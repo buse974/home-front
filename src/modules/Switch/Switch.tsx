@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ModuleProps } from '../base/ModuleInterface';
+import type { ModuleProps } from '../base/ModuleInterface';
 
 /**
  * Module Switch - Bouton on/off simple

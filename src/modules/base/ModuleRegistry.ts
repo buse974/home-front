@@ -3,7 +3,7 @@
  * Permet d'ajouter, récupérer et lister les modules disponibles
  */
 
-import { DashboardModule } from './ModuleInterface';
+import type { DashboardModule } from './ModuleInterface';
 
 class ModuleRegistry {
   private modules: Map<string, DashboardModule> = new Map();
