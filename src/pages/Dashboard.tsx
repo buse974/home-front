@@ -5,6 +5,7 @@ interface Device {
   id: string;
   name: string;
   type: string;
+  toggleCommandId?: string;
 }
 
 export function Dashboard() {
@@ -39,14 +40,17 @@ export function Dashboard() {
   };
 
   const handleToggle = async (device: Device) => {
+    if (!device.toggleCommandId) {
+      console.error('No toggle command found for', device.name);
+      return;
+    }
+
     setToggleStates(prev => ({ ...prev, [device.id]: true }));
 
     try {
-      // Pour Jeedom, on doit trouver la commande toggle/on/off
-      // Pour le POC, on suppose que device.id est l'ID de la commande toggle
-      await api.executeCommand(providerId, device.id, device.id);
+      // Exécuter la commande toggle avec l'ID de la commande
+      await api.executeCommand(providerId, device.id, device.toggleCommandId);
 
-      // Toggle l'état local (pour feedback immédiat)
       console.log(`Toggled ${device.name}`);
     } catch (error) {
       console.error('Failed to toggle:', error);
@@ -83,10 +87,10 @@ export function Dashboard() {
                 <h3 className="text-lg font-semibold mb-4">{device.name}</h3>
                 <button
                   onClick={() => handleToggle(device)}
-                  disabled={toggleStates[device.id]}
+                  disabled={toggleStates[device.id] || !device.toggleCommandId}
                   className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
                 >
-                  {toggleStates[device.id] ? 'Toggling...' : 'Toggle'}
+                  {toggleStates[device.id] ? 'Toggling...' : device.toggleCommandId ? 'Toggle' : 'No command'}
                 </button>
                 <p className="text-xs text-gray-500 mt-2">Type: {device.type}</p>
               </div>
