@@ -160,7 +160,7 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
         <div className="mt-4 pt-4 border-t border-white/5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-white/30">Tap to {isOn ? 'turn off' : 'turn on'}</span>
-            {device.capabilities.toggle ? (
+            {hasToggleCapability ? (
               <span className="text-emerald-400/60">Ready</span>
             ) : (
               <span className="text-red-400/60 flex items-center gap-1">
