@@ -92,7 +92,6 @@ export interface DashboardWidget {
   id: string;
   dashboardId: string;
   widgetId: string;
-  genericDeviceId: string;
   config: Record<string, any>;
   position: {
     x: number;
@@ -101,7 +100,7 @@ export interface DashboardWidget {
     h: number;
   };
   Widget?: Widget;
-  GenericDevice?: GenericDevice;
+  GenericDevices?: GenericDevice[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -152,5 +151,5 @@ export interface DeviceStateResponse {
 // Props pour les composants Widget
 export interface WidgetComponentProps {
   dashboardWidget: DashboardWidget;
-  onCommand: (capability: string, params?: any) => Promise<void>;
+  onCommand: (capability: string, params?: any, deviceId?: string) => Promise<void>;
 }

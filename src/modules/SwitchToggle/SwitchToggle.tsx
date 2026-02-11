@@ -9,7 +9,8 @@ export function SwitchToggle({ dashboardWidget, onCommand }: WidgetComponentProp
   const [isOn, setIsOn] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const device = dashboardWidget.GenericDevice;
+  const devices = dashboardWidget.GenericDevices || [];
+  const device = devices[0] || null;
 
   useEffect(() => {
     loadDeviceState();

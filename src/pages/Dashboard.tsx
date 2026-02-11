@@ -176,9 +176,9 @@ export function Dashboard() {
                   <WidgetComponent
                     key={dashboardWidget.id}
                     dashboardWidget={dashboardWidget}
-                    onCommand={(capability, params) =>
+                    onCommand={(capability, params, deviceId) =>
                       handleExecuteCommand(
-                        dashboardWidget.GenericDevice?.id || '',
+                        deviceId || dashboardWidget.GenericDevices?.[0]?.id || '',
                         capability,
                         params
                       )
@@ -215,7 +215,7 @@ interface AddWidgetModalProps {
 function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps) {
   const [step, setStep] = useState<'device' | 'widget'>('device');
   const [availableDevices, setAvailableDevices] = useState<(GenericDevice & { providerId: string })[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<(GenericDevice & { providerId: string }) | null>(null);
+  const [selectedDevices, setSelectedDevices] = useState<(GenericDevice & { providerId: string })[]>([]);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
   const [loading, setLoading] = useState(false);
@@ -267,21 +267,27 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
   };
 
   const handleAddWidget = async () => {
-    if (!selectedDevice || !selectedWidget) return;
+    if (selectedDevices.length === 0 || !selectedWidget) return;
 
     setLoading(true);
     try {
-      const { device } = await api.createDevice({
-        provider_id: selectedDevice.providerId,
-        name: selectedDevice.name,
-        type: selectedDevice.type,
-        capabilities: selectedDevice.capabilities,
-        command_mapping: selectedDevice.command_mapping,
-      });
+      // Créer tous les GenericDevices
+      const devicePromises = selectedDevices.map(device =>
+        api.createDevice({
+          provider_id: device.providerId,
+          name: device.name,
+          type: device.type,
+          capabilities: device.capabilities,
+          command_mapping: device.command_mapping,
+        })
+      );
+
+      const createdDevices = await Promise.all(devicePromises);
+      const genericDeviceIds = createdDevices.map(result => result.device.id);
 
       await api.addWidget(dashboardId, {
         widgetId: selectedWidget.id,
-        genericDeviceId: device.id,
+        genericDeviceIds: genericDeviceIds,
         config: {},
         position: { x: 0, y: 0, w: 2, h: 1 },
       });
@@ -293,6 +299,17 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleDeviceSelection = (device: GenericDevice & { providerId: string }) => {
+    setSelectedDevices(prev => {
+      const isSelected = prev.some(d => d.id === device.id);
+      if (isSelected) {
+        return prev.filter(d => d.id !== device.id);
+      } else {
+        return [...prev, device];
+      }
+    });
   };
 
   return (
@@ -315,8 +332,8 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Step indicator */}
           <div className="flex items-center justify-center mb-8 gap-3">
-            <StepIndicator active={step === 'device'} completed={!!selectedDevice} number="1">
-              Device
+            <StepIndicator active={step === 'device'} completed={selectedDevices.length > 0} number="1">
+              Device{selectedDevices.length > 1 ? 's' : ''}
             </StepIndicator>
             <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
             <StepIndicator active={step === 'widget'} completed={!!selectedWidget} number="2">
@@ -327,30 +344,55 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
           {/* Step: Device */}
           {step === 'device' && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white mb-4">Select Device</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Select Device(s)</h3>
               {loading ? (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto"></div>
                   <p className="text-white/60 mt-4">Loading devices...</p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {availableDevices.map((device) => (
+                <>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {availableDevices.map((device) => {
+                      const isSelected = selectedDevices.some(d => d.id === device.id);
+                      return (
+                        <button
+                          key={device.id}
+                          onClick={() => toggleDeviceSelection(device)}
+                          className={`w-full p-4 text-left rounded-xl border transition-all group flex items-center gap-3 ${
+                            isSelected
+                              ? 'bg-purple-500/20 border-purple-500'
+                              : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-purple-500/50'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                            isSelected ? 'border-purple-500 bg-purple-500' : 'border-white/30'
+                          }`}>
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-white group-hover:text-purple-400 transition-colors">{device.name}</p>
+                            <p className="text-sm text-white/60 mt-1">
+                              {device.type} • {Object.keys(device.capabilities).filter((k) => device.capabilities[k]).join(', ')}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedDevices.length > 0 && (
                     <button
-                      key={device.id}
-                      onClick={() => {
-                        setSelectedDevice(device);
-                        loadWidgets();
-                      }}
-                      className="w-full p-4 text-left rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 transition-all group"
+                      onClick={loadWidgets}
+                      className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-medium shadow-lg shadow-purple-500/50 transition-all"
                     >
-                      <p className="font-medium text-white group-hover:text-purple-400 transition-colors">{device.name}</p>
-                      <p className="text-sm text-white/60 mt-1">
-                        {device.type} • {Object.keys(device.capabilities).filter((k) => device.capabilities[k]).join(', ')}
-                      </p>
+                      Next ({selectedDevices.length} device{selectedDevices.length > 1 ? 's' : ''} selected)
                     </button>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
           )}
