@@ -17,12 +17,8 @@ export function ActionButton({ dashboardWidget }: WidgetComponentProps) {
   const allDevices = dashboardWidget.GenericDevices || [];
   const displayName = dashboardWidget.name || allDevices.map(d => d.name).join(', ');
 
-  // Vérifier si les devices ont la capability nécessaire
-  const hasCapability = allDevices.some(d => {
-    if (action === 'toggle') return d.capabilities?.toggle;
-    if (action === 'on' || action === 'off') return d.capabilities?.switch;
-    return false;
-  });
+  // Vérifier si les devices ont la capability toggle (nécessaire pour on/off/toggle)
+  const hasCapability = allDevices.some(d => d.capabilities?.toggle);
 
   const handleAction = async () => {
     if (!hasCapability) {
