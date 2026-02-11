@@ -75,7 +75,7 @@ export function ActionButton({ dashboardWidget }: WidgetComponentProps) {
   const colors = colorClasses[color as keyof typeof colorClasses] || colorClasses.red;
 
   return (
-    <div className="relative p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02] group">
+    <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02] group">
       {/* Header avec device name */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-white mb-1.5 line-clamp-2">
@@ -97,7 +97,7 @@ export function ActionButton({ dashboardWidget }: WidgetComponentProps) {
         onClick={handleAction}
         disabled={loading || !hasCapability}
         className={`
-          w-full py-6 rounded-xl transition-all duration-300
+          w-full flex-1 min-h-[96px] rounded-xl transition-all duration-300
           disabled:opacity-30 disabled:cursor-not-allowed
           bg-gradient-to-r ${colors.bg} ${colors.shadow} shadow-lg
           ${!loading && 'hover:scale-105 active:scale-95'}

@@ -62,13 +62,13 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
   }
 
   return (
-    <div className="group relative">
+    <div className="group relative h-full flex flex-col">
       {/* Glow effect when ON */}
       {isOn && (
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-2xl blur-xl transition-opacity duration-500"></div>
       )}
 
-      <div className="relative p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]">
+      <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]">
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
@@ -107,7 +107,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
           onClick={handleToggle}
           disabled={loading || !hasToggleCapability}
           className={`
-            relative w-full h-24 rounded-xl font-semibold text-lg transition-all duration-300
+            relative w-full flex-1 min-h-[96px] rounded-xl font-semibold text-lg transition-all duration-300
             disabled:opacity-30 disabled:cursor-not-allowed
             ${
               isOn

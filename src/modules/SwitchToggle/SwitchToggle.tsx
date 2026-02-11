@@ -62,13 +62,13 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
   }
 
   return (
-    <div className="relative p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02] group">
+    <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02] group">
       {/* Background gradient subtle */}
       <div className={`absolute inset-0 rounded-2xl transition-all duration-500 ${
         isOn ? 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10' : ''
       }`}></div>
 
-      <div className="relative">
+      <div className="relative flex-1 flex flex-col">
         {/* Header avec device name */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-1.5 line-clamp-2">
@@ -97,7 +97,7 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
         </div>
 
         {/* Toggle Switch horizontal */}
-        <div className="flex items-center justify-between">
+        <div className="flex-1 flex items-center justify-between">
           <div className="flex flex-col gap-1">
             <span className={`text-sm font-medium transition-colors ${
               isOn ? 'text-white' : 'text-white/50'

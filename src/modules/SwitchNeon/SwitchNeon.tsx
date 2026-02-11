@@ -56,7 +56,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
   }
 
   return (
-    <div className="relative p-8 bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/5 overflow-hidden group">
+    <div className="relative h-full flex flex-col p-8 bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/5 overflow-hidden group">
       {/* Animated background glow */}
       <div className={`absolute inset-0 transition-opacity duration-700 ${
         isOn ? 'opacity-100' : 'opacity-0'
@@ -73,7 +73,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
         </div>
       )}
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex-1 flex flex-col">
         {/* Header */}
         <div className="mb-8">
           <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
@@ -91,7 +91,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
         </div>
 
         {/* Neon Switch Circle */}
-        <div className="flex flex-col items-center justify-center py-8">
+        <div className="flex-1 flex flex-col items-center justify-center py-8">
           <button
             onClick={handleToggle}
             disabled={loading || !hasToggleCapability}
