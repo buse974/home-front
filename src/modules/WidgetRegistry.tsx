@@ -2,6 +2,7 @@ import type { WidgetComponentProps } from '../types';
 import { Switch } from './Switch/Switch';
 import { SwitchToggle } from './SwitchToggle/SwitchToggle';
 import { ActionButton } from './ActionButton/ActionButton';
+import { SwitchNeon } from './SwitchNeon/SwitchNeon';
 
 /**
  * Registry des widgets disponibles
@@ -18,6 +19,7 @@ export const widgetRegistry: WidgetRegistryMap = {
   'Switch': Switch,
   'SwitchToggle': SwitchToggle,
   'ActionButton': ActionButton,
+  'SwitchNeon': SwitchNeon,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // 'Sensor': Sensor,

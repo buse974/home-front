@@ -449,6 +449,10 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
                       'ActionButton': {
                         gradient: 'from-red-500/20 to-rose-500/20',
                         icon: '⚡'
+                      },
+                      'SwitchNeon': {
+                        gradient: 'from-cyan-500/20 to-blue-500/20',
+                        icon: '⚡'
                       }
                     };
 
