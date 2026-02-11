@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { getWidgetComponent } from '../modules/WidgetRegistry';
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 import type {
   Dashboard as DashboardType,
   GenericDevice,
@@ -12,6 +15,7 @@ export function Dashboard() {
   const [dashboard, setDashboard] = useState<DashboardType | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -48,6 +52,21 @@ export function Dashboard() {
   const handleWidgetAdded = () => {
     loadDashboard();
     setShowAddModal(false);
+  };
+
+  // @ts-ignore - react-grid-layout type mismatch
+  const handleLayoutChange = async (newLayout: any[]) => {
+    if (!editMode || !dashboard) return;
+
+    // Sauvegarder la position de chaque widget
+    for (const item of newLayout) {
+      const position = { x: item.x, y: item.y, w: item.w, h: item.h };
+      try {
+        await api.updateWidget(item.i as string, { position });
+      } catch (error) {
+        console.error('Failed to update widget position:', error);
+      }
+    }
   };
 
   if (loading) {
@@ -116,6 +135,21 @@ export function Dashboard() {
                 </svg>
               </Link>
               <button
+                onClick={() => setEditMode(!editMode)}
+                className={`group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
+                  editMode
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/50'
+                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 border border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="relative flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>{editMode ? 'Save Layout' : 'Edit Layout'}</span>
+                </div>
+              </button>
+              <button
                 onClick={() => setShowAddModal(true)}
                 className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
               >
@@ -153,7 +187,25 @@ export function Dashboard() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <GridLayout
+              className="layout"
+              layout={dashboard.DashboardWidgets.map(dw => ({
+                i: dw.id,
+                x: dw.position?.x || 0,
+                y: dw.position?.y || 0,
+                w: dw.position?.w || 2,
+                h: dw.position?.h || 1
+              }))}
+              cols={12}
+              rowHeight={150}
+              width={1200}
+              isDraggable={editMode}
+              isResizable={editMode}
+              // @ts-ignore - react-grid-layout type mismatch
+              onLayoutChange={handleLayoutChange}
+              compactType={null}
+              preventCollision={false}
+            >
               {dashboard.DashboardWidgets.map((dashboardWidget) => {
                 const WidgetComponent = getWidgetComponent(
                   dashboardWidget.Widget?.component || ''
@@ -173,20 +225,21 @@ export function Dashboard() {
                 }
 
                 return (
-                  <WidgetComponent
-                    key={dashboardWidget.id}
-                    dashboardWidget={dashboardWidget}
-                    onCommand={(capability, params, deviceId) =>
+                  <div key={dashboardWidget.id}>
+                    <WidgetComponent
+                      dashboardWidget={dashboardWidget}
+                      onCommand={(capability, params, deviceId) =>
                       handleExecuteCommand(
                         deviceId || dashboardWidget.GenericDevices?.[0]?.id || '',
                         capability,
                         params
                       )
                     }
-                  />
+                    />
+                  </div>
                 );
               })}
-            </div>
+            </GridLayout>
           )}
         </main>
       </div>
@@ -218,6 +271,7 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
   const [selectedDevices, setSelectedDevices] = useState<(GenericDevice & { providerId: string })[]>([]);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [widgetConfig, setWidgetConfig] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
@@ -426,6 +480,24 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
           {step === 'widget' && (
             <div>
               <h3 className="text-lg font-semibold text-white mb-6">Select Widget Type</h3>
+
+              {/* Category tabs */}
+              <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+                {['all', 'switch', 'action', 'sensor', 'media'].map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                      selectedCategory === category
+                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/50'
+                        : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80'
+                    }`}
+                  >
+                    {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
+                  </button>
+                ))}
+              </div>
+
               {loading ? (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto"></div>
@@ -433,7 +505,9 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {widgets.map((widget) => {
+                  {widgets
+                    .filter(w => selectedCategory === 'all' || w.category === selectedCategory)
+                    .map((widget) => {
                     const isSelected = selectedWidget?.id === widget.id;
 
                     // Visual preview styles by widget type

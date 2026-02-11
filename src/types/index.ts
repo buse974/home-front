@@ -73,6 +73,7 @@ export interface Widget {
   component: string;
   description?: string;
   icon?: string;
+  category?: string;
   config_schema: Record<string, any>;
 }
 
