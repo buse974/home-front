@@ -204,7 +204,8 @@ export function Dashboard() {
               // @ts-ignore - react-grid-layout type mismatch
               onLayoutChange={handleLayoutChange}
               compactType={null}
-              preventCollision={false}
+              preventCollision={true}
+              resizeHandles={['se']}
             >
               {dashboard.DashboardWidgets.map((dashboardWidget) => {
                 const WidgetComponent = getWidgetComponent(
@@ -225,7 +226,7 @@ export function Dashboard() {
                 }
 
                 return (
-                  <div key={dashboardWidget.id}>
+                  <div key={dashboardWidget.id} className="relative">
                     <WidgetComponent
                       dashboardWidget={dashboardWidget}
                       onCommand={(capability, params, deviceId) =>
@@ -236,6 +237,16 @@ export function Dashboard() {
                       )
                     }
                     />
+                    {/* Overlay en mode édition pour bloquer les clics */}
+                    {editMode && (
+                      <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
+                        <div className="absolute bottom-0 right-0 w-6 h-6 bg-purple-500 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
