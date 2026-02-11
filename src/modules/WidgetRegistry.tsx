@@ -1,5 +1,6 @@
 import type { WidgetComponentProps } from '../types';
 import { Switch } from './Switch/Switch';
+import { SwitchToggle } from './SwitchToggle/SwitchToggle';
 
 /**
  * Registry des widgets disponibles
@@ -14,6 +15,7 @@ interface WidgetRegistryMap {
 
 export const widgetRegistry: WidgetRegistryMap = {
   'Switch': Switch,
+  'SwitchToggle': SwitchToggle,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // 'Sensor': Sensor,
