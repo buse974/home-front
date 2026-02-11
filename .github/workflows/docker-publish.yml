@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: chronark/home-front
+  IMAGE_NAME: buse974/home-front
 
 jobs:
   build-and-push:
