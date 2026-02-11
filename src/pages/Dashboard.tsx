@@ -3,7 +3,6 @@ import { api } from '../services/api';
 import { getWidgetComponent } from '../modules/WidgetRegistry';
 import type {
   Dashboard as DashboardType,
-  Provider,
   GenericDevice,
   Widget,
 } from '../types';
@@ -202,42 +201,39 @@ interface AddWidgetModalProps {
 }
 
 function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps) {
-  const [step, setStep] = useState<'provider' | 'device' | 'widget'>('provider');
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [availableDevices, setAvailableDevices] = useState<GenericDevice[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<GenericDevice | null>(null);
+  const [step, setStep] = useState<'device' | 'widget'>('device');
+  const [availableDevices, setAvailableDevices] = useState<(GenericDevice & { providerId: string })[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<(GenericDevice & { providerId: string }) | null>(null);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadProviders();
+    loadAllDevices();
   }, []);
 
-  const loadProviders = async () => {
+  const loadAllDevices = async () => {
     setLoading(true);
     try {
+      // Charger tous les providers
       const { providers: providersList } = await api.getProviders();
-      setProviders(providersList);
 
-      if (providersList.length === 1) {
-        setSelectedProvider(providersList[0]);
-        loadDevices(providersList[0].id);
-      }
-    } catch (error) {
-      console.error('Failed to load providers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Charger les devices de TOUS les providers en parallèle
+      const devicesPromises = providersList.map(async (provider) => {
+        try {
+          const { devices } = await api.getAvailableDevices(provider.id);
+          // Ajouter le providerId à chaque device
+          return devices.map(device => ({ ...device, providerId: provider.id }));
+        } catch (error) {
+          console.error(`Failed to load devices for provider ${provider.name}:`, error);
+          return [];
+        }
+      });
 
-  const loadDevices = async (providerId: string) => {
-    setLoading(true);
-    try {
-      const { devices } = await api.getAvailableDevices(providerId);
-      setAvailableDevices(devices);
-      setStep('device');
+      const devicesArrays = await Promise.all(devicesPromises);
+      const allDevices = devicesArrays.flat();
+
+      setAvailableDevices(allDevices);
     } catch (error) {
       console.error('Failed to load devices:', error);
     } finally {
@@ -259,12 +255,12 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
   };
 
   const handleAddWidget = async () => {
-    if (!selectedDevice || !selectedWidget || !selectedProvider) return;
+    if (!selectedDevice || !selectedWidget) return;
 
     setLoading(true);
     try {
       const { device } = await api.createDevice({
-        provider_id: selectedProvider.id,
+        provider_id: selectedDevice.providerId,
         name: selectedDevice.name,
         type: selectedDevice.type,
         capabilities: selectedDevice.capabilities,
@@ -307,38 +303,14 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Step indicator */}
           <div className="flex items-center justify-center mb-8 gap-3">
-            <StepIndicator active={step === 'provider'} completed={!!selectedProvider} number="1">
-              Provider
-            </StepIndicator>
-            <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
-            <StepIndicator active={step === 'device'} completed={!!selectedDevice} number="2">
+            <StepIndicator active={step === 'device'} completed={!!selectedDevice} number="1">
               Device
             </StepIndicator>
             <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
-            <StepIndicator active={step === 'widget'} completed={!!selectedWidget} number="3">
+            <StepIndicator active={step === 'widget'} completed={!!selectedWidget} number="2">
               Widget
             </StepIndicator>
           </div>
-
-          {/* Step: Provider */}
-          {step === 'provider' && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white mb-4">Select Provider</h3>
-              {providers.map((provider) => (
-                <button
-                  key={provider.id}
-                  onClick={() => {
-                    setSelectedProvider(provider);
-                    loadDevices(provider.id);
-                  }}
-                  className="w-full p-4 text-left rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 transition-all group"
-                >
-                  <p className="font-medium text-white group-hover:text-purple-400 transition-colors">{provider.name}</p>
-                  <p className="text-sm text-white/60 mt-1">{provider.type}</p>
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Step: Device */}
           {step === 'device' && (
