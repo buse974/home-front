@@ -213,11 +213,12 @@ interface AddWidgetModalProps {
 }
 
 function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps) {
-  const [step, setStep] = useState<'device' | 'widget'>('device');
+  const [step, setStep] = useState<'device' | 'widget' | 'config'>('device');
   const [availableDevices, setAvailableDevices] = useState<(GenericDevice & { providerId: string })[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<(GenericDevice & { providerId: string })[]>([]);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
+  const [widgetConfig, setWidgetConfig] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -266,6 +267,22 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
     }
   };
 
+  const handleWidgetSelection = (widget: Widget) => {
+    setSelectedWidget(widget);
+
+    // Si le widget nécessite une configuration (ActionButton), aller au step config
+    if (widget.name === 'ActionButton') {
+      // Initialiser la config avec les valeurs par défaut
+      setWidgetConfig({
+        action: 'off',
+        label: 'Turn OFF',
+        color: 'red'
+      });
+      setStep('config');
+    }
+    // Sinon, le widget est prêt à être créé (config vide)
+  };
+
   const handleAddWidget = async () => {
     if (selectedDevices.length === 0 || !selectedWidget) return;
 
@@ -288,7 +305,7 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
       await api.addWidget(dashboardId, {
         widgetId: selectedWidget.id,
         genericDeviceIds: genericDeviceIds,
-        config: {},
+        config: widgetConfig,
         position: { x: 0, y: 0, w: 2, h: 1 },
       });
 
@@ -339,6 +356,14 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
             <StepIndicator active={step === 'widget'} completed={!!selectedWidget} number="2">
               Widget
             </StepIndicator>
+            {selectedWidget?.name === 'ActionButton' && (
+              <>
+                <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
+                <StepIndicator active={step === 'config'} completed={false} number="3">
+                  Config
+                </StepIndicator>
+              </>
+            )}
           </div>
 
           {/* Step: Device */}
@@ -399,35 +424,174 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
 
           {/* Step: Widget */}
           {step === 'widget' && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white mb-4">Select Widget Type</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-6">Select Widget Type</h3>
               {loading ? (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto"></div>
                   <p className="text-white/60 mt-4">Loading widgets...</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {widgets.map((widget) => (
-                    <button
-                      key={widget.id}
-                      onClick={() => setSelectedWidget(widget)}
-                      className={`w-full p-4 text-left rounded-xl border transition-all ${
-                        selectedWidget?.id === widget.id
-                          ? 'bg-purple-500/20 border-purple-500'
-                          : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-purple-500/50'
-                      }`}
-                    >
-                      <p className="font-medium text-white">
-                        {widget.icon} {widget.libelle}
-                      </p>
-                      {widget.description && (
-                        <p className="text-sm text-white/60 mt-1">{widget.description}</p>
-                      )}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {widgets.map((widget) => {
+                    const isSelected = selectedWidget?.id === widget.id;
+
+                    // Visual preview styles by widget type
+                    const widgetVisuals: Record<string, { gradient: string, icon: string }> = {
+                      'Switch': {
+                        gradient: 'from-blue-500/20 to-indigo-500/20',
+                        icon: '🔘'
+                      },
+                      'SwitchToggle': {
+                        gradient: 'from-emerald-500/20 to-teal-500/20',
+                        icon: '🎚️'
+                      },
+                      'ActionButton': {
+                        gradient: 'from-red-500/20 to-rose-500/20',
+                        icon: '⚡'
+                      }
+                    };
+
+                    const visual = widgetVisuals[widget.name] || {
+                      gradient: 'from-purple-500/20 to-pink-500/20',
+                      icon: widget.icon
+                    };
+
+                    return (
+                      <button
+                        key={widget.id}
+                        onClick={() => handleWidgetSelection(widget)}
+                        className={`
+                          relative p-6 rounded-2xl border-2 transition-all duration-300
+                          overflow-hidden group
+                          ${isSelected
+                            ? 'bg-purple-500/20 border-purple-500 shadow-lg shadow-purple-500/30 scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:border-purple-500/50 hover:bg-white/10 hover:scale-[1.01]'
+                          }
+                        `}
+                      >
+                        {/* Background gradient */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${visual.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+
+                        {/* Content */}
+                        <div className="relative">
+                          {/* Icon */}
+                          <div className="text-5xl mb-4 transition-transform group-hover:scale-110 duration-300">
+                            {visual.icon}
+                          </div>
+
+                          {/* Title */}
+                          <h4 className="font-bold text-white text-lg mb-2">
+                            {widget.libelle}
+                          </h4>
+
+                          {/* Description */}
+                          {widget.description && (
+                            <p className="text-sm text-white/60 leading-relaxed">
+                              {widget.description}
+                            </p>
+                          )}
+
+                          {/* Selected indicator */}
+                          {isSelected && (
+                            <div className="absolute top-0 right-0 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Step: Config (for ActionButton) */}
+          {step === 'config' && selectedWidget && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-6">Configure {selectedWidget.libelle}</h3>
+              <div className="space-y-6">
+                {/* Action Type */}
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-3">Action</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { value: 'off', label: 'Turn OFF', icon: '❌' },
+                      { value: 'on', label: 'Turn ON', icon: '✅' },
+                      { value: 'toggle', label: 'Toggle', icon: '🔄' }
+                    ].map((actionOption) => (
+                      <button
+                        key={actionOption.value}
+                        onClick={() => setWidgetConfig({ ...widgetConfig, action: actionOption.value })}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          widgetConfig.action === actionOption.value
+                            ? 'bg-purple-500/20 border-purple-500'
+                            : 'bg-white/5 border-white/10 hover:border-purple-500/50'
+                        }`}
+                      >
+                        <div className="text-2xl mb-1">{actionOption.icon}</div>
+                        <div className="text-sm font-medium text-white">{actionOption.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Label */}
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-3">Button Label</label>
+                  <input
+                    type="text"
+                    value={widgetConfig.label || ''}
+                    onChange={(e) => setWidgetConfig({ ...widgetConfig, label: e.target.value })}
+                    placeholder="e.g., Turn OFF All Lights"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Color */}
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-3">Color</label>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[
+                      { value: 'red', label: 'Red', gradient: 'from-red-500 to-rose-500' },
+                      { value: 'green', label: 'Green', gradient: 'from-emerald-500 to-teal-500' },
+                      { value: 'blue', label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
+                      { value: 'purple', label: 'Purple', gradient: 'from-purple-500 to-pink-500' }
+                    ].map((colorOption) => (
+                      <button
+                        key={colorOption.value}
+                        onClick={() => setWidgetConfig({ ...widgetConfig, color: colorOption.value })}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          widgetConfig.color === colorOption.value
+                            ? 'border-white shadow-lg'
+                            : 'border-white/10 hover:border-white/50'
+                        }`}
+                      >
+                        <div className={`h-10 rounded-lg bg-gradient-to-r ${colorOption.gradient} mb-2`}></div>
+                        <div className="text-xs font-medium text-white">{colorOption.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="p-6 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-xs text-white/60 mb-3">Preview</p>
+                  <div className={`
+                    py-4 px-6 rounded-xl bg-gradient-to-r
+                    ${widgetConfig.color === 'red' ? 'from-red-500 to-rose-500' : ''}
+                    ${widgetConfig.color === 'green' ? 'from-emerald-500 to-teal-500' : ''}
+                    ${widgetConfig.color === 'blue' ? 'from-blue-500 to-cyan-500' : ''}
+                    ${widgetConfig.color === 'purple' ? 'from-purple-500 to-pink-500' : ''}
+                    text-white font-bold text-center
+                  `}>
+                    {widgetConfig.label || 'Action'}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -440,7 +604,20 @@ function AddWidgetModal({ dashboardId, onClose, onSuccess }: AddWidgetModalProps
           >
             Cancel
           </button>
-          {step === 'widget' && selectedWidget && (
+
+          {/* Show Add Widget button on config step */}
+          {step === 'config' && (
+            <button
+              onClick={handleAddWidget}
+              disabled={loading}
+              className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/50 transition-all"
+            >
+              {loading ? 'Adding...' : 'Add Widget'}
+            </button>
+          )}
+
+          {/* Show Add Widget button on widget step for widgets that don't need config */}
+          {step === 'widget' && selectedWidget && selectedWidget.name !== 'ActionButton' && (
             <button
               onClick={handleAddWidget}
               disabled={loading}
