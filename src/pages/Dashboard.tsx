@@ -187,18 +187,19 @@ export function Dashboard() {
               </button>
             </div>
           ) : (
+            // @ts-ignore - react-grid-layout type mismatch
             <GridLayout
-              className="layout"
+              className="layout w-full"
               layout={dashboard.DashboardWidgets.map(dw => ({
                 i: dw.id,
                 x: dw.position?.x || 0,
                 y: dw.position?.y || 0,
-                w: dw.position?.w || 2,
-                h: dw.position?.h || 1
+                w: dw.position?.w || 3,
+                h: dw.position?.h || 2
               }))}
               cols={12}
-              rowHeight={150}
-              width={1200}
+              rowHeight={120}
+              width={1600}
               isDraggable={editMode}
               isResizable={editMode}
               // @ts-ignore - react-grid-layout type mismatch
