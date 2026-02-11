@@ -100,6 +100,18 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* CSS pour faire en sorte que les widgets prennent toute la hauteur */}
+      <style>{`
+        .react-grid-item {
+          display: flex !important;
+          flex-direction: column !important;
+        }
+        .react-grid-item > div {
+          flex: 1 !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+      `}</style>
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
@@ -227,17 +239,19 @@ export function Dashboard() {
                 }
 
                 return (
-                  <div key={dashboardWidget.id} className="relative">
-                    <WidgetComponent
-                      dashboardWidget={dashboardWidget}
-                      onCommand={(capability, params, deviceId) =>
-                      handleExecuteCommand(
-                        deviceId || dashboardWidget.GenericDevices?.[0]?.id || '',
-                        capability,
-                        params
-                      )
-                    }
-                    />
+                  <div key={dashboardWidget.id} className="relative h-full w-full">
+                    <div className="h-full w-full">
+                      <WidgetComponent
+                        dashboardWidget={dashboardWidget}
+                        onCommand={(capability, params, deviceId) =>
+                        handleExecuteCommand(
+                          deviceId || dashboardWidget.GenericDevices?.[0]?.id || '',
+                          capability,
+                          params
+                        )
+                      }
+                      />
+                    </div>
                     {/* Overlay en mode édition pour bloquer les clics */}
                     {editMode && (
                       <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
