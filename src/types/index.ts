@@ -92,6 +92,7 @@ export interface DashboardWidget {
   id: string;
   dashboardId: string;
   widgetId: string;
+  name?: string | null; // Nom personnalisé optionnel
   config: Record<string, any>;
   position: {
     x: number;

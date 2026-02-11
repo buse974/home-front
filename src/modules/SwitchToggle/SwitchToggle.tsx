@@ -4,40 +4,47 @@ import { api } from '../../services/api';
 
 /**
  * Widget SwitchToggle - Design minimaliste avec toggle horizontal
+ * Supporte plusieurs devices (tous contrôlés ensemble)
  */
-export function SwitchToggle({ dashboardWidget, onCommand }: WidgetComponentProps) {
+export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
   const [isOn, setIsOn] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const devices = dashboardWidget.GenericDevices || [];
-  const device = devices[0] || null;
+
+  // Nom d'affichage : custom ou concaténation
+  const displayName = dashboardWidget.name || devices.map(d => d.name).join(', ');
+
+  // Vérifier si au moins un device a la capability toggle
+  const hasToggleCapability = devices.some(d => d.capabilities?.toggle);
 
   useEffect(() => {
-    loadDeviceState();
-  }, [device?.id]);
+    loadWidgetState();
+  }, [dashboardWidget.id]);
 
-  const loadDeviceState = async () => {
-    if (!device?.id) return;
+  const loadWidgetState = async () => {
+    if (devices.length === 0) return;
 
     try {
-      const { state } = await api.getDeviceState(device.id);
-      if (state.isOn !== undefined) {
-        setIsOn(state.isOn);
-      }
+      const { devices: deviceStates } = await api.getWidgetState(dashboardWidget.id);
+
+      // Si au moins UN device est ON, le widget est ON
+      const anyOn = deviceStates.some(d => d.state?.isOn);
+      setIsOn(anyOn);
     } catch (error) {
-      console.error('Failed to load device state:', error);
+      console.error('Failed to load widget state:', error);
     }
   };
 
   const handleToggle = async () => {
-    if (!device?.capabilities.toggle) {
-      console.error('Toggle capability not available for', device?.name);
+    if (!hasToggleCapability) {
+      console.error('Toggle capability not available');
       return;
     }
 
     setLoading(true);
     try {
-      await onCommand('toggle');
+      await api.executeWidgetCommand(dashboardWidget.id, 'toggle');
       setIsOn(!isOn);
     } catch (error) {
       console.error('Failed to toggle:', error);
@@ -46,7 +53,7 @@ export function SwitchToggle({ dashboardWidget, onCommand }: WidgetComponentProp
     }
   };
 
-  if (!device) {
+  if (devices.length === 0) {
     return (
       <div className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-red-500/20">
         <p className="text-red-400">No device connected</p>
@@ -65,10 +72,16 @@ export function SwitchToggle({ dashboardWidget, onCommand }: WidgetComponentProp
         {/* Header avec device name */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-1.5 line-clamp-2">
-            {device.name}
+            {displayName}
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/40">{device.type}</span>
+            <span className="text-xs text-white/40">{devices[0].type}</span>
+            {devices.length > 1 && (
+              <>
+                <span className="text-xs text-white/20">•</span>
+                <span className="text-xs text-purple-300 font-medium">{devices.length} devices</span>
+              </>
+            )}
             <span className="text-xs text-white/20">•</span>
             <div className="flex items-center gap-1.5">
               <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
@@ -101,7 +114,7 @@ export function SwitchToggle({ dashboardWidget, onCommand }: WidgetComponentProp
           {/* Toggle Button */}
           <button
             onClick={handleToggle}
-            disabled={loading || !device.capabilities.toggle}
+            disabled={loading || !hasToggleCapability}
             className={`
               relative w-20 h-10 rounded-full transition-all duration-300
               disabled:opacity-30 disabled:cursor-not-allowed

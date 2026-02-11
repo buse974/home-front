@@ -225,6 +225,37 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  /**
+   * Exécuter une commande sur TOUS les devices d'un widget
+   */
+  async executeWidgetCommand(
+    widgetId: string,
+    capability: string,
+    params?: any
+  ): Promise<{
+    success: boolean;
+    executed: number;
+    total: number;
+    succeeded: Array<{ deviceId: string; deviceName: string; success: boolean }>;
+    failed: Array<{ deviceId: string; deviceName: string; error: string }>;
+  }> {
+    return this.request(`/dashboards/widgets/${widgetId}/execute`, {
+      method: 'POST',
+      body: JSON.stringify({ capability, params }),
+    });
+  }
+
+  /**
+   * Récupérer l'état de TOUS les devices d'un widget
+   */
+  async getWidgetState(widgetId: string): Promise<{
+    devices: Array<{ deviceId: string; deviceName: string; state: any }>;
+    errors: Array<{ deviceId: string; deviceName: string; error: string }>;
+    total: number;
+  }> {
+    return this.request(`/dashboards/widgets/${widgetId}/state`);
+  }
 }
 
 export const api = new ApiService();
