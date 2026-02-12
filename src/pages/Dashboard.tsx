@@ -28,6 +28,7 @@ export function Dashboard() {
     Record<string, string>
   >({});
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const lastDashboardNavAt = useRef(0);
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
     : -1;
@@ -104,6 +105,34 @@ export function Dashboard() {
     } else {
       goToDashboardBySwipe("prev");
     }
+  };
+
+  const handleWheelNavigation = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (editMode || showAddModal || widgetToDelete) return;
+    if (!dashboard || dashboards.length <= 1) return;
+
+    const now = Date.now();
+    if (now - lastDashboardNavAt.current < 500) return;
+
+    const absX = Math.abs(event.deltaX);
+    const absY = Math.abs(event.deltaY);
+    let direction: "next" | "prev" | null = null;
+
+    // Trackpad horizontal gesture
+    if (absX > 40 && absX >= absY) {
+      direction = event.deltaX > 0 ? "next" : "prev";
+    }
+
+    // Shift + wheel fallback
+    if (!direction && event.shiftKey && absY > 40) {
+      direction = event.deltaY > 0 ? "next" : "prev";
+    }
+
+    if (!direction) return;
+
+    event.preventDefault();
+    lastDashboardNavAt.current = now;
+    goToDashboardBySwipe(direction);
   };
 
   const handleExecuteCommand = async (
@@ -266,6 +295,7 @@ export function Dashboard() {
       className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onWheel={handleWheelNavigation}
     >
       {/* CSS pour faire en sorte que les widgets prennent toute la hauteur */}
       <style>{`
@@ -346,6 +376,48 @@ export function Dashboard() {
               )}
             </div>
             <div className="flex items-center gap-3">
+              {dashboards.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => goToDashboardBySwipe("prev")}
+                    className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
+                    title="Dashboard précédent"
+                  >
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => goToDashboardBySwipe("next")}
+                    className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
+                    title="Dashboard suivant"
+                  >
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <Link
                 to="/admin"
                 className="group relative w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
