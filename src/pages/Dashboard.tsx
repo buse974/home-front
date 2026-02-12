@@ -54,6 +54,18 @@ export function Dashboard() {
     setShowAddModal(false);
   };
 
+  const handleDeleteWidget = async (widgetId: string) => {
+    if (!confirm('Supprimer ce widget ?\n\nLes devices non utilisés seront automatiquement supprimés.')) return;
+
+    try {
+      await api.deleteWidget(widgetId);
+      loadDashboard();
+    } catch (error) {
+      console.error('Failed to delete widget:', error);
+      alert('Failed to delete widget');
+    }
+  };
+
   // @ts-ignore - react-grid-layout type mismatch
   const handleLayoutChange = async (newLayout: any[]) => {
     if (!editMode || !dashboard) return;
@@ -241,18 +253,6 @@ export function Dashboard() {
                     </div>
                   );
                 }
-
-                const handleDeleteWidget = async (widgetId: string) => {
-                  if (!confirm('Supprimer ce widget ?\n\nLes devices non utilisés seront automatiquement supprimés.')) return;
-
-                  try {
-                    await api.deleteWidget(widgetId);
-                    loadDashboard();
-                  } catch (error) {
-                    console.error('Failed to delete widget:', error);
-                    alert('Failed to delete widget');
-                  }
-                };
 
                 return (
                   <div key={dashboardWidget.id} className="relative h-full w-full">
