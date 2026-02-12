@@ -20,6 +20,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [widgetToDelete, setWidgetToDelete] = useState<string | null>(null);
   const [deletingWidget, setDeletingWidget] = useState(false);
   const [dashboardNameDraft, setDashboardNameDraft] = useState("");
@@ -29,6 +30,7 @@ export function Dashboard() {
   >({});
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const lastDashboardNavAt = useRef(0);
+  const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
     : -1;
@@ -36,6 +38,23 @@ export function Dashboard() {
   useEffect(() => {
     loadDashboard();
   }, [searchParams]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      const active =
+        document.fullscreenElement === dashboardContainerRef.current;
+      setIsFullscreen(active);
+      if (active) {
+        setEditMode(false);
+        setShowAddModal(false);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+    };
+  }, []);
 
   const loadDashboard = async () => {
     try {
@@ -133,6 +152,20 @@ export function Dashboard() {
     event.preventDefault();
     lastDashboardNavAt.current = now;
     goToDashboardBySwipe(direction);
+  };
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!dashboardContainerRef.current) return;
+
+      if (document.fullscreenElement === dashboardContainerRef.current) {
+        await document.exitFullscreen();
+      } else {
+        await dashboardContainerRef.current.requestFullscreen();
+      }
+    } catch (error) {
+      console.error("Failed to toggle fullscreen:", error);
+    }
   };
 
   const handleExecuteCommand = async (
@@ -292,6 +325,7 @@ export function Dashboard() {
 
   return (
     <div
+      ref={dashboardContainerRef}
       className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -418,41 +452,14 @@ export function Dashboard() {
                   </button>
                 </div>
               )}
-              <Link
-                to="/admin"
-                className="group relative w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
-              >
-                <svg
-                  className="w-6 h-6 text-white/80 group-hover:text-white transition-colors group-hover:rotate-90 duration-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </Link>
               <button
-                onClick={() => setEditMode(!editMode)}
-                className={`group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
-                  editMode
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/50"
-                    : "bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 border border-white/10 hover:border-white/20"
-                }`}
+                onClick={toggleFullscreen}
+                className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
+                title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
               >
-                <div className="relative flex items-center gap-2">
+                {isFullscreen ? (
                   <svg
-                    className="w-5 h-5"
+                    className="w-6 h-6 text-white/90"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -461,21 +468,33 @@ export function Dashboard() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      d="M9 9V4H4m11 0h5v5m0 6v5h-5M9 20H4v-5"
                     />
                   </svg>
-                  <span>{editMode ? "Save Layout" : "Edit Layout"}</span>
-                </div>
+                ) : (
+                  <svg
+                    className="w-6 h-6 text-white/90"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8V4h4m8 0h4v4M4 16v4h4m8 0h4v-4"
+                    />
+                  </svg>
+                )}
               </button>
-              {editMode && (
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative flex items-center gap-2">
+              {!isFullscreen && (
+                <>
+                  <Link
+                    to="/admin"
+                    className="group relative w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
+                  >
                     <svg
-                      className="w-5 h-5"
+                      className="w-6 h-6 text-white/80 group-hover:text-white transition-colors group-hover:rotate-90 duration-300"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -484,12 +503,66 @@ export function Dashboard() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 4v16m8-8H4"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
-                    <span>Add Widget</span>
-                  </div>
-                </button>
+                  </Link>
+                  <button
+                    onClick={() => setEditMode(!editMode)}
+                    className={`group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
+                      editMode
+                        ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/50"
+                        : "bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 border border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <div className="relative flex items-center gap-2">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      <span>{editMode ? "Save Layout" : "Edit Layout"}</span>
+                    </div>
+                  </button>
+                  {editMode && (
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="relative flex items-center gap-2">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        <span>Add Widget</span>
+                      </div>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
