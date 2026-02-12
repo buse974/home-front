@@ -5,7 +5,6 @@ import { getWidgetComponent } from "../modules/WidgetRegistry";
 import {
   Responsive,
   WidthProvider,
-  type Layout,
   type Layouts,
 } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
