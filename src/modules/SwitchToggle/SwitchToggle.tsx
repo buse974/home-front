@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import type { WidgetComponentProps } from "../../types";
 import { api } from "../../services/api";
 
@@ -82,6 +82,20 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
     }
   };
 
+  const isActionDisabled = loading || !hasToggleCapability;
+
+  const handleCardClick = () => {
+    if (isActionDisabled) return;
+    handleToggle();
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    }
+  };
+
   if (devices.length === 0) {
     return (
       <div className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-red-500/20">
@@ -91,7 +105,18 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
   }
 
   return (
-    <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02] group">
+    <div
+      role="button"
+      tabIndex={isActionDisabled ? -1 : 0}
+      aria-disabled={isActionDisabled}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      className={`relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 transition-all duration-300 group ${
+        isActionDisabled
+          ? "opacity-80 cursor-not-allowed"
+          : "cursor-pointer hover:border-white/20 hover:scale-[1.02]"
+      }`}
+    >
       {/* Background gradient subtle */}
       <div
         className={`absolute inset-0 rounded-2xl transition-all duration-500 ${
@@ -155,18 +180,16 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
           </div>
 
           {/* Toggle Button */}
-          <button
-            onClick={handleToggle}
-            disabled={loading || !hasToggleCapability}
+          <div
             className={`
               relative w-20 h-10 rounded-full transition-all duration-300
-              disabled:opacity-30 disabled:cursor-not-allowed
+              ${isActionDisabled ? "opacity-30" : ""}
               ${
                 isOn
                   ? "bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/30"
                   : "bg-white/10 border border-white/20"
               }
-              ${!loading && "hover:scale-105 active:scale-95"}
+              ${!loading && !isActionDisabled ? "hover:scale-105 active:scale-95" : ""}
             `}
           >
             {/* Toggle circle */}
@@ -214,7 +237,7 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
                 </div>
               )}
             </div>
-          </button>
+          </div>
         </div>
 
         {/* Info complémentaire */}

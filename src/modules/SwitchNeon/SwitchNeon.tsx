@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import type { WidgetComponentProps } from "../../types";
 import { api } from "../../services/api";
 
@@ -76,6 +76,20 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
     }
   };
 
+  const isActionDisabled = loading || !hasToggleCapability;
+
+  const handleCardClick = () => {
+    if (isActionDisabled) return;
+    handleToggle();
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    }
+  };
+
   if (devices.length === 0) {
     return (
       <div className="p-6 bg-black/80 backdrop-blur-xl rounded-3xl border border-red-500/30">
@@ -87,7 +101,18 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
   const circleSize = "clamp(72px, 30%, 128px)";
 
   return (
-    <div className="relative h-full flex flex-col p-6 bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/5 overflow-hidden group">
+    <div
+      role="button"
+      tabIndex={isActionDisabled ? -1 : 0}
+      aria-disabled={isActionDisabled}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      className={`relative h-full flex flex-col p-6 bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/5 overflow-hidden group transition-all duration-300 ${
+        isActionDisabled
+          ? "opacity-80 cursor-not-allowed"
+          : "cursor-pointer hover:border-cyan-400/40"
+      }`}
+    >
       {/* Animated background glow */}
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
@@ -143,14 +168,12 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                   isOn ? "border-cyan-300/70" : "border-white/20"
                 } -z-10`}
               ></div>
-              <button
-                onClick={handleToggle}
-                disabled={loading || !hasToggleCapability}
+              <div
                 style={{ width: circleSize, height: circleSize }}
                 className={`
               relative z-10 rounded-full transition-all duration-500
-              disabled:opacity-30 disabled:cursor-not-allowed
-              ${!loading && "hover:scale-110 active:scale-95"}
+              ${isActionDisabled ? "opacity-30" : ""}
+              ${!loading && !isActionDisabled ? "hover:scale-110 active:scale-95" : ""}
             `}
               >
                 {/* Outer glow ring */}
@@ -217,7 +240,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                 {isOn && !loading && (
                   <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
                 )}
-              </button>
+              </div>
             </div>
 
             {/* Status text */}

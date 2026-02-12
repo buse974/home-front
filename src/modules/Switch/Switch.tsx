@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import type { WidgetComponentProps } from "../../types";
 import { api } from "../../services/api";
 
@@ -82,6 +82,20 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
     }
   };
 
+  const isActionDisabled = loading || !hasToggleCapability;
+
+  const handleCardClick = () => {
+    if (isActionDisabled) return;
+    handleToggle();
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    }
+  };
+
   if (devices.length === 0) {
     return (
       <div className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-red-500/20">
@@ -97,7 +111,18 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-2xl blur-xl transition-opacity duration-500"></div>
       )}
 
-      <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]">
+      <div
+        role="button"
+        tabIndex={isActionDisabled ? -1 : 0}
+        aria-disabled={isActionDisabled}
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
+        className={`relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 transition-all duration-300 ${
+          isActionDisabled
+            ? "opacity-80 cursor-not-allowed"
+            : "cursor-pointer hover:border-white/20 hover:scale-[1.02]"
+        }`}
+      >
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
@@ -142,18 +167,16 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         </div>
 
         {/* Toggle Button */}
-        <button
-          onClick={handleToggle}
-          disabled={loading || !hasToggleCapability}
+        <div
           className={`
             relative w-full flex-1 min-h-[96px] rounded-xl font-semibold text-lg transition-all duration-300
-            disabled:opacity-30 disabled:cursor-not-allowed
+            ${isActionDisabled ? "opacity-30" : ""}
             ${
               isOn
                 ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-2xl shadow-purple-500/50"
                 : "bg-white/10 hover:bg-white/20 text-white/80 border border-white/10"
             }
-            ${!loading && "hover:scale-[1.02] active:scale-[0.98]"}
+            ${!loading && !isActionDisabled ? "hover:scale-[1.02] active:scale-[0.98]" : ""}
             overflow-hidden
           `}
         >
@@ -212,7 +235,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               </>
             )}
           </div>
-        </button>
+        </div>
 
         {/* Capability warning */}
         {!hasToggleCapability && (
