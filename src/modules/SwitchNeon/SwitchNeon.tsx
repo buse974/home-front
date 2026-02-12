@@ -130,25 +130,25 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
         {/* Neon Switch Circle */}
         <div className="flex-1 min-h-0 grid place-items-center">
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="relative">
+            <div className="relative isolate">
               <div
                 className={`absolute -inset-4 rounded-full transition-all duration-500 ${
                   isOn
                     ? "bg-cyan-400/20 blur-xl scale-110"
                     : "bg-white/10 blur-md"
-                }`}
+                } -z-20`}
               ></div>
               <div
                 className={`absolute -inset-2 rounded-full border transition-all duration-500 ${
                   isOn ? "border-cyan-300/70" : "border-white/20"
-                }`}
+                } -z-10`}
               ></div>
               <button
                 onClick={handleToggle}
                 disabled={loading || !hasToggleCapability}
                 style={{ width: circleSize, height: circleSize }}
                 className={`
-              relative rounded-full transition-all duration-500
+              relative z-10 rounded-full transition-all duration-500
               disabled:opacity-30 disabled:cursor-not-allowed
               ${!loading && "hover:scale-110 active:scale-95"}
             `}
@@ -221,9 +221,9 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
             </div>
 
             {/* Status text */}
-            <div className="text-center">
+            <div className="relative z-20 mt-2 text-center">
               <p
-                className={`text-3xl font-black tracking-wider transition-all duration-500 ${
+                className={`text-2xl md:text-3xl leading-none font-black tracking-wider transition-all duration-500 ${
                   isOn
                     ? "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.5)]"
                     : "text-white/30"
