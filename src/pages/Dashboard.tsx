@@ -85,7 +85,7 @@ export function Dashboard() {
     try {
       await api.updateDashboardLayouts(dashboard.id, layouts);
     } catch (error) {
-      console.error('Failed to update dashboard layouts:', error);
+      console.error("Failed to update dashboard layouts:", error);
     }
   };
 
@@ -314,13 +314,17 @@ export function Dashboard() {
           ) : (
             <ResponsiveGridLayout
               className="layout"
-              layouts={dashboard.layouts || { lg: dashboard.DashboardWidgets.map(dw => ({
-                i: dw.id,
-                x: dw.position?.x || 0,
-                y: dw.position?.y || 0,
-                w: dw.position?.w || 3,
-                h: dw.position?.h || 2
-              }))}}
+              layouts={
+                dashboard.layouts || {
+                  lg: dashboard.DashboardWidgets.map((dw) => ({
+                    i: dw.id,
+                    x: dw.position?.x || 0,
+                    y: dw.position?.y || 0,
+                    w: dw.position?.w || 3,
+                    h: dw.position?.h || 2,
+                  })),
+                }
+              }
               breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
               cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
               rowHeight={120}
@@ -330,7 +334,7 @@ export function Dashboard() {
               onLayoutChange={(_, layouts) => handleLayoutChange(layouts)}
               compactType={null}
               preventCollision={true}
-              resizeHandles={['se']}
+              resizeHandles={["se"]}
             >
               {dashboard.DashboardWidgets.map((dashboardWidget) => {
                 const WidgetComponent = getWidgetComponent(
@@ -425,7 +429,7 @@ export function Dashboard() {
                   </div>
                 );
               })}
-            </GridLayout>
+            </ResponsiveGridLayout>
           )}
         </main>
       </div>
