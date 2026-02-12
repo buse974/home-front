@@ -477,6 +477,15 @@ function DashboardsSection() {
 function ProvidersSection() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
+  const [form, setForm] = useState({
+    name: "",
+    url: "",
+    apiKey: "",
+  });
 
   useEffect(() => {
     loadProviders();
@@ -487,10 +496,74 @@ function ProvidersSection() {
     try {
       const { providers: providersList } = await api.getProviders();
       setProviders(providersList);
+      setRenameDrafts(
+        providersList.reduce<Record<string, string>>((acc, provider) => {
+          acc[provider.id] = provider.name;
+          return acc;
+        }, {}),
+      );
     } catch (error) {
       console.error("Failed to load providers:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    const name = form.name.trim();
+    const url = form.url.trim();
+    const apiKey = form.apiKey.trim();
+    if (!name || !url || !apiKey) return;
+
+    setCreating(true);
+    try {
+      await api.createProvider({
+        type: "jeedom",
+        name,
+        config: { url, apiKey },
+      });
+      setForm({ name: "", url: "", apiKey: "" });
+      await loadProviders();
+    } catch (error) {
+      console.error("Failed to create provider:", error);
+      alert("Failed to create provider (check URL/API key)");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRename = async (providerId: string) => {
+    const name = (renameDrafts[providerId] || "").trim();
+    const current = providers.find((p) => p.id === providerId);
+    if (!current || !name || name === current.name) {
+      setRenamingId(null);
+      return;
+    }
+
+    setRenamingId(providerId);
+    try {
+      await api.updateProvider(providerId, { name });
+      await loadProviders();
+    } catch (error) {
+      console.error("Failed to rename provider:", error);
+      alert("Failed to rename provider");
+    } finally {
+      setRenamingId(null);
+    }
+  };
+
+  const handleDelete = async (providerId: string, providerName: string) => {
+    if (!confirm(`Supprimer le provider "${providerName}" ?`)) return;
+
+    setDeletingId(providerId);
+    try {
+      await api.deleteProvider(providerId);
+      await loadProviders();
+    } catch (error) {
+      console.error("Failed to delete provider:", error);
+      alert("Failed to delete provider");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -510,6 +583,50 @@ function ProvidersSection() {
         <span className="text-white/60">{providers.length} provider(s)</span>
       </div>
 
+      <div className="mb-6 p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
+        <p className="text-white/80 font-medium mb-3">
+          Ajouter un provider Jeedom
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            value={form.name}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, name: e.target.value }))
+            }
+            placeholder="Nom"
+            className="px-4 py-2.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+          />
+          <input
+            value={form.url}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, url: e.target.value }))
+            }
+            placeholder="https://jeedom.exemple.com"
+            className="px-4 py-2.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+          />
+          <input
+            value={form.apiKey}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, apiKey: e.target.value }))
+            }
+            placeholder="API key"
+            className="px-4 py-2.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+          />
+          <button
+            onClick={handleCreate}
+            disabled={
+              creating ||
+              !form.name.trim() ||
+              !form.url.trim() ||
+              !form.apiKey.trim()
+            }
+            className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {creating ? "Ajout..." : "Ajouter"}
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-4">
         {providers.map((provider) => (
           <div
@@ -518,15 +635,51 @@ function ProvidersSection() {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {provider.name}
-                </h3>
+                <input
+                  value={renameDrafts[provider.id] || ""}
+                  onChange={(e) =>
+                    setRenameDrafts((prev) => ({
+                      ...prev,
+                      [provider.id]: e.target.value,
+                    }))
+                  }
+                  onBlur={() => handleRename(provider.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleRename(provider.id);
+                    }
+                  }}
+                  className="w-full max-w-sm mb-2 px-3 py-1.5 rounded-lg bg-slate-900/70 border border-white/20 text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
                 <div className="flex items-center gap-4 text-sm">
                   <span className="px-2.5 py-1 bg-blue-500/20 rounded-lg text-blue-400 border border-blue-500/30">
                     {provider.type}
                   </span>
                 </div>
               </div>
+              <button
+                onClick={() => handleDelete(provider.id, provider.name)}
+                disabled={
+                  deletingId === provider.id || renamingId === provider.id
+                }
+                className="ml-4 w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Supprimer le provider"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         ))}

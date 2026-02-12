@@ -90,6 +90,36 @@ class ApiService {
     return this.request("/providers");
   }
 
+  async createProvider(data: {
+    type: "jeedom";
+    name: string;
+    config: {
+      url: string;
+      apiKey: string;
+    };
+  }): Promise<{ provider: any }> {
+    return this.request("/providers", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProvider(
+    providerId: string,
+    data: { name?: string; config?: { url: string; apiKey: string } },
+  ): Promise<{ provider: any }> {
+    return this.request(`/providers/${providerId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteProvider(providerId: string): Promise<{ success: boolean }> {
+    return this.request(`/providers/${providerId}`, {
+      method: "DELETE",
+    });
+  }
+
   // ============ DEVICES ============
 
   /**
