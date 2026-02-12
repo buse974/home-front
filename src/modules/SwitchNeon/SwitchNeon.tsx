@@ -130,19 +130,32 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
         {/* Neon Switch Circle */}
         <div className="flex-1 min-h-0 grid place-items-center">
           <div className="flex flex-col items-center justify-center gap-4">
-            <button
-              onClick={handleToggle}
-              disabled={loading || !hasToggleCapability}
-              style={{ width: circleSize, height: circleSize }}
-              className={`
+            <div className="relative">
+              <div
+                className={`absolute -inset-4 rounded-full transition-all duration-500 ${
+                  isOn
+                    ? "bg-cyan-400/20 blur-xl scale-110"
+                    : "bg-white/10 blur-md"
+                }`}
+              ></div>
+              <div
+                className={`absolute -inset-2 rounded-full border transition-all duration-500 ${
+                  isOn ? "border-cyan-300/70" : "border-white/20"
+                }`}
+              ></div>
+              <button
+                onClick={handleToggle}
+                disabled={loading || !hasToggleCapability}
+                style={{ width: circleSize, height: circleSize }}
+                className={`
               relative rounded-full transition-all duration-500
               disabled:opacity-30 disabled:cursor-not-allowed
               ${!loading && "hover:scale-110 active:scale-95"}
             `}
-            >
-              {/* Outer glow ring */}
-              <div
-                className={`
+              >
+                {/* Outer glow ring */}
+                <div
+                  className={`
               absolute inset-0 rounded-full transition-all duration-500
               ${
                 isOn
@@ -150,11 +163,11 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                   : "bg-gradient-to-br from-white/10 to-white/5 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
               }
             `}
-              ></div>
+                ></div>
 
-              {/* Inner circle */}
-              <div
-                className={`
+                {/* Inner circle */}
+                <div
+                  className={`
               absolute inset-2 rounded-full transition-all duration-500 flex items-center justify-center
               ${
                 isOn
@@ -162,49 +175,50 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                   : "bg-gradient-to-br from-gray-800 to-gray-900 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
               }
             `}
-              >
-                {loading ? (
-                  <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    {isOn ? (
-                      <svg
-                        className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-12 h-12 text-white/40"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    )}
-                  </>
-                )}
-              </div>
+                >
+                  {loading ? (
+                    <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      {isOn ? (
+                        <svg
+                          className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-12 h-12 text-white/40"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      )}
+                    </>
+                  )}
+                </div>
 
-              {/* Rotating ring effect when ON */}
-              {isOn && !loading && (
-                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
-              )}
-            </button>
+                {/* Rotating ring effect when ON */}
+                {isOn && !loading && (
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
+                )}
+              </button>
+            </div>
 
             {/* Status text */}
             <div className="text-center">
