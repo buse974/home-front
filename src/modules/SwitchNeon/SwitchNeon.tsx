@@ -85,7 +85,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
-  const circleSize = "clamp(140px, 38%, 220px)";
+  const circleSize = "clamp(170px, 42%, 240px)";
 
   return (
     <div
@@ -141,120 +141,60 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
 
         {/* Neon Switch Circle */}
         <div className="flex-1 min-h-0 grid place-items-center">
-          <div className="flex flex-col items-center justify-center">
-            <div className="relative isolate">
-              <div
-                className={`absolute -inset-4 rounded-full transition-all duration-500 ${
-                  isOn
-                    ? "bg-cyan-400/20 blur-xl scale-110"
-                    : "bg-white/10 blur-md"
-                } -z-20`}
-              ></div>
-              <div
-                className={`absolute -inset-2 rounded-full border transition-all duration-500 ${
-                  isOn ? "border-cyan-300/70" : "border-white/20"
-                } -z-10`}
-              ></div>
-              <div
-                style={{ width: circleSize, height: circleSize }}
-                className={`
-              relative z-10 rounded-full transition-all duration-500
+          <div
+            style={{ width: circleSize, height: circleSize }}
+            className={`
+              relative grid place-items-center rounded-full transition-all duration-500
               ${isActionDisabled ? "opacity-30" : ""}
-              ${!loading && !isActionDisabled ? "hover:scale-110 active:scale-95" : ""}
-            `}
-              >
-                {/* Outer glow ring */}
-                <div
-                  className={`
-              absolute inset-0 rounded-full transition-all duration-500
+              ${!loading && !isActionDisabled ? "hover:scale-105 active:scale-95" : ""}
               ${
                 isOn
-                  ? "bg-gradient-to-br from-cyan-500 to-blue-500 shadow-[0_0_50px_rgba(6,182,212,0.6)] animate-pulse"
-                  : "bg-gradient-to-br from-white/10 to-white/5 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                  ? "bg-gradient-to-br from-cyan-500 to-blue-600 shadow-[0_0_60px_rgba(6,182,212,0.55)]"
+                  : "bg-gradient-to-br from-gray-700 to-gray-900 shadow-[0_0_22px_rgba(255,255,255,0.12)]"
               }
             `}
-                ></div>
-
-                {/* Inner circle */}
-                <div
-                  className={`
-              absolute inset-2 rounded-full transition-all duration-500 flex items-center justify-center
-              ${
-                isOn
-                  ? "bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[inset_0_0_30px_rgba(6,182,212,0.8)]"
-                  : "bg-gradient-to-br from-gray-800 to-gray-900 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
-              }
-            `}
+          >
+            <div
+              className={`
+                w-[78%] h-[78%] rounded-full grid place-items-center border
+                ${isOn ? "border-cyan-200/70 bg-cyan-500/20" : "border-white/20 bg-black/35"}
+              `}
+            >
+              {loading ? (
+                <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : isOn ? (
+                <svg
+                  className="w-16 h-16 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  {loading ? (
-                    <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      {isOn ? (
-                        <svg
-                          className="w-14 h-14 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-14 h-14 text-white/40"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Rotating ring effect when ON */}
-                {isOn && !loading && (
-                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
-                )}
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-16 h-16 text-white/45"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/* Footer stats */}
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  isOn
-                    ? "bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse"
-                    : "bg-white/20"
-                }`}
-              ></div>
-              <span
-                className={`text-xs font-bold uppercase tracking-wider transition-colors ${
-                  isOn ? "text-cyan-400" : "text-white/40"
-                }`}
-              >
-                {isOn ? "Active" : "Standby"}
-              </span>
-            </div>
-            {hasToggleCapability ? (
-              <span className="text-xs text-cyan-400/60 font-mono">READY</span>
-            ) : (
-              <span className="text-xs text-red-400/60 font-mono">ERROR</span>
+            {isOn && !loading && (
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-300 animate-spin-slow opacity-70"></div>
             )}
           </div>
         </div>
