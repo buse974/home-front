@@ -161,18 +161,20 @@ export function Dashboard() {
                   <span>{editMode ? 'Save Layout' : 'Edit Layout'}</span>
                 </div>
               </button>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Add Widget</span>
-                </div>
-              </button>
+              {editMode && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="relative flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Add Widget</span>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -187,16 +189,18 @@ export function Dashboard() {
                 </svg>
               </div>
               <h3 className="text-2xl text-white/80 mb-3 font-light">No widgets yet</h3>
-              <p className="text-white/50 mb-6">Start by adding your first device</p>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl text-white font-medium transition-all duration-300 border border-white/10 hover:border-white/20"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add your first widget
-              </button>
+              <p className="text-white/50 mb-6">{editMode ? 'Start by adding your first device' : 'Enable edit mode to add widgets'}</p>
+              {editMode && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl text-white font-medium transition-all duration-300 border border-white/10 hover:border-white/20"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add your first widget
+                </button>
+              )}
             </div>
           ) : (
             // @ts-ignore - react-grid-layout type mismatch
@@ -238,6 +242,18 @@ export function Dashboard() {
                   );
                 }
 
+                const handleDeleteWidget = async (widgetId: string) => {
+                  if (!confirm('Supprimer ce widget ?\n\nLes devices non utilisés seront automatiquement supprimés.')) return;
+
+                  try {
+                    await api.deleteWidget(widgetId);
+                    loadDashboard();
+                  } catch (error) {
+                    console.error('Failed to delete widget:', error);
+                    alert('Failed to delete widget');
+                  }
+                };
+
                 return (
                   <div key={dashboardWidget.id} className="relative h-full w-full">
                     <div className="h-full w-full">
@@ -255,6 +271,17 @@ export function Dashboard() {
                     {/* Overlay en mode édition pour bloquer les clics */}
                     {editMode && (
                       <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
+                        {/* Bouton supprimer */}
+                        <button
+                          onClick={() => handleDeleteWidget(dashboardWidget.id)}
+                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center pointer-events-auto cursor-pointer transition-colors shadow-lg"
+                          title="Supprimer le widget"
+                        >
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                        {/* Poignée de redimensionnement */}
                         <div className="absolute bottom-0 right-0 w-6 h-6 bg-purple-500 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center">
                           <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
