@@ -32,35 +32,24 @@ export function RawState({ dashboardWidget }: WidgetComponentProps) {
     return input;
   };
 
-  const compactValues = deviceStates.map((deviceState) => {
-    const value = extractValue(
-      deviceState.state?.rawValue ??
-        deviceState.state?.value ??
-        deviceState.state?.state ??
-        deviceState.state?.isOn,
-    );
-
-    return {
-      deviceId: deviceState.deviceId,
-      deviceName: deviceState.deviceName,
-      value,
-    };
-  });
+  const primaryValue = extractValue(
+    deviceStates[0]?.state?.rawValue ??
+      deviceStates[0]?.state?.value ??
+      deviceStates[0]?.state?.state ??
+      deviceStates[0]?.state?.isOn,
+  );
 
   return (
     <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
       <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
         {displayName}
       </h3>
-      <p className="text-xs text-white/40 mb-4">
-        Raw provider state ({deviceStates.length} device
-        {deviceStates.length > 1 ? "s" : ""})
-      </p>
+      <p className="text-xs text-white/40 mb-4">Raw value</p>
 
-      <div className="flex-1 min-h-0 overflow-auto rounded-xl bg-black/40 border border-white/10 p-3">
-        <pre className="text-xs text-cyan-200 whitespace-pre-wrap break-words">
-          {JSON.stringify(compactValues, null, 2)}
-        </pre>
+      <div className="flex-1 min-h-0 grid place-items-center rounded-xl bg-black/40 border border-white/10 p-3">
+        <p className="text-6xl font-black text-cyan-300">
+          {primaryValue === null ? "-" : String(primaryValue)}
+        </p>
       </div>
 
       {error && (

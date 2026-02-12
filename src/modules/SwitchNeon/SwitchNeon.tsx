@@ -85,7 +85,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
-  const circleSize = "clamp(72px, 30%, 128px)";
+  const circleSize = "clamp(140px, 38%, 220px)";
 
   return (
     <div
@@ -141,7 +141,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
 
         {/* Neon Switch Circle */}
         <div className="flex-1 min-h-0 grid place-items-center">
-          <div className="flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center">
             <div className="relative isolate">
               <div
                 className={`absolute -inset-4 rounded-full transition-all duration-500 ${
@@ -192,7 +192,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                     <>
                       {isOn ? (
                         <svg
-                          className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                          className="w-14 h-14 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -206,7 +206,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                         </svg>
                       ) : (
                         <svg
-                          className="w-12 h-12 text-white/40"
+                          className="w-14 h-14 text-white/40"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -228,19 +228,6 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                   <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
                 )}
               </div>
-            </div>
-
-            {/* Status text */}
-            <div className="relative z-20 mt-2 text-center">
-              <p
-                className={`text-2xl md:text-3xl leading-none font-black tracking-wider transition-all duration-500 ${
-                  isOn
-                    ? "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.5)]"
-                    : "text-white/30"
-                }`}
-              >
-                {isOn ? "ONLINE" : "OFFLINE"}
-              </p>
             </div>
           </div>
         </div>
