@@ -13,7 +13,7 @@ export function StateMessage({ dashboardWidget }: WidgetComponentProps) {
   const displayName =
     dashboardWidget.name || devices.map((d) => d.name).join(", ");
 
-  const { deviceStates, error } = useWidgetRealtimeState(
+  const { anyOn, error } = useWidgetRealtimeState(
     dashboardWidget.id,
     devices.length > 0,
   );
@@ -26,7 +26,7 @@ export function StateMessage({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
-  const isOn = Boolean(deviceStates[0]?.state?.isOn);
+  const isOn = anyOn;
   const message = isOn ? trueMessage : falseMessage;
   const activeColor = isOn ? trueColor : falseColor;
   const colorClass =

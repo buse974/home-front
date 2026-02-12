@@ -4,6 +4,39 @@ import type { WidgetDeviceState } from "../../types";
 
 const DEFAULT_POLL_INTERVAL_MS = 3000;
 
+function toBooleanState(state: WidgetDeviceState["state"]): boolean {
+  if (typeof state?.isOn === "boolean") return state.isOn;
+
+  const raw = state?.rawValue ?? state?.value ?? state?.state;
+  if (raw === null || raw === undefined) return false;
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "number") return raw > 0;
+  if (typeof raw === "string") {
+    const normalized = raw.trim().toLowerCase();
+    if (
+      normalized === "1" ||
+      normalized === "on" ||
+      normalized === "true" ||
+      normalized === "open" ||
+      normalized === "active"
+    ) {
+      return true;
+    }
+    if (
+      normalized === "0" ||
+      normalized === "off" ||
+      normalized === "false" ||
+      normalized === "closed" ||
+      normalized === "inactive"
+    ) {
+      return false;
+    }
+    const asNumber = Number(normalized);
+    if (!Number.isNaN(asNumber)) return asNumber > 0;
+  }
+  return false;
+}
+
 export function useWidgetRealtimeState(
   widgetId: string,
   enabled = true,
@@ -55,7 +88,7 @@ export function useWidgetRealtimeState(
   }, [enabled, fetchState]);
 
   const anyOn = useMemo(
-    () => deviceStates.some((device) => Boolean(device.state?.isOn)),
+    () => deviceStates.some((device) => toBooleanState(device.state)),
     [deviceStates],
   );
 

@@ -6,7 +6,7 @@ export function Sensor({ dashboardWidget }: WidgetComponentProps) {
   const displayName =
     dashboardWidget.name || devices.map((d) => d.name).join(", ");
 
-  const { deviceStates, error } = useWidgetRealtimeState(
+  const { anyOn, error } = useWidgetRealtimeState(
     dashboardWidget.id,
     devices.length > 0,
   );
@@ -19,8 +19,7 @@ export function Sensor({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
-  const primaryState = deviceStates[0]?.state || {};
-  const isOn = Boolean(primaryState.isOn);
+  const isOn = anyOn;
 
   return (
     <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
