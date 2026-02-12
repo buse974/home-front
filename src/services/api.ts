@@ -8,6 +8,7 @@ import type {
   WidgetsResponse,
   DashboardWidgetResponse,
   DeviceStateResponse,
+  WidgetStateResponse,
   GenericDevice,
   DashboardWidget,
 } from "../types";
@@ -297,11 +298,7 @@ class ApiService {
   /**
    * Récupérer l'état de TOUS les devices d'un widget
    */
-  async getWidgetState(widgetId: string): Promise<{
-    devices: Array<{ deviceId: string; deviceName: string; state: any }>;
-    errors: Array<{ deviceId: string; deviceName: string; error: string }>;
-    total: number;
-  }> {
+  async getWidgetState(widgetId: string): Promise<WidgetStateResponse> {
     return this.request(`/dashboards/widgets/${widgetId}/state`);
   }
 }

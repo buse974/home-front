@@ -1,13 +1,13 @@
 import { useState, useEffect, type KeyboardEvent } from "react";
 import type { WidgetComponentProps } from "../../types";
 import { api } from "../../services/api";
+import { useWidgetRealtimeState } from "../hooks/useWidgetRealtimeState";
 
 /**
  * Widget SwitchNeon - Design futuriste avec effet néon
  * Animations fluides et style cyberpunk
  */
 export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
-  const [isOn, setIsOn] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const devices = dashboardWidget.GenericDevices || [];
@@ -39,23 +39,10 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
     dashboardWidget.Widget?.component,
   ]);
 
-  useEffect(() => {
-    loadWidgetState();
-  }, [dashboardWidget.id]);
-
-  const loadWidgetState = async () => {
-    if (devices.length === 0) return;
-
-    try {
-      const { devices: deviceStates } = await api.getWidgetState(
-        dashboardWidget.id,
-      );
-      const anyOn = deviceStates.some((d) => d.state?.isOn);
-      setIsOn(anyOn);
-    } catch (error) {
-      console.error("Failed to load widget state:", error);
-    }
-  };
+  const { anyOn: isOn, refresh } = useWidgetRealtimeState(
+    dashboardWidget.id,
+    devices.length > 0,
+  );
 
   const handleToggle = async () => {
     if (!hasToggleCapability) {
@@ -68,7 +55,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
       await api.executeWidgetCommand(dashboardWidget.id, "toggle", {
         desiredState: !isOn,
       });
-      setIsOn(!isOn);
+      await refresh();
     } catch (error) {
       console.error("Failed to toggle:", error);
     } finally {

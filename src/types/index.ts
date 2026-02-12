@@ -152,6 +152,18 @@ export interface DeviceStateResponse {
   };
 }
 
+export interface WidgetDeviceState {
+  deviceId: string;
+  deviceName: string;
+  state: DeviceStateResponse["state"];
+}
+
+export interface WidgetStateResponse {
+  devices: WidgetDeviceState[];
+  errors: Array<{ deviceId: string; deviceName: string; error: string }>;
+  total: number;
+}
+
 // Props pour les composants Widget
 export interface WidgetComponentProps {
   dashboardWidget: DashboardWidget;
