@@ -18,6 +18,24 @@ export function SwitchToggle({ dashboardWidget }: WidgetComponentProps) {
   // Vérifier si au moins un device a la capability toggle
   const hasToggleCapability = devices.some(d => d.capabilities?.toggle);
 
+  // Log capability error with full device details
+  useEffect(() => {
+    if (devices.length > 0 && !hasToggleCapability) {
+      console.error('❌ Widget capability error:', {
+        widgetId: dashboardWidget.id,
+        widgetName: displayName,
+        widgetType: dashboardWidget.type,
+        reason: 'No device has toggle capability',
+        devices: devices.map(d => ({
+          id: d.id,
+          name: d.name,
+          type: d.type,
+          capabilities: d.capabilities || null
+        }))
+      });
+    }
+  }, [devices, hasToggleCapability, dashboardWidget.id, displayName, dashboardWidget.type]);
+
   useEffect(() => {
     loadWidgetState();
   }, [dashboardWidget.id]);

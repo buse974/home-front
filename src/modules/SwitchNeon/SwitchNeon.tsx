@@ -14,6 +14,24 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
   const displayName = dashboardWidget.name || devices.map(d => d.name).join(', ');
   const hasToggleCapability = devices.some(d => d.capabilities?.toggle);
 
+  // Log capability error with full device details
+  useEffect(() => {
+    if (devices.length > 0 && !hasToggleCapability) {
+      console.error('❌ Widget capability error:', {
+        widgetId: dashboardWidget.id,
+        widgetName: displayName,
+        widgetType: dashboardWidget.type,
+        reason: 'No device has toggle capability',
+        devices: devices.map(d => ({
+          id: d.id,
+          name: d.name,
+          type: d.type,
+          capabilities: d.capabilities || null
+        }))
+      });
+    }
+  }, [devices, hasToggleCapability, dashboardWidget.id, displayName, dashboardWidget.type]);
+
   useEffect(() => {
     loadWidgetState();
   }, [dashboardWidget.id]);

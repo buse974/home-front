@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { WidgetComponentProps } from '../../types';
 import { api } from '../../services/api';
 
@@ -19,6 +19,25 @@ export function ActionButton({ dashboardWidget }: WidgetComponentProps) {
 
   // Vérifier si les devices ont la capability toggle (nécessaire pour on/off/toggle)
   const hasCapability = allDevices.some(d => d.capabilities?.toggle);
+
+  // Log capability error with full device details
+  useEffect(() => {
+    if (allDevices.length > 0 && !hasCapability) {
+      console.error('❌ Widget capability error:', {
+        widgetId: dashboardWidget.id,
+        widgetName: displayName,
+        widgetType: dashboardWidget.type,
+        action: action,
+        reason: 'No device has toggle capability',
+        devices: allDevices.map(d => ({
+          id: d.id,
+          name: d.name,
+          type: d.type,
+          capabilities: d.capabilities || null
+        }))
+      });
+    }
+  }, [allDevices, hasCapability, dashboardWidget.id, displayName, dashboardWidget.type, action]);
 
   const handleAction = async () => {
     if (!hasCapability) {
