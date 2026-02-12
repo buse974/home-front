@@ -6,6 +6,7 @@ import { SwitchNeon } from "./SwitchNeon/SwitchNeon";
 import { Sensor } from "./Sensor/Sensor";
 import { StateMessage } from "./StateMessage/StateMessage";
 import { RawState } from "./RawState/RawState";
+import { TextTicker } from "./TextTicker/TextTicker";
 
 /**
  * Registry des widgets disponibles
@@ -26,6 +27,7 @@ export const widgetRegistry: WidgetRegistryMap = {
   Sensor: Sensor,
   StateMessage: StateMessage,
   RawState: RawState,
+  TextTicker: TextTicker,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // etc.

@@ -717,6 +717,15 @@ function AddWidgetModal({
       return;
     }
 
+    if (widget.name === "TextTicker") {
+      setWidgetConfig({
+        message: "Bienvenue dans votre dashboard",
+        speed: 16,
+      });
+      setStep("config");
+      return;
+    }
+
     // Sinon, le widget est prêt à être créé (config vide)
     setWidgetConfig({});
   };
@@ -815,7 +824,8 @@ function AddWidgetModal({
               Widget
             </StepIndicator>
             {(selectedWidget?.name === "ActionButton" ||
-              selectedWidget?.name === "StateMessage") && (
+              selectedWidget?.name === "StateMessage" ||
+              selectedWidget?.name === "TextTicker") && (
               <>
                 <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
                 <StepIndicator
@@ -985,6 +995,10 @@ function AddWidgetModal({
                         RawState: {
                           gradient: "from-slate-500/20 to-cyan-500/20",
                           icon: "🧾",
+                        },
+                        TextTicker: {
+                          gradient: "from-fuchsia-500/20 to-violet-500/20",
+                          icon: "📢",
                         },
                       };
 
@@ -1270,6 +1284,51 @@ function AddWidgetModal({
                   </div>
                 </div>
               )}
+
+              {selectedWidget.name === "TextTicker" && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      value={widgetConfig.message || ""}
+                      onChange={(e) =>
+                        setWidgetConfig({
+                          ...widgetConfig,
+                          message: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder="Votre message"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Vitesse de defilement (secondes)
+                    </label>
+                    <input
+                      type="range"
+                      min={8}
+                      max={40}
+                      step={1}
+                      value={widgetConfig.speed || 16}
+                      onChange={(e) =>
+                        setWidgetConfig({
+                          ...widgetConfig,
+                          speed: Number(e.target.value),
+                        })
+                      }
+                      className="w-full"
+                    />
+                    <p className="text-xs text-white/50 mt-1">
+                      {widgetConfig.speed || 16}s
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1298,7 +1357,8 @@ function AddWidgetModal({
           {step === "widget" &&
             selectedWidget &&
             selectedWidget.name !== "ActionButton" &&
-            selectedWidget.name !== "StateMessage" && (
+            selectedWidget.name !== "StateMessage" &&
+            selectedWidget.name !== "TextTicker" && (
               <button
                 onClick={handleAddWidget}
                 disabled={loading}
