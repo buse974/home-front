@@ -26,7 +26,7 @@ export function ActionButton({ dashboardWidget }: WidgetComponentProps) {
       console.error('❌ Widget capability error:', {
         widgetId: dashboardWidget.id,
         widgetName: displayName,
-        widgetType: dashboardWidget.type,
+        widgetComponent: dashboardWidget.Widget?.component,
         action: action,
         reason: 'No device has toggle capability',
         devices: allDevices.map(d => ({
@@ -37,7 +37,7 @@ export function ActionButton({ dashboardWidget }: WidgetComponentProps) {
         }))
       });
     }
-  }, [allDevices, hasCapability, dashboardWidget.id, displayName, dashboardWidget.type, action]);
+  }, [allDevices, hasCapability, dashboardWidget.id, displayName, dashboardWidget.Widget?.component, action]);
 
   const handleAction = async () => {
     if (!hasCapability) {
