@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
@@ -14,8 +14,9 @@ import type {
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function Dashboard() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dashboard, setDashboard] = useState<DashboardType | null>(null);
+  const [dashboards, setDashboards] = useState<DashboardType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -26,6 +27,7 @@ export function Dashboard() {
   const [widgetNameDrafts, setWidgetNameDrafts] = useState<
     Record<string, string>
   >({});
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -39,6 +41,7 @@ export function Dashboard() {
         setLoading(false);
         return;
       }
+      setDashboards(dashboards);
 
       const requestedDashboardId = searchParams.get("id");
       const requestedDashboard = requestedDashboardId
@@ -56,6 +59,47 @@ export function Dashboard() {
       console.error("Failed to load dashboard:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const goToDashboardBySwipe = (direction: "next" | "prev") => {
+    if (!dashboard || dashboards.length <= 1) return;
+
+    const currentIndex = dashboards.findIndex((d) => d.id === dashboard.id);
+    if (currentIndex === -1) return;
+
+    const nextIndex =
+      direction === "next"
+        ? (currentIndex + 1) % dashboards.length
+        : (currentIndex - 1 + dashboards.length) % dashboards.length;
+
+    const nextDashboard = dashboards[nextIndex];
+    if (!nextDashboard) return;
+    setSearchParams({ id: nextDashboard.id });
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (editMode || showAddModal || widgetToDelete) return;
+    const touch = event.changedTouches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (editMode || showAddModal || widgetToDelete) return;
+    if (!touchStart.current) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStart.current.x;
+    const deltaY = touch.clientY - touchStart.current.y;
+    touchStart.current = null;
+
+    if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+    if (Math.abs(deltaX) < 60) return;
+
+    if (deltaX < 0) {
+      goToDashboardBySwipe("next");
+    } else {
+      goToDashboardBySwipe("prev");
     }
   };
 
@@ -215,7 +259,11 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* CSS pour faire en sorte que les widgets prennent toute la hauteur */}
       <style>{`
         .react-grid-item {
