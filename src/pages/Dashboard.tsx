@@ -28,6 +28,9 @@ export function Dashboard() {
     Record<string, string>
   >({});
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const currentDashboardIndex = dashboard
+    ? dashboards.findIndex((d) => d.id === dashboard.id)
+    : -1;
 
   useEffect(() => {
     loadDashboard();
@@ -332,6 +335,15 @@ export function Dashboard() {
               <p className="text-white/60 ml-[52px] font-light">
                 Control your connected devices
               </p>
+              {dashboards.length > 1 && currentDashboardIndex >= 0 && (
+                <div className="ml-[52px] mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
+                  <span>
+                    Dashboard {currentDashboardIndex + 1}/{dashboards.length}
+                  </span>
+                  <span className="text-white/40">•</span>
+                  <span>Swipe gauche/droite</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Link
