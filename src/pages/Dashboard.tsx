@@ -687,7 +687,7 @@ function AddWidgetModal({
   const handleWidgetSelection = (widget: Widget) => {
     setSelectedWidget(widget);
 
-    // Si le widget nécessite une configuration (ActionButton), aller au step config
+    // Si le widget nécessite une configuration, aller au step config
     if (widget.name === "ActionButton") {
       // Initialiser la config avec les valeurs par défaut
       setWidgetConfig({
@@ -696,8 +696,22 @@ function AddWidgetModal({
         color: "red",
       });
       setStep("config");
+      return;
     }
+
+    if (widget.name === "StateMessage") {
+      setWidgetConfig({
+        trueMessage: "Allume",
+        falseMessage: "Eteint",
+        trueColor: "green",
+        falseColor: "red",
+      });
+      setStep("config");
+      return;
+    }
+
     // Sinon, le widget est prêt à être créé (config vide)
+    setWidgetConfig({});
   };
 
   const handleAddWidget = async () => {
@@ -793,7 +807,8 @@ function AddWidgetModal({
             >
               Widget
             </StepIndicator>
-            {selectedWidget?.name === "ActionButton" && (
+            {(selectedWidget?.name === "ActionButton" ||
+              selectedWidget?.name === "StateMessage") && (
               <>
                 <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
                 <StepIndicator
@@ -952,6 +967,18 @@ function AddWidgetModal({
                           gradient: "from-cyan-500/20 to-blue-500/20",
                           icon: "⚡",
                         },
+                        Sensor: {
+                          gradient: "from-emerald-500/20 to-lime-500/20",
+                          icon: "📡",
+                        },
+                        StateMessage: {
+                          gradient: "from-amber-500/20 to-orange-500/20",
+                          icon: "💬",
+                        },
+                        RawState: {
+                          gradient: "from-slate-500/20 to-cyan-500/20",
+                          icon: "🧾",
+                        },
                       };
 
                       const visual = widgetVisuals[widget.name] || {
@@ -1024,136 +1051,218 @@ function AddWidgetModal({
             </div>
           )}
 
-          {/* Step: Config (for ActionButton) */}
+          {/* Step: Config (for configurable widgets) */}
           {step === "config" && selectedWidget && (
             <div>
               <h3 className="text-lg font-semibold text-white mb-6">
                 Configure {selectedWidget.libelle}
               </h3>
-              <div className="space-y-6">
-                {/* Action Type */}
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-3">
-                    Action
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { value: "off", label: "Turn OFF", icon: "❌" },
-                      { value: "on", label: "Turn ON", icon: "✅" },
-                      { value: "toggle", label: "Toggle", icon: "🔄" },
-                    ].map((actionOption) => (
-                      <button
-                        key={actionOption.value}
-                        onClick={() =>
+              {selectedWidget.name === "ActionButton" && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      Action
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: "off", label: "Turn OFF", icon: "❌" },
+                        { value: "on", label: "Turn ON", icon: "✅" },
+                        { value: "toggle", label: "Toggle", icon: "🔄" },
+                      ].map((actionOption) => (
+                        <button
+                          key={actionOption.value}
+                          onClick={() =>
+                            setWidgetConfig({
+                              ...widgetConfig,
+                              action: actionOption.value,
+                            })
+                          }
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            widgetConfig.action === actionOption.value
+                              ? "bg-purple-500/20 border-purple-500"
+                              : "bg-white/5 border-white/10 hover:border-purple-500/50"
+                          }`}
+                        >
+                          <div className="text-2xl mb-1">
+                            {actionOption.icon}
+                          </div>
+                          <div className="text-sm font-medium text-white">
+                            {actionOption.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      Button Label
+                    </label>
+                    <input
+                      type="text"
+                      value={widgetConfig.label || ""}
+                      onChange={(e) =>
+                        setWidgetConfig({
+                          ...widgetConfig,
+                          label: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Turn OFF All Lights"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      Color
+                    </label>
+                    <div className="grid grid-cols-4 gap-3">
+                      {[
+                        {
+                          value: "red",
+                          label: "Red",
+                          gradient: "from-red-500 to-rose-500",
+                        },
+                        {
+                          value: "green",
+                          label: "Green",
+                          gradient: "from-emerald-500 to-teal-500",
+                        },
+                        {
+                          value: "blue",
+                          label: "Blue",
+                          gradient: "from-blue-500 to-cyan-500",
+                        },
+                        {
+                          value: "purple",
+                          label: "Purple",
+                          gradient: "from-purple-500 to-pink-500",
+                        },
+                      ].map((colorOption) => (
+                        <button
+                          key={colorOption.value}
+                          onClick={() =>
+                            setWidgetConfig({
+                              ...widgetConfig,
+                              color: colorOption.value,
+                            })
+                          }
+                          className={`p-4 rounded-xl border-2 transition-all ${
+                            widgetConfig.color === colorOption.value
+                              ? "border-white shadow-lg"
+                              : "border-white/10 hover:border-white/50"
+                          }`}
+                        >
+                          <div
+                            className={`h-10 rounded-lg bg-gradient-to-r ${colorOption.gradient} mb-2`}
+                          ></div>
+                          <div className="text-xs font-medium text-white">
+                            {colorOption.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-white/5 rounded-xl border border-white/10">
+                    <p className="text-xs text-white/60 mb-3">Preview</p>
+                    <div
+                      className={`
+                      py-4 px-6 rounded-xl bg-gradient-to-r
+                      ${widgetConfig.color === "red" ? "from-red-500 to-rose-500" : ""}
+                      ${widgetConfig.color === "green" ? "from-emerald-500 to-teal-500" : ""}
+                      ${widgetConfig.color === "blue" ? "from-blue-500 to-cyan-500" : ""}
+                      ${widgetConfig.color === "purple" ? "from-purple-500 to-pink-500" : ""}
+                      text-white font-bold text-center
+                    `}
+                    >
+                      {widgetConfig.label || "Action"}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedWidget.name === "StateMessage" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-2">
+                        Message pour 1
+                      </label>
+                      <input
+                        type="text"
+                        value={widgetConfig.trueMessage || ""}
+                        onChange={(e) =>
                           setWidgetConfig({
                             ...widgetConfig,
-                            action: actionOption.value,
+                            trueMessage: e.target.value,
                           })
                         }
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          widgetConfig.action === actionOption.value
-                            ? "bg-purple-500/20 border-purple-500"
-                            : "bg-white/5 border-white/10 hover:border-purple-500/50"
-                        }`}
-                      >
-                        <div className="text-2xl mb-1">{actionOption.icon}</div>
-                        <div className="text-sm font-medium text-white">
-                          {actionOption.label}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Label */}
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-3">
-                    Button Label
-                  </label>
-                  <input
-                    type="text"
-                    value={widgetConfig.label || ""}
-                    onChange={(e) =>
-                      setWidgetConfig({
-                        ...widgetConfig,
-                        label: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., Turn OFF All Lights"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
-                  />
-                </div>
-
-                {/* Color */}
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-3">
-                    Color
-                  </label>
-                  <div className="grid grid-cols-4 gap-3">
-                    {[
-                      {
-                        value: "red",
-                        label: "Red",
-                        gradient: "from-red-500 to-rose-500",
-                      },
-                      {
-                        value: "green",
-                        label: "Green",
-                        gradient: "from-emerald-500 to-teal-500",
-                      },
-                      {
-                        value: "blue",
-                        label: "Blue",
-                        gradient: "from-blue-500 to-cyan-500",
-                      },
-                      {
-                        value: "purple",
-                        label: "Purple",
-                        gradient: "from-purple-500 to-pink-500",
-                      },
-                    ].map((colorOption) => (
-                      <button
-                        key={colorOption.value}
-                        onClick={() =>
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-2">
+                        Message pour 0
+                      </label>
+                      <input
+                        type="text"
+                        value={widgetConfig.falseMessage || ""}
+                        onChange={(e) =>
                           setWidgetConfig({
                             ...widgetConfig,
-                            color: colorOption.value,
+                            falseMessage: e.target.value,
                           })
                         }
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          widgetConfig.color === colorOption.value
-                            ? "border-white shadow-lg"
-                            : "border-white/10 hover:border-white/50"
-                        }`}
-                      >
-                        <div
-                          className={`h-10 rounded-lg bg-gradient-to-r ${colorOption.gradient} mb-2`}
-                        ></div>
-                        <div className="text-xs font-medium text-white">
-                          {colorOption.label}
-                        </div>
-                      </button>
-                    ))}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Preview */}
-                <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                  <p className="text-xs text-white/60 mb-3">Preview</p>
-                  <div
-                    className={`
-                    py-4 px-6 rounded-xl bg-gradient-to-r
-                    ${widgetConfig.color === "red" ? "from-red-500 to-rose-500" : ""}
-                    ${widgetConfig.color === "green" ? "from-emerald-500 to-teal-500" : ""}
-                    ${widgetConfig.color === "blue" ? "from-blue-500 to-cyan-500" : ""}
-                    ${widgetConfig.color === "purple" ? "from-purple-500 to-pink-500" : ""}
-                    text-white font-bold text-center
-                  `}
-                  >
-                    {widgetConfig.label || "Action"}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-2">
+                        Couleur pour 1
+                      </label>
+                      <select
+                        value={widgetConfig.trueColor || "green"}
+                        onChange={(e) =>
+                          setWidgetConfig({
+                            ...widgetConfig,
+                            trueColor: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      >
+                        <option value="green">Green</option>
+                        <option value="red">Red</option>
+                        <option value="blue">Blue</option>
+                        <option value="purple">Purple</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-2">
+                        Couleur pour 0
+                      </label>
+                      <select
+                        value={widgetConfig.falseColor || "red"}
+                        onChange={(e) =>
+                          setWidgetConfig({
+                            ...widgetConfig,
+                            falseColor: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      >
+                        <option value="red">Red</option>
+                        <option value="green">Green</option>
+                        <option value="blue">Blue</option>
+                        <option value="purple">Purple</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -1181,7 +1290,8 @@ function AddWidgetModal({
           {/* Show Add Widget button on widget step for widgets that don't need config */}
           {step === "widget" &&
             selectedWidget &&
-            selectedWidget.name !== "ActionButton" && (
+            selectedWidget.name !== "ActionButton" &&
+            selectedWidget.name !== "StateMessage" && (
               <button
                 onClick={handleAddWidget}
                 disabled={loading}

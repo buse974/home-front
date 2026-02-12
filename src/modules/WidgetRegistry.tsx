@@ -4,6 +4,8 @@ import { SwitchToggle } from "./SwitchToggle/SwitchToggle";
 import { ActionButton } from "./ActionButton/ActionButton";
 import { SwitchNeon } from "./SwitchNeon/SwitchNeon";
 import { Sensor } from "./Sensor/Sensor";
+import { StateMessage } from "./StateMessage/StateMessage";
+import { RawState } from "./RawState/RawState";
 
 /**
  * Registry des widgets disponibles
@@ -22,6 +24,8 @@ export const widgetRegistry: WidgetRegistryMap = {
   ActionButton: ActionButton,
   SwitchNeon: SwitchNeon,
   Sensor: Sensor,
+  StateMessage: StateMessage,
+  RawState: RawState,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // etc.
