@@ -20,6 +20,11 @@ export function Dashboard() {
   const [editMode, setEditMode] = useState(false);
   const [widgetToDelete, setWidgetToDelete] = useState<string | null>(null);
   const [deletingWidget, setDeletingWidget] = useState(false);
+  const [dashboardNameDraft, setDashboardNameDraft] = useState("");
+  const [savingDashboardName, setSavingDashboardName] = useState(false);
+  const [widgetNameDrafts, setWidgetNameDrafts] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     loadDashboard();
@@ -63,6 +68,75 @@ export function Dashboard() {
   const handleWidgetAdded = () => {
     loadDashboard();
     setShowAddModal(false);
+  };
+
+  useEffect(() => {
+    if (!dashboard) return;
+    setDashboardNameDraft(dashboard.name);
+
+    const drafts: Record<string, string> = {};
+    (dashboard.DashboardWidgets || []).forEach((dw) => {
+      drafts[dw.id] =
+        dw.name?.trim() ||
+        dw.GenericDevices?.map((d) => d.name).join(", ") ||
+        dw.Widget?.libelle ||
+        "Widget";
+    });
+    setWidgetNameDrafts(drafts);
+  }, [dashboard]);
+
+  const handleSaveDashboardName = async () => {
+    if (!dashboard) return;
+    const nextName = dashboardNameDraft.trim();
+    if (!nextName || nextName === dashboard.name) return;
+
+    setSavingDashboardName(true);
+    try {
+      const { dashboard: updated } = await api.updateDashboard(dashboard.id, {
+        name: nextName,
+      });
+      setDashboard((prev) => (prev ? { ...prev, name: updated.name } : prev));
+    } catch (error) {
+      console.error("Failed to rename dashboard:", error);
+      alert("Failed to rename dashboard");
+    } finally {
+      setSavingDashboardName(false);
+    }
+  };
+
+  const handleSaveWidgetName = async (widgetId: string) => {
+    if (!dashboard) return;
+    const dashboardWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === widgetId,
+    );
+    if (!dashboardWidget) return;
+
+    const nextName = (widgetNameDrafts[widgetId] || "").trim();
+    const currentName = (dashboardWidget.name || "").trim();
+    const currentDisplayName =
+      currentName ||
+      dashboardWidget.GenericDevices?.map((d) => d.name).join(", ") ||
+      dashboardWidget.Widget?.libelle ||
+      "Widget";
+    if (nextName === currentName || nextName === currentDisplayName) return;
+
+    try {
+      const { dashboardWidget: updated } = await api.updateWidget(widgetId, {
+        name: nextName || null,
+      });
+      setDashboard((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+            w.id === widgetId ? { ...w, name: updated.name ?? null } : w,
+          ),
+        };
+      });
+    } catch (error) {
+      console.error("Failed to rename widget:", error);
+      alert("Failed to rename widget");
+    }
   };
 
   const handleDeleteWidget = async () => {
@@ -154,7 +228,7 @@ export function Dashboard() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 p-6 md:p-8 lg:p-12">
+      <div className="relative z-10 min-h-screen p-6 md:p-8 lg:p-12 flex flex-col">
         {/* Header */}
         <header className="mb-12">
           <div className="flex items-center justify-between">
@@ -175,9 +249,30 @@ export function Dashboard() {
                     />
                   </svg>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-                  {dashboard.name}
-                </h1>
+                {editMode ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={dashboardNameDraft}
+                      onChange={(e) => setDashboardNameDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveDashboardName();
+                      }}
+                      className="rename-dashboard-input text-3xl md:text-4xl font-bold px-3 py-1 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      placeholder="Nom du dashboard"
+                    />
+                    <button
+                      onClick={handleSaveDashboardName}
+                      disabled={savingDashboardName}
+                      className="rename-widget-save px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm disabled:opacity-50"
+                    >
+                      {savingDashboardName ? "..." : "Save"}
+                    </button>
+                  </div>
+                ) : (
+                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+                    {dashboard.name}
+                  </h1>
+                )}
               </div>
               <p className="text-white/60 ml-[52px] font-light">
                 Control your connected devices
@@ -262,7 +357,7 @@ export function Dashboard() {
         </header>
 
         {/* Widgets Grid */}
-        <main>
+        <main className="flex-1 flex items-center">
           {!dashboard.DashboardWidgets ||
           dashboard.DashboardWidgets.length === 0 ? (
             <div className="text-center py-20">
@@ -312,108 +407,119 @@ export function Dashboard() {
               )}
             </div>
           ) : (
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={
-                dashboard.layouts || {
-                  lg: dashboard.DashboardWidgets.map((dw) => ({
-                    i: dw.id,
-                    x: dw.position?.x || 0,
-                    y: dw.position?.y || 0,
-                    w: dw.position?.w || 3,
-                    h: dw.position?.h || 2,
-                  })),
+            <div className="w-full">
+              <ResponsiveGridLayout
+                className="layout"
+                layouts={
+                  dashboard.layouts || {
+                    lg: dashboard.DashboardWidgets.map((dw) => ({
+                      i: dw.id,
+                      x: dw.position?.x || 0,
+                      y: dw.position?.y || 0,
+                      w: dw.position?.w || 3,
+                      h: dw.position?.h || 2,
+                    })),
+                  }
                 }
-              }
-              breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-              cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-              rowHeight={120}
-              isDraggable={editMode}
-              isResizable={editMode}
-              draggableCancel=".delete-button"
-              onLayoutChange={(_, layouts: Layouts) =>
-                handleLayoutChange(layouts)
-              }
-              compactType={null}
-              preventCollision={true}
-              resizeHandles={["se"]}
-            >
-              {dashboard.DashboardWidgets.map((dashboardWidget) => {
-                const WidgetComponent = getWidgetComponent(
-                  dashboardWidget.Widget?.component || "",
-                );
+                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                rowHeight={120}
+                isDraggable={editMode}
+                isResizable={editMode}
+                draggableCancel=".delete-button,.rename-widget-input,.rename-widget-save,.rename-dashboard-input"
+                onLayoutChange={(_, layouts: Layouts) =>
+                  handleLayoutChange(layouts)
+                }
+                compactType={null}
+                preventCollision={true}
+                resizeHandles={["se"]}
+              >
+                {dashboard.DashboardWidgets.map((dashboardWidget) => {
+                  const WidgetComponent = getWidgetComponent(
+                    dashboardWidget.Widget?.component || "",
+                  );
 
-                if (!WidgetComponent) {
+                  if (!WidgetComponent) {
+                    return (
+                      <div
+                        key={dashboardWidget.id}
+                        className="p-6 bg-red-500/10 backdrop-blur-sm rounded-2xl border border-red-500/20"
+                      >
+                        <p className="text-red-400">
+                          Unknown widget: {dashboardWidget.Widget?.component}
+                        </p>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div
                       key={dashboardWidget.id}
-                      className="p-6 bg-red-500/10 backdrop-blur-sm rounded-2xl border border-red-500/20"
+                      className="relative h-full w-full"
                     >
-                      <p className="text-red-400">
-                        Unknown widget: {dashboardWidget.Widget?.component}
-                      </p>
-                    </div>
-                  );
-                }
+                      <div className="h-full w-full">
+                        <WidgetComponent
+                          dashboardWidget={dashboardWidget}
+                          onCommand={(capability, params, deviceId) =>
+                            handleExecuteCommand(
+                              deviceId ||
+                                dashboardWidget.GenericDevices?.[0]?.id ||
+                                "",
+                              capability,
+                              params,
+                            )
+                          }
+                        />
+                      </div>
 
-                return (
-                  <div
-                    key={dashboardWidget.id}
-                    className="relative h-full w-full"
-                  >
-                    <div className="h-full w-full">
-                      <WidgetComponent
-                        dashboardWidget={dashboardWidget}
-                        onCommand={(capability, params, deviceId) =>
-                          handleExecuteCommand(
-                            deviceId ||
-                              dashboardWidget.GenericDevices?.[0]?.id ||
-                              "",
-                            capability,
-                            params,
-                          )
-                        }
-                      />
-                    </div>
-
-                    {/* Bouton supprimer - HORS de l'overlay pour éviter les conflits */}
-                    {editMode && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          setWidgetToDelete(dashboardWidget.id);
-                        }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                        }}
-                        className="delete-button absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
-                        title="Supprimer le widget"
-                      >
-                        <svg
-                          className="w-4 h-4 text-white pointer-events-none"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      {editMode && (
+                        <div className="absolute top-2 left-2 z-[101] flex items-center gap-2">
+                          <input
+                            value={widgetNameDrafts[dashboardWidget.id] || ""}
+                            onChange={(e) =>
+                              setWidgetNameDrafts((prev) => ({
+                                ...prev,
+                                [dashboardWidget.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSaveWidgetName(dashboardWidget.id);
+                              }
+                            }}
+                            className="rename-widget-input w-44 px-2.5 py-1.5 rounded-md bg-slate-900/80 border border-white/25 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            placeholder="Nom du widget"
                           />
-                        </svg>
-                      </button>
-                    )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleSaveWidgetName(dashboardWidget.id);
+                            }}
+                            className="rename-widget-save px-2.5 py-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-xs"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      )}
 
-                    {/* Overlay en mode édition pour bloquer les clics */}
-                    {editMode && (
-                      <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
-                        {/* Poignée de redimensionnement */}
-                        <div className="absolute bottom-0 right-0 w-6 h-6 bg-purple-500 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center">
+                      {/* Bouton supprimer - HORS de l'overlay pour éviter les conflits */}
+                      {editMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setWidgetToDelete(dashboardWidget.id);
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
+                          className="delete-button absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
+                          title="Supprimer le widget"
+                        >
                           <svg
-                            className="w-4 h-4 text-white"
+                            className="w-4 h-4 text-white pointer-events-none"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -422,16 +528,38 @@ export function Dashboard() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                             />
                           </svg>
+                        </button>
+                      )}
+
+                      {/* Overlay en mode édition pour bloquer les clics */}
+                      {editMode && (
+                        <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
+                          {/* Poignée de redimensionnement */}
+                          <div className="absolute bottom-0 right-0 w-6 h-6 bg-purple-500 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                              />
+                            </svg>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </ResponsiveGridLayout>
+                      )}
+                    </div>
+                  );
+                })}
+              </ResponsiveGridLayout>
+            </div>
           )}
         </main>
       </div>

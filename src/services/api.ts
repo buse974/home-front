@@ -183,6 +183,19 @@ class ApiService {
   }
 
   /**
+   * Renommer un dashboard
+   */
+  async updateDashboard(
+    dashboardId: string,
+    data: { name: string },
+  ): Promise<{ dashboard: any }> {
+    return this.request(`/dashboards/${dashboardId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
    * Mettre à jour les layouts d'un dashboard
    */
   async updateDashboardLayouts(
@@ -237,6 +250,7 @@ class ApiService {
   async updateWidget(
     widgetId: string,
     data: {
+      name?: string | null;
       config?: any;
       position?: { x: number; y: number; w: number; h: number };
     },
