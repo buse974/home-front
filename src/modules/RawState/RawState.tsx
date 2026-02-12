@@ -19,12 +19,26 @@ export function RawState({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
+  const extractValue = (input: unknown): unknown => {
+    if (input === null || input === undefined) return null;
+    if (typeof input === "object") {
+      const data = input as Record<string, unknown>;
+      if (data.value !== undefined) return extractValue(data.value);
+      if (data.state !== undefined) return extractValue(data.state);
+      if (data.isOn !== undefined) return data.isOn ? 1 : 0;
+      return null;
+    }
+    if (typeof input === "boolean") return input ? 1 : 0;
+    return input;
+  };
+
   const compactValues = deviceStates.map((deviceState) => {
-    const raw = deviceState.state?.rawValue;
-    const value =
-      raw && typeof raw === "object" && "value" in raw
-        ? (raw as { value: unknown }).value
-        : raw;
+    const value = extractValue(
+      deviceState.state?.rawValue ??
+        deviceState.state?.value ??
+        deviceState.state?.state ??
+        deviceState.state?.isOn,
+    );
 
     return {
       deviceId: deviceState.deviceId,
