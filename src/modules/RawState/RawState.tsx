@@ -19,6 +19,20 @@ export function RawState({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
+  const compactValues = deviceStates.map((deviceState) => {
+    const raw = deviceState.state?.rawValue;
+    const value =
+      raw && typeof raw === "object" && "value" in raw
+        ? (raw as { value: unknown }).value
+        : raw;
+
+    return {
+      deviceId: deviceState.deviceId,
+      deviceName: deviceState.deviceName,
+      value,
+    };
+  });
+
   return (
     <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
       <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
@@ -31,7 +45,7 @@ export function RawState({ dashboardWidget }: WidgetComponentProps) {
 
       <div className="flex-1 min-h-0 overflow-auto rounded-xl bg-black/40 border border-white/10 p-3">
         <pre className="text-xs text-cyan-200 whitespace-pre-wrap break-words">
-          {JSON.stringify(deviceStates, null, 2)}
+          {JSON.stringify(compactValues, null, 2)}
         </pre>
       </div>
 

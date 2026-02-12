@@ -44,16 +44,16 @@ export function Sensor({ dashboardWidget }: WidgetComponentProps) {
 
       <div className="flex-1 grid place-items-center">
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wide text-white/40 mb-1">
-            State
+          <p className="text-xs uppercase tracking-wide text-white/40 mb-3">
+            Etat
           </p>
-          <p
-            className={`text-4xl font-bold ${
-              isOn ? "text-emerald-400" : "text-white/50"
+          <div
+            className={`w-20 h-20 rounded-full mx-auto ${
+              isOn
+                ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.7)]"
+                : "bg-red-500 shadow-[0_0_30px_rgba(239,68,68,0.7)]"
             }`}
-          >
-            {isOn ? "ON" : "OFF"}
-          </p>
+          />
         </div>
       </div>
 

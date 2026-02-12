@@ -4,10 +4,20 @@ import type { WidgetDeviceState } from "../../types";
 
 const DEFAULT_POLL_INTERVAL_MS = 3000;
 
+function unwrapStateValue(value: unknown): unknown {
+  if (value && typeof value === "object") {
+    const data = value as Record<string, unknown>;
+    if (data.isOn !== undefined) return unwrapStateValue(data.isOn);
+    if (data.value !== undefined) return unwrapStateValue(data.value);
+    if (data.state !== undefined) return unwrapStateValue(data.state);
+  }
+  return value;
+}
+
 function toBooleanState(state: WidgetDeviceState["state"]): boolean {
   if (typeof state?.isOn === "boolean") return state.isOn;
 
-  const raw = state?.rawValue ?? state?.value ?? state?.state;
+  const raw = unwrapStateValue(state?.rawValue ?? state?.value ?? state?.state);
   if (raw === null || raw === undefined) return false;
   if (typeof raw === "boolean") return raw;
   if (typeof raw === "number") return raw > 0;
