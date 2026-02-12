@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import type { WidgetComponentProps } from '../../types';
-import { api } from '../../services/api';
+import { useState, useEffect } from "react";
+import type { WidgetComponentProps } from "../../types";
+import { api } from "../../services/api";
 
 /**
  * Widget Switch Premium - Design moderne avec animations
@@ -13,28 +13,35 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
   const devices = dashboardWidget.GenericDevices || [];
 
   // Nom d'affichage : custom ou concaténation
-  const displayName = dashboardWidget.name || devices.map(d => d.name).join(', ');
+  const displayName =
+    dashboardWidget.name || devices.map((d) => d.name).join(", ");
 
   // Vérifier si au moins un device a la capability toggle
-  const hasToggleCapability = devices.some(d => d.capabilities?.toggle);
+  const hasToggleCapability = devices.some((d) => d.capabilities?.toggle);
 
   // Log capability error with full device details
   useEffect(() => {
     if (devices.length > 0 && !hasToggleCapability) {
-      console.error('❌ Widget capability error:', {
+      console.error("❌ Widget capability error:", {
         widgetId: dashboardWidget.id,
         widgetName: displayName,
         widgetComponent: dashboardWidget.Widget?.component,
-        reason: 'No device has toggle capability',
-        devices: devices.map(d => ({
+        reason: "No device has toggle capability",
+        devices: devices.map((d) => ({
           id: d.id,
           name: d.name,
           type: d.type,
-          capabilities: d.capabilities || null
-        }))
+          capabilities: d.capabilities || null,
+        })),
       });
     }
-  }, [devices, hasToggleCapability, dashboardWidget.id, displayName, dashboardWidget.Widget?.component]);
+  }, [
+    devices,
+    hasToggleCapability,
+    dashboardWidget.id,
+    displayName,
+    dashboardWidget.Widget?.component,
+  ]);
 
   useEffect(() => {
     loadWidgetState();
@@ -44,28 +51,32 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
     if (devices.length === 0) return;
 
     try {
-      const { devices: deviceStates } = await api.getWidgetState(dashboardWidget.id);
+      const { devices: deviceStates } = await api.getWidgetState(
+        dashboardWidget.id,
+      );
 
       // Si au moins UN device est ON, le widget est ON
-      const anyOn = deviceStates.some(d => d.state?.isOn);
+      const anyOn = deviceStates.some((d) => d.state?.isOn);
       setIsOn(anyOn);
     } catch (error) {
-      console.error('Failed to load widget state:', error);
+      console.error("Failed to load widget state:", error);
     }
   };
 
   const handleToggle = async () => {
     if (!hasToggleCapability) {
-      console.error('Toggle capability not available');
+      console.error("Toggle capability not available");
       return;
     }
 
     setLoading(true);
     try {
-      await api.executeWidgetCommand(dashboardWidget.id, 'toggle');
+      await api.executeWidgetCommand(dashboardWidget.id, "toggle", {
+        desiredState: !isOn,
+      });
       setIsOn(!isOn);
     } catch (error) {
-      console.error('Failed to toggle:', error);
+      console.error("Failed to toggle:", error);
     } finally {
       setLoading(false);
     }
@@ -95,8 +106,18 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
             </h3>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-lg text-xs text-white/60 font-medium">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
                 </svg>
                 {devices[0].type}
               </span>
@@ -113,8 +134,8 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
             <div
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
                 isOn
-                  ? 'bg-green-400 shadow-lg shadow-green-400/50 animate-pulse'
-                  : 'bg-white/20'
+                  ? "bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"
+                  : "bg-white/20"
               }`}
             ></div>
           </div>
@@ -129,10 +150,10 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
             disabled:opacity-30 disabled:cursor-not-allowed
             ${
               isOn
-                ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-2xl shadow-purple-500/50'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/10'
+                ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-2xl shadow-purple-500/50"
+                : "bg-white/10 hover:bg-white/20 text-white/80 border border-white/10"
             }
-            ${!loading && 'hover:scale-[1.02] active:scale-[0.98]'}
+            ${!loading && "hover:scale-[1.02] active:scale-[0.98]"}
             overflow-hidden
           `}
         >
@@ -183,8 +204,10 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                 </div>
 
                 {/* Text */}
-                <span className={`text-xl font-bold ${isOn ? 'text-white' : 'text-white/60'}`}>
-                  {isOn ? 'ON' : 'OFF'}
+                <span
+                  className={`text-xl font-bold ${isOn ? "text-white" : "text-white/60"}`}
+                >
+                  {isOn ? "ON" : "OFF"}
                 </span>
               </>
             )}
@@ -194,7 +217,12 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         {/* Capability warning */}
         {!hasToggleCapability && (
           <p className="mt-3 text-xs text-red-400/80 flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
