@@ -254,19 +254,19 @@ export function Dashboard() {
                     <input
                       value={dashboardNameDraft}
                       onChange={(e) => setDashboardNameDraft(e.target.value)}
+                      onBlur={handleSaveDashboardName}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveDashboardName();
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }
                       }}
                       className="rename-dashboard-input text-3xl md:text-4xl font-bold px-3 py-1 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
                       placeholder="Nom du dashboard"
                     />
-                    <button
-                      onClick={handleSaveDashboardName}
-                      disabled={savingDashboardName}
-                      className="rename-widget-save px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm disabled:opacity-50"
-                    >
-                      {savingDashboardName ? "..." : "Save"}
-                    </button>
+                    {savingDashboardName && (
+                      <span className="text-xs text-white/60">Saving...</span>
+                    )}
                   </div>
                 ) : (
                   <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
@@ -426,7 +426,7 @@ export function Dashboard() {
                 rowHeight={120}
                 isDraggable={editMode}
                 isResizable={editMode}
-                draggableCancel=".delete-button,.rename-widget-input,.rename-widget-save,.rename-dashboard-input"
+                draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input"
                 onLayoutChange={(_, layouts: Layouts) =>
                   handleLayoutChange(layouts)
                 }
@@ -482,24 +482,18 @@ export function Dashboard() {
                                 [dashboardWidget.id]: e.target.value,
                               }))
                             }
+                            onBlur={() =>
+                              handleSaveWidgetName(dashboardWidget.id)
+                            }
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
-                                handleSaveWidgetName(dashboardWidget.id);
+                                e.preventDefault();
+                                e.currentTarget.blur();
                               }
                             }}
                             className="rename-widget-input w-44 px-2.5 py-1.5 rounded-md bg-slate-900/80 border border-white/25 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                             placeholder="Nom du widget"
                           />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              handleSaveWidgetName(dashboardWidget.id);
-                            }}
-                            className="rename-widget-save px-2.5 py-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-xs"
-                          >
-                            Save
-                          </button>
                         </div>
                       )}
 
