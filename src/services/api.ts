@@ -197,6 +197,15 @@ class ApiService {
   }
 
   /**
+   * Supprimer un dashboard
+   */
+  async deleteDashboard(dashboardId: string): Promise<{ success: boolean }> {
+    return this.request(`/dashboards/${dashboardId}`, {
+      method: "DELETE",
+    });
+  }
+
+  /**
    * Mettre à jour les layouts d'un dashboard
    */
   async updateDashboardLayouts(

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
 import { Responsive, WidthProvider, type Layouts } from "react-grid-layout";
@@ -14,6 +14,7 @@ import type {
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function Dashboard() {
+  const [searchParams] = useSearchParams();
   const [dashboard, setDashboard] = useState<DashboardType | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -28,7 +29,7 @@ export function Dashboard() {
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [searchParams]);
 
   const loadDashboard = async () => {
     try {
@@ -39,8 +40,14 @@ export function Dashboard() {
         return;
       }
 
+      const requestedDashboardId = searchParams.get("id");
+      const requestedDashboard = requestedDashboardId
+        ? dashboards.find((d) => d.id === requestedDashboardId)
+        : null;
       const defaultDashboard =
-        dashboards.find((d) => d.isDefault) || dashboards[0];
+        requestedDashboard ||
+        dashboards.find((d) => d.isDefault) ||
+        dashboards[0];
       const { dashboard: fullDashboard } = await api.getDashboard(
         defaultDashboard.id,
       );
