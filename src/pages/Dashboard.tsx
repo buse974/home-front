@@ -133,6 +133,9 @@ export function Dashboard() {
     }
     lastTapAt.current = now;
 
+    // En plein écran, pas de swipe de navigation (seulement double tap pour sortir)
+    if (isFullscreen) return;
+
     if (editMode || showAddModal || widgetToDelete) return;
     if (!touchStart.current) return;
 
@@ -161,6 +164,7 @@ export function Dashboard() {
   };
 
   const handleWheelNavigation = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (isFullscreen) return;
     if (editMode || showAddModal || widgetToDelete) return;
     if (!dashboard || dashboards.length <= 1) return;
 
@@ -434,18 +438,20 @@ export function Dashboard() {
               <p className="text-white/60 ml-[52px] font-light">
                 Control your connected devices
               </p>
-              {dashboards.length > 1 && currentDashboardIndex >= 0 && (
-                <div className="ml-[52px] mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
-                  <span>
-                    Dashboard {currentDashboardIndex + 1}/{dashboards.length}
-                  </span>
-                  <span className="text-white/40">•</span>
-                  <span>Swipe gauche/droite</span>
-                </div>
-              )}
+              {!isFullscreen &&
+                dashboards.length > 1 &&
+                currentDashboardIndex >= 0 && (
+                  <div className="ml-[52px] mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
+                    <span>
+                      Dashboard {currentDashboardIndex + 1}/{dashboards.length}
+                    </span>
+                    <span className="text-white/40">•</span>
+                    <span>Swipe gauche/droite</span>
+                  </div>
+                )}
             </div>
             <div className="flex items-center gap-3">
-              {dashboards.length > 1 && (
+              {!isFullscreen && dashboards.length > 1 && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => goToDashboardBySwipe("prev")}
@@ -487,26 +493,12 @@ export function Dashboard() {
                   </button>
                 </div>
               )}
-              <button
-                onClick={toggleFullscreen}
-                className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
-                title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
-              >
-                {isFullscreen ? (
-                  <svg
-                    className="w-6 h-6 text-white/90"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 9V4H4m11 0h5v5m0 6v5h-5M9 20H4v-5"
-                    />
-                  </svg>
-                ) : (
+              {!isFullscreen && (
+                <button
+                  onClick={toggleFullscreen}
+                  className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
+                  title="Plein écran"
+                >
                   <svg
                     className="w-6 h-6 text-white/90"
                     fill="none"
@@ -520,8 +512,8 @@ export function Dashboard() {
                       d="M4 8V4h4m8 0h4v4M4 16v4h4m8 0h4v-4"
                     />
                   </svg>
-                )}
-              </button>
+                </button>
+              )}
               {!isFullscreen && (
                 <>
                   <Link
