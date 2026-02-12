@@ -273,8 +273,12 @@ export function Dashboard() {
                       <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
                         {/* Bouton supprimer */}
                         <button
-                          onClick={() => handleDeleteWidget(dashboardWidget.id)}
-                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center pointer-events-auto cursor-pointer transition-colors shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteWidget(dashboardWidget.id);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center pointer-events-auto cursor-pointer transition-colors shadow-lg z-50"
                           title="Supprimer le widget"
                         >
                           <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
