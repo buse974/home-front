@@ -102,6 +102,7 @@ export interface DashboardWidget {
     h: number;
   };
   Widget?: Widget;
+  Dashboard?: Dashboard;
   GenericDevices?: GenericDevice[];
   createdAt?: string;
   updatedAt?: string;
