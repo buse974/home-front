@@ -16,14 +16,14 @@ export interface User {
   email: string;
   name: string;
   house_id: string;
-  role: 'admin' | 'member';
+  role: "admin" | "member";
 }
 
 // Provider
 export interface Provider {
   id: string;
   houseId: string;
-  type: 'jeedom' | 'mqtt' | 'homeassistant';
+  type: "jeedom" | "mqtt" | "homeassistant";
   name: string;
   createdAt: string;
   updatedAt: string;
@@ -83,6 +83,7 @@ export interface Dashboard {
   houseId: string;
   name: string;
   isDefault: boolean;
+  layouts?: any;
   DashboardWidgets?: DashboardWidget[];
   createdAt: string;
   updatedAt: string;
@@ -154,5 +155,9 @@ export interface DeviceStateResponse {
 // Props pour les composants Widget
 export interface WidgetComponentProps {
   dashboardWidget: DashboardWidget;
-  onCommand: (capability: string, params?: any, deviceId?: string) => Promise<void>;
+  onCommand: (
+    capability: string,
+    params?: any,
+    deviceId?: string,
+  ) => Promise<void>;
 }

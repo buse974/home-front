@@ -9,28 +9,28 @@ import type {
   DashboardWidgetResponse,
   DeviceStateResponse,
   GenericDevice,
-  DashboardWidget
-} from '../types';
+  DashboardWidget,
+} from "../types";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 class ApiService {
   private getToken(): string | null {
-    return localStorage.getItem('token');
+    return localStorage.getItem("token");
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const token = this.getToken();
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
@@ -39,7 +39,9 @@ class ApiService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Request failed" }));
       throw new Error(error.error || `HTTP ${response.status}`);
     }
 
@@ -49,38 +51,42 @@ class ApiService {
   // ============ AUTH ============
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    const data = await this.request<LoginResponse>('/auth/login', {
-      method: 'POST',
+    const data = await this.request<LoginResponse>("/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
     });
 
     // Store token
-    localStorage.setItem('token', data.token);
+    localStorage.setItem("token", data.token);
     return data;
   }
 
-  async register(email: string, password: string, name: string): Promise<LoginResponse> {
-    const data = await this.request<LoginResponse>('/auth/register', {
-      method: 'POST',
+  async register(
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<LoginResponse> {
+    const data = await this.request<LoginResponse>("/auth/register", {
+      method: "POST",
       body: JSON.stringify({ email, password, name }),
     });
 
-    localStorage.setItem('token', data.token);
+    localStorage.setItem("token", data.token);
     return data;
   }
 
   async me(): Promise<{ user: any }> {
-    return this.request('/auth/me');
+    return this.request("/auth/me");
   }
 
   logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
   }
 
   // ============ PROVIDERS ============
 
   async getProviders(): Promise<ProvidersResponse> {
-    return this.request('/providers');
+    return this.request("/providers");
   }
 
   // ============ DEVICES ============
@@ -88,7 +94,9 @@ class ApiService {
   /**
    * Liste LIVE des devices disponibles du provider (pas encore créés en DB)
    */
-  async getAvailableDevices(providerId: string): Promise<AvailableDevicesResponse> {
+  async getAvailableDevices(
+    providerId: string,
+  ): Promise<AvailableDevicesResponse> {
     return this.request(`/devices/available/${providerId}`);
   }
 
@@ -96,7 +104,7 @@ class ApiService {
    * Liste des generic_devices déjà créés pour la maison
    */
   async getDevices(): Promise<DevicesResponse> {
-    return this.request('/devices');
+    return this.request("/devices");
   }
 
   /**
@@ -109,8 +117,8 @@ class ApiService {
     capabilities: any;
     command_mapping: any;
   }): Promise<{ device: GenericDevice }> {
-    return this.request('/devices', {
-      method: 'POST',
+    return this.request("/devices", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
@@ -121,10 +129,10 @@ class ApiService {
   async executeCapability(
     deviceId: string,
     capability: string,
-    params?: any
+    params?: any,
   ): Promise<{ success: boolean }> {
     return this.request(`/devices/${deviceId}/execute`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ capability, params }),
     });
   }
@@ -141,7 +149,7 @@ class ApiService {
    */
   async deleteDevice(deviceId: string): Promise<{ success: boolean }> {
     return this.request(`/devices/${deviceId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -151,7 +159,7 @@ class ApiService {
    * Liste des dashboards de la maison
    */
   async getDashboards(): Promise<DashboardsResponse> {
-    return this.request('/dashboards');
+    return this.request("/dashboards");
   }
 
   /**
@@ -168,9 +176,22 @@ class ApiService {
     name: string;
     isDefault?: boolean;
   }): Promise<{ dashboard: any }> {
-    return this.request('/dashboards', {
-      method: 'POST',
+    return this.request("/dashboards", {
+      method: "POST",
       body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Mettre à jour les layouts d'un dashboard
+   */
+  async updateDashboardLayouts(
+    dashboardId: string,
+    layouts: any,
+  ): Promise<{ success: boolean }> {
+    return this.request(`/dashboards/${dashboardId}/layouts`, {
+      method: "PUT",
+      body: JSON.stringify({ layouts }),
     });
   }
 
@@ -180,14 +201,16 @@ class ApiService {
    * Catalogue de widgets disponibles
    */
   async getWidgetsCatalogue(): Promise<WidgetsResponse> {
-    return this.request('/dashboards/widgets/catalogue');
+    return this.request("/dashboards/widgets/catalogue");
   }
 
   /**
    * Liste de TOUS les DashboardWidgets de la maison (pour admin)
    */
-  async getAllDashboardWidgets(): Promise<{ dashboardWidgets: DashboardWidget[] }> {
-    return this.request('/dashboards/widgets/all');
+  async getAllDashboardWidgets(): Promise<{
+    dashboardWidgets: DashboardWidget[];
+  }> {
+    return this.request("/dashboards/widgets/all");
   }
 
   /**
@@ -200,10 +223,10 @@ class ApiService {
       genericDeviceIds: string[];
       config?: any;
       position?: { x: number; y: number; w: number; h: number };
-    }
+    },
   ): Promise<DashboardWidgetResponse> {
     return this.request(`/dashboards/${dashboardId}/widgets`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
@@ -216,10 +239,10 @@ class ApiService {
     data: {
       config?: any;
       position?: { x: number; y: number; w: number; h: number };
-    }
+    },
   ): Promise<{ dashboardWidget: DashboardWidget }> {
     return this.request(`/dashboards/widgets/${widgetId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
     });
   }
@@ -229,7 +252,7 @@ class ApiService {
    */
   async deleteWidget(widgetId: string): Promise<{ success: boolean }> {
     return this.request(`/dashboards/widgets/${widgetId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -239,16 +262,20 @@ class ApiService {
   async executeWidgetCommand(
     widgetId: string,
     capability: string,
-    params?: any
+    params?: any,
   ): Promise<{
     success: boolean;
     executed: number;
     total: number;
-    succeeded: Array<{ deviceId: string; deviceName: string; success: boolean }>;
+    succeeded: Array<{
+      deviceId: string;
+      deviceName: string;
+      success: boolean;
+    }>;
     failed: Array<{ deviceId: string; deviceName: string; error: string }>;
   }> {
     return this.request(`/dashboards/widgets/${widgetId}/execute`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ capability, params }),
     });
   }
