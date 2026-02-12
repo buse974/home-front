@@ -184,6 +184,13 @@ class ApiService {
   }
 
   /**
+   * Liste de TOUS les DashboardWidgets de la maison (pour admin)
+   */
+  async getAllDashboardWidgets(): Promise<{ dashboardWidgets: DashboardWidget[] }> {
+    return this.request('/dashboards/widgets/all');
+  }
+
+  /**
    * Ajouter un widget au dashboard
    */
   async addWidget(

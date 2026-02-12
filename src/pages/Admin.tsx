@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import type { GenericDevice, Dashboard as DashboardType, Provider } from '../types';
+import type { DashboardWidget, Dashboard as DashboardType, Provider } from '../types';
 
 export function Admin() {
-  const [activeTab, setActiveTab] = useState<'devices' | 'dashboards' | 'providers'>('devices');
+  const [activeTab, setActiveTab] = useState<'widgets' | 'dashboards' | 'providers'>('widgets');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -49,14 +49,14 @@ export function Admin() {
         <div className="mb-8">
           <div className="flex gap-2 p-1 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 inline-flex">
             <button
-              onClick={() => setActiveTab('devices')}
+              onClick={() => setActiveTab('widgets')}
               className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                activeTab === 'devices'
+                activeTab === 'widgets'
                   ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/50'
                   : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
-              Devices
+              Widgets
             </button>
             <button
               onClick={() => setActiveTab('dashboards')}
@@ -83,7 +83,7 @@ export function Admin() {
 
         {/* Content */}
         <main>
-          {activeTab === 'devices' && <DevicesSection />}
+          {activeTab === 'widgets' && <WidgetsSection />}
           {activeTab === 'dashboards' && <DashboardsSection />}
           {activeTab === 'providers' && <ProvidersSection />}
         </main>
@@ -93,37 +93,37 @@ export function Admin() {
 }
 
 /**
- * Section Devices - Liste des generic_devices
+ * Section Widgets - Liste des DashboardWidgets avec suppression en cascade
  */
-function DevicesSection() {
-  const [devices, setDevices] = useState<GenericDevice[]>([]);
+function WidgetsSection() {
+  const [widgets, setWidgets] = useState<DashboardWidget[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDevices();
+    loadWidgets();
   }, []);
 
-  const loadDevices = async () => {
+  const loadWidgets = async () => {
     setLoading(true);
     try {
-      const { devices: devicesList } = await api.getDevices();
-      setDevices(devicesList);
+      const { dashboardWidgets } = await api.getAllDashboardWidgets();
+      setWidgets(dashboardWidgets);
     } catch (error) {
-      console.error('Failed to load devices:', error);
+      console.error('Failed to load widgets:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (deviceId: string) => {
-    if (!confirm('Delete this device? This will remove it from all dashboards.')) return;
+  const handleDelete = async (widgetId: string, widgetName: string) => {
+    if (!confirm(`Supprimer "${widgetName}" ?\n\nLes devices non utilisés seront automatiquement supprimés.`)) return;
 
     try {
-      await api.deleteDevice(deviceId);
-      loadDevices();
+      await api.deleteWidget(widgetId);
+      loadWidgets();
     } catch (error) {
-      console.error('Failed to delete device:', error);
-      alert('Failed to delete device');
+      console.error('Failed to delete widget:', error);
+      alert('Failed to delete widget');
     }
   };
 
@@ -131,7 +131,7 @@ function DevicesSection() {
     return (
       <div className="text-center py-12">
         <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto"></div>
-        <p className="text-white/60 mt-4">Loading devices...</p>
+        <p className="text-white/60 mt-4">Loading widgets...</p>
       </div>
     );
   }
@@ -139,46 +139,65 @@ function DevicesSection() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white">Generic Devices</h2>
-        <span className="text-white/60">{devices.length} device(s)</span>
+        <h2 className="text-2xl font-bold text-white">Dashboard Widgets</h2>
+        <span className="text-white/60">{widgets.length} widget(s)</span>
       </div>
 
-      {devices.length === 0 ? (
+      {widgets.length === 0 ? (
         <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
-          <p className="text-white/60">No devices created yet</p>
-          <p className="text-white/40 text-sm mt-2">Add widgets to your dashboard to create devices</p>
+          <p className="text-white/60">Aucun widget créé</p>
+          <p className="text-white/40 text-sm mt-2">Ajoutez des widgets à vos dashboards pour les voir ici</p>
         </div>
       ) : (
         <div className="grid gap-4">
-          {devices.map((device) => (
+          {widgets.map((widget) => (
             <div
-              key={device.id}
+              key={widget.id}
               className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/20 transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-2">{device.name}</h3>
-                  <div className="flex items-center gap-4 text-sm text-white/60">
-                    <span>Type: {device.type}</span>
+                  {/* Nom du widget */}
+                  <div className="flex items-center gap-3 mb-2">
+                    {widget.Widget?.icon && (
+                      <span className="text-2xl">{widget.Widget.icon}</span>
+                    )}
+                    <h3 className="text-lg font-semibold text-white">
+                      {widget.name || widget.Widget?.libelle}
+                    </h3>
+                  </div>
+
+                  {/* Dashboard */}
+                  <div className="flex items-center gap-4 text-sm text-white/60 mb-3">
+                    <span>Dashboard: {widget.Dashboard?.name}</span>
                     <span>•</span>
-                    <span>Provider: {device.Provider?.name || 'Unknown'}</span>
+                    <span>Type: {widget.Widget?.component}</span>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {Object.entries(device.capabilities).map(([key, value]) => (
-                      value && (
-                        <span
-                          key={key}
-                          className="px-2.5 py-1 bg-white/10 rounded-lg text-xs text-white/80"
-                        >
-                          {key}
-                        </span>
-                      )
-                    ))}
-                  </div>
+
+                  {/* Devices liés */}
+                  {widget.GenericDevices && widget.GenericDevices.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs text-white/40 mb-2">Devices ({widget.GenericDevices.length}):</p>
+                      <div className="flex flex-wrap gap-2">
+                        {widget.GenericDevices.map((device) => (
+                          <span
+                            key={device.id}
+                            className="px-2.5 py-1 bg-white/10 rounded-lg text-xs text-white/80 flex items-center gap-1.5"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                            {device.name} ({device.type})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Bouton supprimer */}
                 <button
-                  onClick={() => handleDelete(device.id)}
+                  onClick={() => handleDelete(widget.id, widget.name || widget.Widget?.libelle || 'ce widget')}
                   className="ml-4 w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+                  title="Supprimer le widget (et les devices orphelins)"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
