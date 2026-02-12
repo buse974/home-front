@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
-import { Responsive, WidthProvider } from "react-grid-layout";
+import {
+  Responsive,
+  WidthProvider,
+  type Layout,
+  type Layouts,
+} from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import type {
@@ -331,7 +336,9 @@ export function Dashboard() {
               isDraggable={editMode}
               isResizable={editMode}
               draggableCancel=".delete-button"
-              onLayoutChange={(_, layouts) => handleLayoutChange(layouts)}
+              onLayoutChange={(_, layouts: Layouts) =>
+                handleLayoutChange(layouts)
+              }
               compactType={null}
               preventCollision={true}
               resizeHandles={["se"]}
