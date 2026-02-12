@@ -2,11 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
-import {
-  Responsive,
-  WidthProvider,
-  type Layouts,
-} from "react-grid-layout";
+import { Responsive, WidthProvider, type Layouts } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import type {
@@ -22,6 +18,8 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [widgetToDelete, setWidgetToDelete] = useState<string | null>(null);
+  const [deletingWidget, setDeletingWidget] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -67,20 +65,18 @@ export function Dashboard() {
     setShowAddModal(false);
   };
 
-  const handleDeleteWidget = async (widgetId: string) => {
-    if (
-      !confirm(
-        "Supprimer ce widget ?\n\nLes devices non utilisés seront automatiquement supprimés.",
-      )
-    )
-      return;
-
+  const handleDeleteWidget = async () => {
+    if (!widgetToDelete) return;
+    setDeletingWidget(true);
     try {
-      await api.deleteWidget(widgetId);
+      await api.deleteWidget(widgetToDelete);
       loadDashboard();
+      setWidgetToDelete(null);
     } catch (error) {
       console.error("Failed to delete widget:", error);
       alert("Failed to delete widget");
+    } finally {
+      setDeletingWidget(false);
     }
   };
 
@@ -386,7 +382,7 @@ export function Dashboard() {
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          handleDeleteWidget(dashboardWidget.id);
+                          setWidgetToDelete(dashboardWidget.id);
                         }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -447,6 +443,41 @@ export function Dashboard() {
           onClose={() => setShowAddModal(false)}
           onSuccess={handleWidgetAdded}
         />
+      )}
+
+      {/* Modal Delete Widget */}
+      {widgetToDelete && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <button
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => !deletingWidget && setWidgetToDelete(null)}
+            aria-label="Fermer la confirmation"
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-white/15 bg-slate-900/95 p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-white">
+              Supprimer ce widget ?
+            </h3>
+            <p className="mt-3 text-white/70">
+              Les devices non utilisés seront automatiquement supprimés.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setWidgetToDelete(null)}
+                disabled={deletingWidget}
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteWidget}
+                disabled={deletingWidget}
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingWidget ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
