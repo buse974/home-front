@@ -30,6 +30,7 @@ export function Dashboard() {
   >({});
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const lastDashboardNavAt = useRef(0);
+  const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -50,9 +51,21 @@ export function Dashboard() {
       }
     };
 
+    const onKeyDown = async (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (document.fullscreenElement !== dashboardContainerRef.current) return;
+      try {
+        await document.exitFullscreen();
+      } catch (error) {
+        console.error("Failed to exit fullscreen with Escape:", error);
+      }
+    };
+
     document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
 
@@ -107,7 +120,19 @@ export function Dashboard() {
     touchStart.current = { x: touch.clientX, y: touch.clientY };
   };
 
-  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchEnd = async (event: React.TouchEvent<HTMLDivElement>) => {
+    const now = Date.now();
+    if (isFullscreen && now - lastTapAt.current < 280) {
+      lastTapAt.current = 0;
+      try {
+        await document.exitFullscreen();
+      } catch (error) {
+        console.error("Failed to exit fullscreen with double tap:", error);
+      }
+      return;
+    }
+    lastTapAt.current = now;
+
     if (editMode || showAddModal || widgetToDelete) return;
     if (!touchStart.current) return;
 
@@ -123,6 +148,15 @@ export function Dashboard() {
       goToDashboardBySwipe("next");
     } else {
       goToDashboardBySwipe("prev");
+    }
+  };
+
+  const handleDoubleClick = async () => {
+    if (!isFullscreen) return;
+    try {
+      await document.exitFullscreen();
+    } catch (error) {
+      console.error("Failed to exit fullscreen with double click:", error);
     }
   };
 
@@ -329,6 +363,7 @@ export function Dashboard() {
       className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onDoubleClick={handleDoubleClick}
       onWheel={handleWheelNavigation}
     >
       {/* CSS pour faire en sorte que les widgets prennent toute la hauteur */}
