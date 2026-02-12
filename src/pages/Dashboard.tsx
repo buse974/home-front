@@ -230,6 +230,7 @@ export function Dashboard() {
               width={1600}
               isDraggable={editMode}
               isResizable={editMode}
+              draggableCancel=".delete-button"
               // @ts-ignore - react-grid-layout type mismatch
               onLayoutChange={handleLayoutChange}
               compactType={null}
@@ -281,7 +282,7 @@ export function Dashboard() {
                           e.stopPropagation();
                           e.preventDefault();
                         }}
-                        className="react-grid-drag-cancel absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
+                        className="delete-button absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
                         title="Supprimer le widget"
                       >
                         <svg className="w-4 h-4 text-white pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
