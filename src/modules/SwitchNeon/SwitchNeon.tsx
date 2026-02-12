@@ -84,8 +84,10 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
+  const circleSize = "clamp(72px, 30%, 128px)";
+
   return (
-    <div className="relative h-full flex flex-col p-8 bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/5 overflow-hidden group">
+    <div className="relative h-full flex flex-col p-6 bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/5 overflow-hidden group">
       {/* Animated background glow */}
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
@@ -106,7 +108,7 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
 
       <div className="relative z-10 flex-1 flex flex-col">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4">
           <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
             {displayName}
           </h3>
@@ -126,19 +128,21 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
         </div>
 
         {/* Neon Switch Circle */}
-        <div className="flex-1 flex flex-col items-center justify-center py-8">
-          <button
-            onClick={handleToggle}
-            disabled={loading || !hasToggleCapability}
-            className={`
-              relative w-32 h-32 rounded-full transition-all duration-500
+        <div className="flex-1 min-h-0 grid place-items-center">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <button
+              onClick={handleToggle}
+              disabled={loading || !hasToggleCapability}
+              style={{ width: circleSize, height: circleSize }}
+              className={`
+              relative rounded-full transition-all duration-500
               disabled:opacity-30 disabled:cursor-not-allowed
               ${!loading && "hover:scale-110 active:scale-95"}
             `}
-          >
-            {/* Outer glow ring */}
-            <div
-              className={`
+            >
+              {/* Outer glow ring */}
+              <div
+                className={`
               absolute inset-0 rounded-full transition-all duration-500
               ${
                 isOn
@@ -146,11 +150,11 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                   : "bg-gradient-to-br from-white/10 to-white/5 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
               }
             `}
-            ></div>
+              ></div>
 
-            {/* Inner circle */}
-            <div
-              className={`
+              {/* Inner circle */}
+              <div
+                className={`
               absolute inset-2 rounded-full transition-all duration-500 flex items-center justify-center
               ${
                 isOn
@@ -158,66 +162,67 @@ export function SwitchNeon({ dashboardWidget }: WidgetComponentProps) {
                   : "bg-gradient-to-br from-gray-800 to-gray-900 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
               }
             `}
-            >
-              {loading ? (
-                <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  {isOn ? (
-                    <svg
-                      className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-12 h-12 text-white/40"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  )}
-                </>
+              >
+                {loading ? (
+                  <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    {isOn ? (
+                      <svg
+                        className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-12 h-12 text-white/40"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Rotating ring effect when ON */}
+              {isOn && !loading && (
+                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
               )}
+            </button>
+
+            {/* Status text */}
+            <div className="text-center">
+              <p
+                className={`text-3xl font-black tracking-wider transition-all duration-500 ${
+                  isOn
+                    ? "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.5)]"
+                    : "text-white/30"
+                }`}
+              >
+                {isOn ? "ONLINE" : "OFFLINE"}
+              </p>
             </div>
-
-            {/* Rotating ring effect when ON */}
-            {isOn && !loading && (
-              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-400 animate-spin-slow opacity-70"></div>
-            )}
-          </button>
-
-          {/* Status text */}
-          <div className="mt-6 text-center">
-            <p
-              className={`text-3xl font-black tracking-wider transition-all duration-500 ${
-                isOn
-                  ? "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.5)]"
-                  : "text-white/30"
-              }`}
-            >
-              {isOn ? "ONLINE" : "OFFLINE"}
-            </p>
           </div>
         </div>
 
         {/* Footer stats */}
-        <div className="mt-6 pt-6 border-t border-white/5">
+        <div className="mt-4 pt-4 border-t border-white/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
