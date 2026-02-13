@@ -42,16 +42,18 @@ export function Sensor({ dashboardWidget }: WidgetComponentProps) {
         />
       </div>
 
-      <div className="flex-1 grid place-items-center">
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-wide text-white/40 mb-3">
-            Etat
-          </p>
+      <div className="flex-1 min-h-0 grid place-items-center">
+        <div className="relative grid place-items-center">
           <div
-            className={`w-20 h-20 rounded-full mx-auto ${
+            className={`absolute w-28 h-28 rounded-full blur-xl ${
+              isOn ? "bg-emerald-400/45" : "bg-red-400/40"
+            }`}
+          />
+          <div
+            className={`relative w-20 h-20 rounded-full border ${
               isOn
-                ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.7)]"
-                : "bg-red-500 shadow-[0_0_30px_rgba(239,68,68,0.7)]"
+                ? "bg-emerald-500 border-emerald-300/70 shadow-[0_0_34px_rgba(16,185,129,0.8)]"
+                : "bg-red-500 border-red-300/70 shadow-[0_0_28px_rgba(239,68,68,0.7)]"
             }`}
           />
         </div>
