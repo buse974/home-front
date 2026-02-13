@@ -376,7 +376,7 @@ export function Dashboard() {
   }
 
   const baseLayouts: Layouts = dashboard.layouts || {
-    lg: dashboard.DashboardWidgets.map((dw) => ({
+    lg: (dashboard.DashboardWidgets || []).map((dw) => ({
       i: dw.id,
       x: dw.position?.x || 0,
       y: dw.position?.y || 0,
