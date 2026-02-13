@@ -420,9 +420,11 @@ export function Dashboard() {
                   </h1>
                 )}
               </div>
-              <p className="text-white/60 font-light">
-                Control your connected devices
-              </p>
+              {!isFullscreen && (
+                <p className="text-white/60 font-light">
+                  Control your connected devices
+                </p>
+              )}
               {!isFullscreen &&
                 dashboards.length > 1 &&
                 currentDashboardIndex >= 0 && (
