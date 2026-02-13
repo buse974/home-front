@@ -273,7 +273,7 @@ class ApiService {
     dashboardId: string,
     data: {
       widgetId: string;
-      genericDeviceIds: string[];
+      genericDeviceIds?: string[];
       config?: any;
       position?: { x: number; y: number; w: number; h: number };
     },

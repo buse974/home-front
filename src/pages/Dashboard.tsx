@@ -858,7 +858,7 @@ function AddWidgetModal({
   onClose,
   onSuccess,
 }: AddWidgetModalProps) {
-  const [step, setStep] = useState<"device" | "widget" | "config">("device");
+  const [step, setStep] = useState<"widget" | "device" | "config">("widget");
   const [availableDevices, setAvailableDevices] = useState<
     (GenericDevice & { providerId: string })[]
   >([]);
@@ -872,8 +872,44 @@ function AddWidgetModal({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadAllDevices();
+    loadWidgets();
   }, []);
+
+  const widgetNeedsConfig = (widget: Widget | null) =>
+    widget?.name === "ActionButton" ||
+    widget?.name === "StateMessage" ||
+    widget?.name === "TextTicker";
+
+  const widgetNeedsDevice = (widget: Widget | null) =>
+    widget ? widget.requiresDevice !== false : false;
+
+  const getDefaultConfig = (widget: Widget) => {
+    if (widget.name === "ActionButton") {
+      return {
+        action: "off",
+        label: "Turn OFF",
+        color: "red",
+      };
+    }
+
+    if (widget.name === "StateMessage") {
+      return {
+        trueMessage: "Allume",
+        falseMessage: "Eteint",
+        trueColor: "green",
+        falseColor: "red",
+      };
+    }
+
+    if (widget.name === "TextTicker") {
+      return {
+        message: "Bienvenue dans votre dashboard",
+        speed: 16,
+      };
+    }
+
+    return {};
+  };
 
   const loadAllDevices = async () => {
     setLoading(true);
@@ -915,7 +951,6 @@ function AddWidgetModal({
     try {
       const { widgets: widgetsList } = await api.getWidgetsCatalogue();
       setWidgets(widgetsList);
-      setStep("widget");
     } catch (error) {
       console.error("Failed to load widgets:", error);
     } finally {
@@ -923,67 +958,56 @@ function AddWidgetModal({
     }
   };
 
-  const handleWidgetSelection = (widget: Widget) => {
+  const handleWidgetSelection = async (widget: Widget) => {
     setSelectedWidget(widget);
+    setSelectedDevices([]);
+    setWidgetConfig(getDefaultConfig(widget));
 
-    // Si le widget nécessite une configuration, aller au step config
-    if (widget.name === "ActionButton") {
-      // Initialiser la config avec les valeurs par défaut
-      setWidgetConfig({
-        action: "off",
-        label: "Turn OFF",
-        color: "red",
-      });
+    if (widgetNeedsDevice(widget)) {
+      await loadAllDevices();
+      setStep("device");
+      return;
+    }
+
+    if (widgetNeedsConfig(widget)) {
       setStep("config");
       return;
     }
 
-    if (widget.name === "StateMessage") {
-      setWidgetConfig({
-        trueMessage: "Allume",
-        falseMessage: "Eteint",
-        trueColor: "green",
-        falseColor: "red",
-      });
-      setStep("config");
-      return;
-    }
-
-    if (widget.name === "TextTicker") {
-      setWidgetConfig({
-        message: "Bienvenue dans votre dashboard",
-        speed: 16,
-      });
-      setStep("config");
-      return;
-    }
-
-    // Sinon, le widget est prêt à être créé (config vide)
-    setWidgetConfig({});
+    setStep("widget");
   };
 
   const handleAddWidget = async () => {
-    if (selectedDevices.length === 0 || !selectedWidget) return;
+    if (!selectedWidget) return;
 
     setLoading(true);
     try {
-      // Créer tous les GenericDevices
-      const devicePromises = selectedDevices.map((device) =>
-        api.createDevice({
-          provider_id: device.providerId,
-          name: device.name,
-          type: device.type,
-          capabilities: device.capabilities,
-          command_mapping: device.command_mapping,
-        }),
-      );
+      let genericDeviceIds: string[] = [];
 
-      const createdDevices = await Promise.all(devicePromises);
-      const genericDeviceIds = createdDevices.map((result) => result.device.id);
+      if (widgetNeedsDevice(selectedWidget)) {
+        if (selectedDevices.length === 0) {
+          alert("Please select at least one device");
+          return;
+        }
+
+        // Créer tous les GenericDevices
+        const devicePromises = selectedDevices.map((device) =>
+          api.createDevice({
+            provider_id: device.providerId,
+            name: device.name,
+            type: device.type,
+            capabilities: device.capabilities,
+            command_mapping: device.command_mapping,
+          }),
+        );
+
+        const createdDevices = await Promise.all(devicePromises);
+        genericDeviceIds = createdDevices.map((result) => result.device.id);
+      }
 
       await api.addWidget(dashboardId, {
         widgetId: selectedWidget.id,
-        genericDeviceIds: genericDeviceIds,
+        genericDeviceIds,
         config: widgetConfig,
         position: { x: 0, y: 0, w: 2, h: 1 },
       });
@@ -1008,6 +1032,29 @@ function AddWidgetModal({
         return [...prev, device];
       }
     });
+  };
+
+  const handleBackStep = () => {
+    if (
+      step === "config" &&
+      selectedWidget &&
+      widgetNeedsDevice(selectedWidget)
+    ) {
+      setStep("device");
+      return;
+    }
+    setStep("widget");
+  };
+
+  const handleDeviceNext = async () => {
+    if (!selectedWidget || selectedDevices.length === 0) return;
+
+    if (widgetNeedsConfig(selectedWidget)) {
+      setStep("config");
+      return;
+    }
+
+    await handleAddWidget();
   };
 
   return (
@@ -1041,29 +1088,31 @@ function AddWidgetModal({
           {/* Step indicator */}
           <div className="flex items-center justify-center mb-8 gap-3">
             <StepIndicator
-              active={step === "device"}
-              completed={selectedDevices.length > 0}
-              number="1"
-            >
-              Device{selectedDevices.length > 1 ? "s" : ""}
-            </StepIndicator>
-            <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
-            <StepIndicator
               active={step === "widget"}
               completed={!!selectedWidget}
-              number="2"
+              number="1"
             >
               Widget
             </StepIndicator>
-            {(selectedWidget?.name === "ActionButton" ||
-              selectedWidget?.name === "StateMessage" ||
-              selectedWidget?.name === "TextTicker") && (
+            {selectedWidget && widgetNeedsDevice(selectedWidget) && (
+              <>
+                <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
+                <StepIndicator
+                  active={step === "device"}
+                  completed={selectedDevices.length > 0}
+                  number="2"
+                >
+                  Device{selectedDevices.length > 1 ? "s" : ""}
+                </StepIndicator>
+              </>
+            )}
+            {selectedWidget && widgetNeedsConfig(selectedWidget) && (
               <>
                 <div className="w-12 h-0.5 bg-gradient-to-r from-purple-500/30 to-blue-500/30" />
                 <StepIndicator
                   active={step === "config"}
                   completed={false}
-                  number="3"
+                  number={widgetNeedsDevice(selectedWidget) ? "3" : "2"}
                 >
                   Config
                 </StepIndicator>
@@ -1137,15 +1186,6 @@ function AddWidgetModal({
                       );
                     })}
                   </div>
-                  {selectedDevices.length > 0 && (
-                    <button
-                      onClick={loadWidgets}
-                      className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-medium shadow-lg shadow-purple-500/50 transition-all"
-                    >
-                      Next ({selectedDevices.length} device
-                      {selectedDevices.length > 1 ? "s" : ""} selected)
-                    </button>
-                  )}
                 </>
               )}
             </div>
@@ -1242,7 +1282,7 @@ function AddWidgetModal({
                       return (
                         <button
                           key={widget.id}
-                          onClick={() => handleWidgetSelection(widget)}
+                          onClick={() => void handleWidgetSelection(widget)}
                           className={`
                           relative p-6 rounded-2xl border-2 transition-all duration-300
                           overflow-hidden group
@@ -1574,6 +1614,30 @@ function AddWidgetModal({
             Cancel
           </button>
 
+          {step !== "widget" && (
+            <button
+              onClick={handleBackStep}
+              className="px-6 py-2.5 text-white/60 hover:text-white transition-colors"
+            >
+              Back
+            </button>
+          )}
+
+          {/* Show Next/Add button on device step */}
+          {step === "device" && selectedWidget && (
+            <button
+              onClick={() => void handleDeviceNext()}
+              disabled={loading || selectedDevices.length === 0}
+              className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/50 transition-all"
+            >
+              {loading
+                ? "Adding..."
+                : widgetNeedsConfig(selectedWidget)
+                  ? "Next"
+                  : "Add Widget"}
+            </button>
+          )}
+
           {/* Show Add Widget button on config step */}
           {step === "config" && (
             <button
@@ -1588,9 +1652,8 @@ function AddWidgetModal({
           {/* Show Add Widget button on widget step for widgets that don't need config */}
           {step === "widget" &&
             selectedWidget &&
-            selectedWidget.name !== "ActionButton" &&
-            selectedWidget.name !== "StateMessage" &&
-            selectedWidget.name !== "TextTicker" && (
+            !widgetNeedsConfig(selectedWidget) &&
+            !widgetNeedsDevice(selectedWidget) && (
               <button
                 onClick={handleAddWidget}
                 disabled={loading}

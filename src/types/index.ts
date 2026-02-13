@@ -74,6 +74,7 @@ export interface Widget {
   description?: string;
   icon?: string;
   category?: string;
+  requiresDevice?: boolean;
   config_schema: Record<string, any>;
 }
 
