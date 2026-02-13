@@ -154,71 +154,80 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         {/* Toggle Button */}
         <div
           className={`
-            relative w-full flex-1 min-h-[96px] rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center
+            relative w-full flex-1 min-h-[96px] transition-all duration-300 flex items-center justify-center
             ${isActionDisabled ? "opacity-30" : ""}
-            ${
-              isOn
-                ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-2xl shadow-purple-500/50"
-                : "bg-white/10 hover:bg-white/20 text-white/80 border border-white/10"
-            }
             ${!loading && !isActionDisabled ? "hover:scale-[1.02] active:scale-[0.98]" : ""}
-            overflow-hidden
           `}
         >
-          {/* Shimmer effect when ON */}
-          {isOn && (
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-          )}
-
-          <div className="relative flex flex-col items-center justify-center gap-2">
-            {loading ? (
-              <>
-                <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span className="text-sm font-medium">Switching...</span>
-              </>
-            ) : (
-              <>
-                {/* Icon */}
-                <div className="relative">
-                  {isOn ? (
-                    <svg
-                      className="w-10 h-10 animate-in zoom-in duration-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-10 h-10 animate-in zoom-in duration-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                      />
-                    </svg>
-                  )}
-                </div>
-
-                {/* Text */}
-                <span
-                  className={`text-xl font-bold ${isOn ? "text-white" : "text-white/60"}`}
-                >
-                  {isOn ? "ON" : "OFF"}
-                </span>
-              </>
+          <div
+            className={`
+              relative w-full max-w-[330px] h-20 rounded-2xl border overflow-hidden
+              transition-all duration-300
+              ${
+                isOn
+                  ? "bg-gradient-to-r from-purple-500/70 to-blue-500/70 border-white/20 shadow-xl shadow-blue-500/25"
+                  : "bg-white/8 border-white/15"
+              }
+            `}
+          >
+            {isOn && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             )}
+
+            <div className="relative h-full px-4 flex items-center gap-4">
+              <div
+                className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${
+                  isOn
+                    ? "bg-white/20 border-white/35 text-white"
+                    : "bg-black/25 border-white/20 text-white/70"
+                }`}
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/35 border-t-white rounded-full animate-spin" />
+                ) : isOn ? (
+                  <svg
+                    className="w-7 h-7 animate-in zoom-in duration-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-7 h-7 animate-in zoom-in duration-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                    />
+                  </svg>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                  Power
+                </p>
+                <p
+                  className={`text-2xl font-black leading-none mt-1 ${
+                    isOn ? "text-white" : "text-white/75"
+                  }`}
+                >
+                  {loading ? "Switching..." : isOn ? "ON" : "OFF"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
