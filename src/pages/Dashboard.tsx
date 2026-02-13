@@ -21,6 +21,9 @@ export function Dashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hideTitleInFullscreen, setHideTitleInFullscreen] = useState(() => {
+    return localStorage.getItem("hideTitleInFullscreen") === "1";
+  });
   const [widgetToDelete, setWidgetToDelete] = useState<string | null>(null);
   const [deletingWidget, setDeletingWidget] = useState(false);
   const [dashboardNameDraft, setDashboardNameDraft] = useState("");
@@ -32,6 +35,7 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
+  const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
     : -1;
@@ -68,6 +72,13 @@ export function Dashboard() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "hideTitleInFullscreen",
+      hideTitleInFullscreen ? "1" : "0",
+    );
+  }, [hideTitleInFullscreen]);
 
   const loadDashboard = async () => {
     try {
@@ -394,52 +405,71 @@ export function Dashboard() {
           {/* Header */}
           <header className="mb-2 md:mb-3">
             <div className="min-h-[clamp(6rem,13vh,9rem)] md:min-h-[clamp(7rem,15vh,10rem)] px-2 md:px-3 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  {editMode ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={dashboardNameDraft}
-                        onChange={(e) => setDashboardNameDraft(e.target.value)}
-                        onBlur={handleSaveDashboardName}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            e.currentTarget.blur();
+              {!shouldHideTitle && (
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    {editMode ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={dashboardNameDraft}
+                          onChange={(e) =>
+                            setDashboardNameDraft(e.target.value)
                           }
-                        }}
-                        className="rename-dashboard-input text-3xl md:text-4xl font-bold px-3 py-1 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
-                        placeholder="Nom du dashboard"
-                      />
-                      {savingDashboardName && (
-                        <span className="text-xs text-white/60">Saving...</span>
-                      )}
-                    </div>
-                  ) : (
-                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-                      {dashboard.name}
-                    </h1>
+                          onBlur={handleSaveDashboardName}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          className="rename-dashboard-input text-3xl md:text-4xl font-bold px-3 py-1 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          placeholder="Nom du dashboard"
+                        />
+                        {savingDashboardName && (
+                          <span className="text-xs text-white/60">
+                            Saving...
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+                        {dashboard.name}
+                      </h1>
+                    )}
+                  </div>
+                  {!isFullscreen && (
+                    <p className="text-white/60 font-light">
+                      Control your connected devices
+                    </p>
                   )}
+                  {!isFullscreen &&
+                    dashboards.length > 1 &&
+                    currentDashboardIndex >= 0 && (
+                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
+                        <span>
+                          Dashboard {currentDashboardIndex + 1}/
+                          {dashboards.length}
+                        </span>
+                        <span className="text-white/40">•</span>
+                        <span>Swipe gauche/droite</span>
+                      </div>
+                    )}
                 </div>
-                {!isFullscreen && (
-                  <p className="text-white/60 font-light">
-                    Control your connected devices
-                  </p>
-                )}
-                {!isFullscreen &&
-                  dashboards.length > 1 &&
-                  currentDashboardIndex >= 0 && (
-                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
-                      <span>
-                        Dashboard {currentDashboardIndex + 1}/
-                        {dashboards.length}
-                      </span>
-                      <span className="text-white/40">•</span>
-                      <span>Swipe gauche/droite</span>
-                    </div>
-                  )}
-              </div>
+              )}
               <div className="flex items-center gap-3">
+                {!isFullscreen && (
+                  <button
+                    onClick={() => setHideTitleInFullscreen((prev) => !prev)}
+                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${
+                      hideTitleInFullscreen
+                        ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
+                        : "bg-white/10 border-white/15 text-white/70 hover:text-white hover:bg-white/15"
+                    }`}
+                    title="Masquer le titre en plein écran"
+                  >
+                    Titre FS: {hideTitleInFullscreen ? "Off" : "On"}
+                  </button>
+                )}
                 {!isFullscreen && dashboards.length > 1 && (
                   <div className="flex items-center gap-2">
                     <button
