@@ -196,7 +196,7 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
             <p className="text-sm text-amber-300/90">{error}</p>
           </div>
         ) : payload ? (
-          <div className="h-full flex flex-col justify-between">
+          <div className="flex flex-col gap-4">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="text-5xl md:text-6xl font-black text-cyan-100 leading-none drop-shadow-[0_0_18px_rgba(125,211,252,0.35)]">
@@ -211,7 +211,7 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-xs mt-4">
+            <div className="grid grid-cols-3 gap-3 text-xs">
               <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
                 <p className="text-white/55">Ressenti</p>
                 <p className="text-white font-semibold text-sm">
