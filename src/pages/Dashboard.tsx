@@ -15,6 +15,32 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 const GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
 const GRID_COLS = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
 type GridBreakpoint = keyof typeof GRID_COLS;
+type DashboardTone = "violet" | "ocean" | "emerald" | "sunset";
+const DASHBOARD_TONES: Record<
+  DashboardTone,
+  { gradient: string; swatch: string; label: string }
+> = {
+  violet: {
+    gradient: "from-slate-900 via-purple-900 to-slate-900",
+    swatch: "from-violet-500 to-fuchsia-500",
+    label: "Violet",
+  },
+  ocean: {
+    gradient: "from-slate-900 via-blue-900 to-cyan-900",
+    swatch: "from-blue-500 to-cyan-500",
+    label: "Ocean",
+  },
+  emerald: {
+    gradient: "from-slate-900 via-emerald-900 to-teal-900",
+    swatch: "from-emerald-500 to-teal-500",
+    label: "Emerald",
+  },
+  sunset: {
+    gradient: "from-slate-900 via-rose-900 to-amber-900",
+    swatch: "from-rose-500 to-amber-500",
+    label: "Sunset",
+  },
+};
 
 export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,6 +57,7 @@ export function Dashboard() {
   const [deletingWidget, setDeletingWidget] = useState(false);
   const [dashboardNameDraft, setDashboardNameDraft] = useState("");
   const [savingDashboardName, setSavingDashboardName] = useState(false);
+  const [dashboardTone, setDashboardTone] = useState<DashboardTone>("violet");
   const [widgetNameDrafts, setWidgetNameDrafts] = useState<
     Record<string, string>
   >({});
@@ -253,6 +280,22 @@ export function Dashboard() {
     setWidgetNameDrafts(drafts);
   }, [dashboard]);
 
+  useEffect(() => {
+    if (!dashboard?.id) return;
+    const storageKey = `dashboard-tone:${dashboard.id}`;
+    const storedTone = localStorage.getItem(storageKey) as DashboardTone | null;
+    if (storedTone && storedTone in DASHBOARD_TONES) {
+      setDashboardTone(storedTone);
+      return;
+    }
+    setDashboardTone("violet");
+  }, [dashboard?.id]);
+
+  useEffect(() => {
+    if (!dashboard?.id) return;
+    localStorage.setItem(`dashboard-tone:${dashboard.id}`, dashboardTone);
+  }, [dashboard?.id, dashboardTone]);
+
   const handleSaveDashboardName = async () => {
     if (!dashboard) return;
     const nextName = dashboardNameDraft.trim();
@@ -457,11 +500,12 @@ export function Dashboard() {
   ) as Layouts;
 
   const layoutsForRender = editMode ? baseLayouts : centeredLayouts;
+  const dashboardGradientClass = DASHBOARD_TONES[dashboardTone].gradient;
 
   return (
     <div
       ref={dashboardContainerRef}
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
+      className={`min-h-screen bg-gradient-to-br ${dashboardGradientClass} relative overflow-hidden`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
@@ -554,6 +598,29 @@ export function Dashboard() {
                 </div>
               )}
               <div className="flex items-center gap-3">
+                {editMode && !isFullscreen && (
+                  <div className="h-12 px-3 rounded-xl bg-white/10 border border-white/15 inline-flex items-center gap-2">
+                    <span className="text-xs text-white/65 hidden md:inline">
+                      Nuance
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {(Object.keys(DASHBOARD_TONES) as DashboardTone[]).map(
+                        (tone) => (
+                          <button
+                            key={tone}
+                            onClick={() => setDashboardTone(tone)}
+                            className={`w-6 h-6 rounded-full bg-gradient-to-br ${DASHBOARD_TONES[tone].swatch} border-2 transition-transform hover:scale-110 ${
+                              dashboardTone === tone
+                                ? "border-white shadow-[0_0_12px_rgba(255,255,255,0.45)]"
+                                : "border-white/30"
+                            }`}
+                            title={`Nuance ${DASHBOARD_TONES[tone].label}`}
+                          />
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
                 {!isFullscreen && (
                   <button
                     onClick={() => setHideTitleInFullscreen((prev) => !prev)}
