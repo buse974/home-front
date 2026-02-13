@@ -11,6 +11,33 @@ type WeatherPayload = {
   isDay: boolean;
 };
 
+function buildAddressCandidates(input: string): string[] {
+  const normalized = input.trim();
+  const candidates: string[] = [];
+
+  if (normalized) candidates.push(normalized);
+
+  const commaParts = normalized
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (commaParts.length > 1) {
+    candidates.push(commaParts[commaParts.length - 1]);
+  }
+
+  const postalCityMatch = normalized.match(/\b(\d{5}\s+[A-Za-zÀ-ÿ' -]+)\b/);
+  if (postalCityMatch?.[1]) {
+    candidates.push(postalCityMatch[1].trim());
+  }
+
+  if (commaParts.length > 0) {
+    const maybeCity = commaParts[commaParts.length - 1].replace(/^\d+\s*/, "");
+    if (maybeCity) candidates.push(maybeCity.trim());
+  }
+
+  return [...new Set(candidates)];
+}
+
 function getWeatherLabel(code: number): string {
   if (code === 0) return "Ciel degage";
   if ([1, 2].includes(code)) return "Peu nuageux";
@@ -53,12 +80,19 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
       setLoading(true);
       setError(null);
       try {
-        const geocodeRes = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(address)}&count=1&language=fr&format=json`,
-        );
-        if (!geocodeRes.ok) throw new Error("Geocoding failed");
-        const geocodeJson = await geocodeRes.json();
-        const place = geocodeJson?.results?.[0];
+        const addressCandidates = buildAddressCandidates(address);
+        let place: any = null;
+
+        for (const candidate of addressCandidates) {
+          const geocodeRes = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=fr&format=json`,
+          );
+          if (!geocodeRes.ok) continue;
+          const geocodeJson = await geocodeRes.json();
+          place = geocodeJson?.results?.[0] || null;
+          if (place) break;
+        }
+
         if (!place) throw new Error("Adresse introuvable");
 
         const weatherRes = await fetch(
@@ -90,9 +124,12 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
     };
 
     void fetchWeather();
-    refreshTimer = window.setInterval(() => {
-      void fetchWeather();
-    }, 10 * 60 * 1000);
+    refreshTimer = window.setInterval(
+      () => {
+        void fetchWeather();
+      },
+      10 * 60 * 1000,
+    );
 
     return () => {
       active = false;
