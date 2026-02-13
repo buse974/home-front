@@ -389,10 +389,10 @@ export function Dashboard() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 min-h-screen p-6 md:p-8 lg:p-12 flex flex-col">
+      <div className="relative z-10 min-h-screen px-4 py-6 md:px-5 md:py-8 lg:px-6 lg:py-10 flex flex-col">
         {/* Header */}
-        <header className="mb-4 md:mb-6">
-          <div className="min-h-[clamp(7rem,16vh,11rem)] md:min-h-[clamp(8rem,18vh,12rem)] px-[10px] flex items-center justify-between">
+        <header className="mb-2 md:mb-3">
+          <div className="min-h-[clamp(6rem,13vh,9rem)] md:min-h-[clamp(7rem,15vh,10rem)] px-1 md:px-2 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 {editMode ? (
@@ -583,7 +583,7 @@ export function Dashboard() {
         </header>
 
         {/* Widgets Grid */}
-        <main className="flex-1 flex items-center">
+        <main className="flex-1 flex items-start">
           {!dashboard.DashboardWidgets ||
           dashboard.DashboardWidgets.length === 0 ? (
             <div className="text-center py-20">
@@ -633,7 +633,7 @@ export function Dashboard() {
               )}
             </div>
           ) : (
-            <div className="w-full px-[10px]">
+            <div className="w-full px-1 md:px-2">
               <ResponsiveGridLayout
                 className="layout"
                 layouts={
