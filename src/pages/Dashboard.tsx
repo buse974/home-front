@@ -12,6 +12,9 @@ import type {
 } from "../types";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+const GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
+const GRID_COLS = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
+type GridBreakpoint = keyof typeof GRID_COLS;
 
 export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -372,6 +375,46 @@ export function Dashboard() {
     );
   }
 
+  const baseLayouts: Layouts = dashboard.layouts || {
+    lg: dashboard.DashboardWidgets.map((dw) => ({
+      i: dw.id,
+      x: dw.position?.x || 0,
+      y: dw.position?.y || 0,
+      w: dw.position?.w || 3,
+      h: dw.position?.h || 2,
+    })),
+  };
+
+  const centeredLayouts: Layouts = Object.fromEntries(
+    Object.entries(baseLayouts).map(([breakpoint, layout]) => {
+      const cols = GRID_COLS[breakpoint as GridBreakpoint];
+      if (!cols || !layout?.length) {
+        return [breakpoint, layout];
+      }
+
+      const maxRight = layout.reduce(
+        (max, item) => Math.max(max, (item.x || 0) + (item.w || 1)),
+        0,
+      );
+      const usedCols = Math.min(cols, Math.max(0, maxRight));
+      const shift = Math.max(0, Math.floor((cols - usedCols) / 2));
+
+      if (shift === 0) {
+        return [breakpoint, layout];
+      }
+
+      return [
+        breakpoint,
+        layout.map((item) => ({
+          ...item,
+          x: (item.x || 0) + shift,
+        })),
+      ];
+    }),
+  ) as Layouts;
+
+  const layoutsForRender = editMode ? baseLayouts : centeredLayouts;
+
   return (
     <div
       ref={dashboardContainerRef}
@@ -676,19 +719,9 @@ export function Dashboard() {
               <div className="w-full px-2 md:px-3">
                 <ResponsiveGridLayout
                   className="layout"
-                  layouts={
-                    dashboard.layouts || {
-                      lg: dashboard.DashboardWidgets.map((dw) => ({
-                        i: dw.id,
-                        x: dw.position?.x || 0,
-                        y: dw.position?.y || 0,
-                        w: dw.position?.w || 3,
-                        h: dw.position?.h || 2,
-                      })),
-                    }
-                  }
-                  breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                  cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                  layouts={layoutsForRender}
+                  breakpoints={GRID_BREAKPOINTS}
+                  cols={GRID_COLS}
                   rowHeight={120}
                   isDraggable={editMode}
                   isResizable={editMode}
