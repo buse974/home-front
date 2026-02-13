@@ -757,7 +757,11 @@ export function Dashboard() {
                         key={dashboardWidget.id}
                         className="relative h-full w-full"
                       >
-                        <div className="h-full w-full">
+                        <div
+                          className={`h-full w-full ${
+                            editMode ? "pointer-events-none" : ""
+                          }`}
+                        >
                           <WidgetComponent
                             dashboardWidget={dashboardWidget}
                             onCommand={(capability, params, deviceId) =>
