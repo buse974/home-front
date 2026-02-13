@@ -948,7 +948,7 @@ function AddWidgetModal({
 
   const widgetNeedsDevice = (widget: Widget | null) =>
     widget
-      ? widget.name === "TextTicker"
+      ? widget.name === "TextTicker" || widget.name === "Clock"
         ? false
         : widget.requiresDevice !== false
       : false;
@@ -1341,6 +1341,10 @@ function AddWidgetModal({
                         TextTicker: {
                           gradient: "from-fuchsia-500/20 to-violet-500/20",
                           icon: "📢",
+                        },
+                        Clock: {
+                          gradient: "from-cyan-500/20 to-blue-500/20",
+                          icon: "🕒",
                         },
                       };
 
