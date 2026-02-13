@@ -145,25 +145,48 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
     () => (payload ? getWeatherIcon(payload.weatherCode, payload.isDay) : "🌤️"),
     [payload],
   );
+  const weatherCode = payload?.weatherCode ?? -1;
+  const isRainy = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(
+    weatherCode,
+  );
+  const isCloudy = [1, 2, 3, 45, 48].includes(weatherCode);
+  const dynamicBg = payload?.isDay
+    ? "from-sky-500/25 via-cyan-500/10 to-blue-600/20"
+    : "from-indigo-500/25 via-violet-600/10 to-slate-900/25";
 
   return (
     <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
-      <div className="absolute -top-20 -right-20 w-44 h-44 bg-cyan-400/15 rounded-full blur-3xl" />
-      <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-blue-500/15 rounded-full blur-3xl" />
+      <div className={`absolute inset-0 bg-gradient-to-br ${dynamicBg}`} />
+      <div className="absolute -top-24 -right-10 w-52 h-52 bg-cyan-300/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-24 -left-10 w-52 h-52 bg-blue-400/20 rounded-full blur-3xl" />
 
-      <div className="relative z-10 flex items-start justify-between mb-4">
+      {(isCloudy || isRainy) && (
+        <>
+          <div className="weather-cloud weather-cloud-a" />
+          <div className="weather-cloud weather-cloud-b" />
+        </>
+      )}
+      {isRainy && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="weather-rain weather-rain-a" />
+          <div className="weather-rain weather-rain-b" />
+          <div className="weather-rain weather-rain-c" />
+        </div>
+      )}
+
+      <div className="relative z-10 flex items-start justify-between mb-5">
         <div>
-          <h3 className="text-lg font-semibold text-white line-clamp-1">
+          <h3 className="text-xl font-bold text-white line-clamp-1 tracking-tight">
             {dashboardWidget.name || "Meteo"}
           </h3>
-          <p className="text-xs text-white/55 line-clamp-1">{address}</p>
+          <p className="text-xs text-white/60 line-clamp-1 mt-0.5">{address}</p>
         </div>
-        <span className="text-3xl" aria-hidden>
-          {weatherIcon}
-        </span>
+        <div className="weather-icon-badge" aria-hidden>
+          <span className="text-4xl leading-none">{weatherIcon}</span>
+        </div>
       </div>
 
-      <div className="relative z-10 flex-1 min-h-0 rounded-xl bg-black/30 border border-white/10 p-4">
+      <div className="relative z-10 flex-1 min-h-0 rounded-2xl bg-black/35 border border-white/10 p-4 md:p-5 shadow-[0_12px_40px_rgba(8,10,22,0.45)]">
         {loading ? (
           <div className="h-full grid place-items-center text-white/70">
             Chargement meteo...
@@ -174,32 +197,36 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
           </div>
         ) : payload ? (
           <div className="h-full flex flex-col justify-between">
-            <div>
-              <p className="text-4xl font-black text-cyan-200 leading-none">
-                {Math.round(payload.temperature)}°C
-              </p>
-              <p className="mt-1 text-sm text-white/80">{weatherLabel}</p>
-              <p className="mt-1 text-xs text-white/55 line-clamp-1">
-                {payload.locationName}
-              </p>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-5xl md:text-6xl font-black text-cyan-100 leading-none drop-shadow-[0_0_18px_rgba(125,211,252,0.35)]">
+                  {Math.round(payload.temperature)}°C
+                </p>
+                <p className="mt-1.5 text-sm text-white/90 font-medium">
+                  {weatherLabel}
+                </p>
+                <p className="mt-1 text-xs text-white/60 line-clamp-1">
+                  {payload.locationName}
+                </p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-xs">
-              <div className="rounded-lg bg-white/5 border border-white/10 p-2 text-center">
-                <p className="text-white/45">Ressenti</p>
-                <p className="text-white font-semibold">
+            <div className="grid grid-cols-3 gap-3 text-xs mt-4">
+              <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
+                <p className="text-white/55">Ressenti</p>
+                <p className="text-white font-semibold text-sm">
                   {Math.round(payload.feelsLike)}°C
                 </p>
               </div>
-              <div className="rounded-lg bg-white/5 border border-white/10 p-2 text-center">
-                <p className="text-white/45">Humidite</p>
-                <p className="text-white font-semibold">
+              <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
+                <p className="text-white/55">Humidite</p>
+                <p className="text-white font-semibold text-sm">
                   {Math.round(payload.humidity)}%
                 </p>
               </div>
-              <div className="rounded-lg bg-white/5 border border-white/10 p-2 text-center">
-                <p className="text-white/45">Vent</p>
-                <p className="text-white font-semibold">
+              <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
+                <p className="text-white/55">Vent</p>
+                <p className="text-white font-semibold text-sm">
                   {Math.round(payload.windSpeed)} km/h
                 </p>
               </div>
@@ -211,6 +238,68 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
           </div>
         )}
       </div>
+
+      <style>{`
+        .weather-icon-badge {
+          width: 64px;
+          height: 64px;
+          border-radius: 16px;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));
+          border: 1px solid rgba(255,255,255,0.18);
+          box-shadow: 0 10px 28px rgba(4, 6, 20, 0.35);
+          backdrop-filter: blur(8px);
+        }
+        .weather-cloud {
+          position: absolute;
+          width: 170px;
+          height: 58px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.19), rgba(255,255,255,0.05));
+          filter: blur(0.2px);
+          opacity: 0.75;
+          border: 1px solid rgba(255,255,255,0.16);
+          pointer-events: none;
+        }
+        .weather-cloud-a {
+          top: 24%;
+          left: -26%;
+          animation: weather-cloud-drift-a 19s linear infinite;
+        }
+        .weather-cloud-b {
+          top: 11%;
+          left: -34%;
+          transform: scale(0.88);
+          opacity: 0.55;
+          animation: weather-cloud-drift-b 26s linear infinite;
+        }
+        .weather-rain {
+          position: absolute;
+          width: 2px;
+          height: 18px;
+          background: linear-gradient(to bottom, rgba(125,211,252,0), rgba(125,211,252,0.7));
+          border-radius: 2px;
+          opacity: 0.55;
+          animation: weather-rain-fall 1.15s linear infinite;
+        }
+        .weather-rain-a { left: 28%; top: 8%; animation-delay: 0s; }
+        .weather-rain-b { left: 48%; top: 2%; animation-delay: .25s; }
+        .weather-rain-c { left: 68%; top: 12%; animation-delay: .5s; }
+        @keyframes weather-cloud-drift-a {
+          from { transform: translateX(0); }
+          to { transform: translateX(185%); }
+        }
+        @keyframes weather-cloud-drift-b {
+          from { transform: translateX(0) scale(0.88); }
+          to { transform: translateX(210%) scale(0.88); }
+        }
+        @keyframes weather-rain-fall {
+          from { transform: translateY(-8px); opacity: 0; }
+          20% { opacity: 0.75; }
+          to { transform: translateY(140px); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
