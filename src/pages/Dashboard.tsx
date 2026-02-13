@@ -730,8 +730,8 @@ export function Dashboard() {
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
-                  compactType={null}
-                  preventCollision={true}
+                  compactType={editMode ? "vertical" : null}
+                  preventCollision={!editMode}
                   resizeHandles={["se"]}
                 >
                   {dashboard.DashboardWidgets.map((dashboardWidget) => {
