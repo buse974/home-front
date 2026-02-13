@@ -307,6 +307,48 @@ export function Dashboard() {
     }
   };
 
+  const handleToggleWidgetBackground = async (widgetId: string) => {
+    if (!dashboard) return;
+
+    const targetWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === widgetId,
+    );
+    if (!targetWidget) return;
+
+    const currentConfig = targetWidget.config || {};
+    const nextTransparentBackground = !currentConfig.transparentBackground;
+    const nextConfig = {
+      ...currentConfig,
+      transparentBackground: nextTransparentBackground,
+    };
+
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+          w.id === widgetId ? { ...w, config: nextConfig } : w,
+        ),
+      };
+    });
+
+    try {
+      await api.updateWidget(widgetId, { config: nextConfig });
+    } catch (error) {
+      console.error("Failed to update widget background option:", error);
+      setDashboard((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+            w.id === widgetId ? { ...w, config: currentConfig } : w,
+          ),
+        };
+      });
+      alert("Failed to update widget background option");
+    }
+  };
+
   const handleDeleteWidget = async () => {
     if (!widgetToDelete) return;
     setDeletingWidget(true);
@@ -435,6 +477,13 @@ export function Dashboard() {
           flex: 1 !important;
           display: flex !important;
           flex-direction: column !important;
+        }
+        .widget-no-background > div:first-child {
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
         }
       `}</style>
       {/* Background decorative elements */}
@@ -726,7 +775,7 @@ export function Dashboard() {
                   rowHeight={120}
                   isDraggable={editMode}
                   isResizable={editMode}
-                  draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input"
+                  draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button"
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
@@ -760,6 +809,10 @@ export function Dashboard() {
                         <div
                           className={`h-full w-full ${
                             editMode ? "pointer-events-none" : ""
+                          } ${
+                            dashboardWidget.config?.transparentBackground
+                              ? "widget-no-background"
+                              : ""
                           }`}
                         >
                           <WidgetComponent
@@ -798,6 +851,27 @@ export function Dashboard() {
                               className="rename-widget-input w-44 px-2.5 py-1.5 rounded-md bg-slate-900/80 border border-white/25 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                               placeholder="Nom du widget"
                             />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                void handleToggleWidgetBackground(
+                                  dashboardWidget.id,
+                                );
+                              }}
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
+                              className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                                dashboardWidget.config?.transparentBackground
+                                  ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
+                                  : "bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                              }`}
+                              title="Activer/desactiver le fond du widget"
+                            >
+                              Fond
+                            </button>
                           </div>
                         )}
 
