@@ -881,7 +881,11 @@ function AddWidgetModal({
     widget?.name === "TextTicker";
 
   const widgetNeedsDevice = (widget: Widget | null) =>
-    widget ? widget.requiresDevice !== false : false;
+    widget
+      ? widget.name === "TextTicker"
+        ? false
+        : widget.requiresDevice !== false
+      : false;
 
   const getDefaultConfig = (widget: Widget) => {
     if (widget.name === "ActionButton") {
