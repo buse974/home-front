@@ -391,25 +391,10 @@ export function Dashboard() {
 
       <div className="relative z-10 min-h-screen p-6 md:p-8 lg:p-12 flex flex-col">
         {/* Header */}
-        <header className="mb-12">
-          <div className="flex items-center justify-between">
+        <header className="mb-4 md:mb-6">
+          <div className="min-h-[clamp(7rem,16vh,11rem)] md:min-h-[clamp(8rem,18vh,12rem)] px-[10px] flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/50">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
-                </div>
                 {editMode ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -435,13 +420,13 @@ export function Dashboard() {
                   </h1>
                 )}
               </div>
-              <p className="text-white/60 ml-[52px] font-light">
+              <p className="text-white/60 font-light">
                 Control your connected devices
               </p>
               {!isFullscreen &&
                 dashboards.length > 1 &&
                 currentDashboardIndex >= 0 && (
-                  <div className="ml-[52px] mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
+                  <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
                     <span>
                       Dashboard {currentDashboardIndex + 1}/{dashboards.length}
                     </span>
@@ -646,7 +631,7 @@ export function Dashboard() {
               )}
             </div>
           ) : (
-            <div className="w-full">
+            <div className="w-full px-[10px]">
               <ResponsiveGridLayout
                 className="layout"
                 layouts={
