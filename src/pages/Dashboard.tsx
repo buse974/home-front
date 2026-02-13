@@ -1010,10 +1010,73 @@ function AddWidgetModal({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [widgetConfig, setWidgetConfig] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  const [weatherSuggestions, setWeatherSuggestions] = useState<string[]>([]);
+  const [weatherAutocompleteLoading, setWeatherAutocompleteLoading] =
+    useState(false);
 
   useEffect(() => {
     loadWidgets();
   }, []);
+
+  useEffect(() => {
+    if (selectedWidget?.name !== "Weather" || step !== "config") {
+      setWeatherSuggestions([]);
+      setWeatherAutocompleteLoading(false);
+      return;
+    }
+
+    const rawQuery =
+      typeof widgetConfig.address === "string"
+        ? widgetConfig.address.trim()
+        : "";
+
+    if (rawQuery.length < 2) {
+      setWeatherSuggestions([]);
+      setWeatherAutocompleteLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setWeatherAutocompleteLoading(true);
+      try {
+        const res = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(rawQuery)}&count=5&language=fr&format=json`,
+          { signal: controller.signal },
+        );
+
+        if (!res.ok) {
+          setWeatherSuggestions([]);
+          return;
+        }
+
+        const data = await res.json();
+        const results: any[] = Array.isArray(data?.results) ? data.results : [];
+        const suggestionLabels = results
+          .map((item: any) =>
+            [item.name, item.admin1, item.country].filter(Boolean).join(", "),
+          )
+          .filter((value: string) => value.length > 0);
+        const nextSuggestions = Array.from(
+          new Set<string>(suggestionLabels),
+        ).slice(0, 5);
+
+        setWeatherSuggestions(nextSuggestions);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setWeatherSuggestions([]);
+      } finally {
+        setWeatherAutocompleteLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [selectedWidget?.name, step, widgetConfig.address]);
 
   const widgetNeedsConfig = (widget: Widget | null) =>
     widget?.name === "ActionButton" ||
@@ -1769,18 +1832,52 @@ function AddWidgetModal({
                     <label className="block text-sm font-medium text-white/80 mb-2">
                       Adresse / Ville
                     </label>
-                    <input
-                      type="text"
-                      value={widgetConfig.address || ""}
-                      onChange={(e) =>
-                        setWidgetConfig({
-                          ...widgetConfig,
-                          address: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
-                      placeholder="Ex: Paris, Lyon, Marseille"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={widgetConfig.address || ""}
+                        onChange={(e) =>
+                          setWidgetConfig({
+                            ...widgetConfig,
+                            address: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                        placeholder="Ex: Paris, Lyon, Marseille"
+                        autoComplete="off"
+                      />
+
+                      {(weatherAutocompleteLoading ||
+                        weatherSuggestions.length > 0) && (
+                        <div className="absolute z-20 mt-2 w-full rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+                          {weatherAutocompleteLoading && (
+                            <p className="px-3 py-2 text-xs text-white/60">
+                              Recherche...
+                            </p>
+                          )}
+                          {!weatherAutocompleteLoading &&
+                            weatherSuggestions.length > 0 && (
+                              <div className="max-h-52 overflow-y-auto">
+                                {weatherSuggestions.map((suggestion) => (
+                                  <button
+                                    key={suggestion}
+                                    type="button"
+                                    onClick={() =>
+                                      setWidgetConfig({
+                                        ...widgetConfig,
+                                        address: suggestion,
+                                      })
+                                    }
+                                    className="w-full text-left px-3 py-2 text-sm text-white/85 hover:bg-white/10 transition-colors"
+                                  >
+                                    {suggestion}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-white/50 mt-2">
                       Le widget utilise cette adresse pour afficher la meteo en
                       direct.
