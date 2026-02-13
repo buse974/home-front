@@ -324,6 +324,7 @@ export function Dashboard() {
 
   const handleLayoutChange = async (layouts: any) => {
     if (!editMode || !dashboard) return;
+    setDashboard((prev) => (prev ? { ...prev, layouts } : prev));
     try {
       await api.updateDashboardLayouts(dashboard.id, layouts);
     } catch (error) {
