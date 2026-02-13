@@ -154,7 +154,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         {/* Toggle Button */}
         <div
           className={`
-            relative w-full flex-1 min-h-[96px] rounded-xl font-semibold text-lg transition-all duration-300
+            relative w-full flex-1 min-h-[96px] rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center
             ${isActionDisabled ? "opacity-30" : ""}
             ${
               isOn
