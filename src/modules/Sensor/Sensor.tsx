@@ -42,7 +42,7 @@ export function Sensor({ dashboardWidget }: WidgetComponentProps) {
         />
       </div>
 
-      <div className="flex-1 min-h-0 grid place-items-center">
+      <div className="absolute inset-0 grid place-items-center pointer-events-none">
         <div className="relative grid place-items-center">
           <div
             className={`absolute w-28 h-28 rounded-full blur-xl ${
