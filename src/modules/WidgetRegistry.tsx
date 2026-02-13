@@ -8,6 +8,7 @@ import { StateMessage } from "./StateMessage/StateMessage";
 import { RawState } from "./RawState/RawState";
 import { TextTicker } from "./TextTicker/TextTicker";
 import { Clock } from "./Clock/Clock";
+import { Weather } from "./Weather/Weather";
 
 /**
  * Registry des widgets disponibles
@@ -30,6 +31,7 @@ export const widgetRegistry: WidgetRegistryMap = {
   RawState: RawState,
   TextTicker: TextTicker,
   Clock: Clock,
+  Weather: Weather,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // etc.

@@ -944,11 +944,14 @@ function AddWidgetModal({
   const widgetNeedsConfig = (widget: Widget | null) =>
     widget?.name === "ActionButton" ||
     widget?.name === "StateMessage" ||
-    widget?.name === "TextTicker";
+    widget?.name === "TextTicker" ||
+    widget?.name === "Weather";
 
   const widgetNeedsDevice = (widget: Widget | null) =>
     widget
-      ? widget.name === "TextTicker" || widget.name === "Clock"
+      ? widget.name === "TextTicker" ||
+        widget.name === "Clock" ||
+        widget.name === "Weather"
         ? false
         : widget.requiresDevice !== false
       : false;
@@ -975,6 +978,12 @@ function AddWidgetModal({
       return {
         message: "Bienvenue dans votre dashboard",
         speed: 16,
+      };
+    }
+
+    if (widget.name === "Weather") {
+      return {
+        address: "Paris",
       };
     }
 
@@ -1346,6 +1355,10 @@ function AddWidgetModal({
                           gradient: "from-cyan-500/20 to-blue-500/20",
                           icon: "🕒",
                         },
+                        Weather: {
+                          gradient: "from-sky-500/20 to-cyan-500/20",
+                          icon: "🌤️",
+                        },
                       };
 
                       const visual = widgetVisuals[widget.name] || {
@@ -1671,6 +1684,32 @@ function AddWidgetModal({
                     />
                     <p className="text-xs text-white/50 mt-1">
                       {widgetConfig.speed || 16}s
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedWidget.name === "Weather" && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Adresse / Ville
+                    </label>
+                    <input
+                      type="text"
+                      value={widgetConfig.address || ""}
+                      onChange={(e) =>
+                        setWidgetConfig({
+                          ...widgetConfig,
+                          address: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                      placeholder="Ex: Paris, Lyon, Marseille"
+                    />
+                    <p className="text-xs text-white/50 mt-2">
+                      Le widget utilise cette adresse pour afficher la meteo en
+                      direct.
                     </p>
                   </div>
                 </div>
