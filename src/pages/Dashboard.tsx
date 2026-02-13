@@ -400,10 +400,14 @@ export function Dashboard() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 min-h-screen py-6 md:py-8 lg:py-10 flex flex-col">
+      <div
+        className={`relative z-10 min-h-screen flex flex-col ${
+          shouldHideTitle ? "py-0" : "py-6 md:py-8 lg:py-10"
+        }`}
+      >
         <div className="w-full max-w-[1760px] mx-auto px-5 md:px-7 lg:px-8 flex-1 flex flex-col">
           {/* Header */}
-          <header className="mb-2 md:mb-3">
+          <header className={`${shouldHideTitle ? "hidden" : "mb-2 md:mb-3"}`}>
             <div className="min-h-[clamp(6rem,13vh,9rem)] md:min-h-[clamp(7rem,15vh,10rem)] px-2 md:px-3 flex items-center justify-between">
               {!shouldHideTitle && (
                 <div>
@@ -615,7 +619,11 @@ export function Dashboard() {
           </header>
 
           {/* Widgets Grid */}
-          <main className="flex-1 flex items-start">
+          <main
+            className={`flex-1 flex ${
+              shouldHideTitle ? "items-center" : "items-start"
+            }`}
+          >
             {!dashboard.DashboardWidgets ||
             dashboard.DashboardWidgets.length === 0 ? (
               <div className="text-center py-20">
