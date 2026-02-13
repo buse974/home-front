@@ -197,7 +197,7 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
           </div>
         ) : payload ? (
           <div className="flex flex-col gap-4">
-            <div className="flex items-end justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-5xl md:text-6xl font-black text-cyan-100 leading-none drop-shadow-[0_0_18px_rgba(125,211,252,0.35)]">
                   {Math.round(payload.temperature)}°C
@@ -208,6 +208,9 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
                 <p className="mt-1 text-xs text-white/60 line-clamp-1">
                   {payload.locationName}
                 </p>
+              </div>
+              <div className="weather-hero-icon" aria-hidden>
+                <span className="weather-hero-emoji">{weatherIcon}</span>
               </div>
             </div>
 
@@ -286,6 +289,32 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
         .weather-rain-a { left: 28%; top: 8%; animation-delay: 0s; }
         .weather-rain-b { left: 48%; top: 2%; animation-delay: .25s; }
         .weather-rain-c { left: 68%; top: 12%; animation-delay: .5s; }
+        .weather-hero-icon {
+          width: 120px;
+          height: 120px;
+          border-radius: 28px;
+          display: grid;
+          place-items: center;
+          background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.18), rgba(255,255,255,0.03) 68%);
+          border: 1px solid rgba(255,255,255,0.15);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.2),
+            0 14px 36px rgba(6, 10, 30, 0.42),
+            0 0 30px rgba(125,211,252,0.18);
+          backdrop-filter: blur(7px);
+          -webkit-backdrop-filter: blur(7px);
+          animation: weather-hero-float 4.8s ease-in-out infinite;
+        }
+        .weather-hero-emoji {
+          font-size: 64px;
+          line-height: 1;
+          filter: drop-shadow(0 8px 12px rgba(4, 8, 24, 0.35));
+          transform: translateY(2px);
+        }
+        @keyframes weather-hero-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
         @keyframes weather-cloud-drift-a {
           from { transform: translateX(0); }
           to { transform: translateX(185%); }
