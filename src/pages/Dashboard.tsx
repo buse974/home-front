@@ -508,7 +508,7 @@ export function Dashboard() {
                 {!isFullscreen && (
                   <button
                     onClick={() => setHideTitleInFullscreen((prev) => !prev)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${
+                    className={`h-12 px-4 inline-flex items-center justify-center rounded-xl text-xs font-medium border transition-colors ${
                       hideTitleInFullscreen
                         ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
                         : "bg-white/10 border-white/15 text-white/70 hover:text-white hover:bg-white/15"
@@ -522,7 +522,7 @@ export function Dashboard() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => goToDashboardBySwipe("prev")}
-                      className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
+                      className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
                       title="Dashboard précédent"
                     >
                       <svg
@@ -541,7 +541,7 @@ export function Dashboard() {
                     </button>
                     <button
                       onClick={() => goToDashboardBySwipe("next")}
-                      className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
+                      className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
                       title="Dashboard suivant"
                     >
                       <svg
@@ -609,7 +609,7 @@ export function Dashboard() {
                     </Link>
                     <button
                       onClick={() => setEditMode(!editMode)}
-                      className={`group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
+                      className={`group relative h-12 px-6 rounded-xl font-medium inline-flex items-center justify-center transition-all duration-300 hover:scale-105 ${
                         editMode
                           ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/50"
                           : "bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 border border-white/10 hover:border-white/20"
@@ -635,7 +635,7 @@ export function Dashboard() {
                     {editMode && (
                       <button
                         onClick={() => setShowAddModal(true)}
-                        className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
+                        className="group relative h-12 px-6 inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="relative flex items-center gap-2">
