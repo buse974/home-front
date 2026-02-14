@@ -117,59 +117,74 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               }`
         }`}
       >
+        {isOn && (
+          <div className="absolute inset-0 rounded-2xl bg-emerald-500/20 pointer-events-none" />
+        )}
+        {isOn && (
+          <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.2),transparent_42%)] pointer-events-none" />
+        )}
+
         {/* Header */}
-        <div
-          className={`flex items-start justify-between ${isCompact ? "mb-2" : "mb-6"}`}
-        >
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
-              {displayName}
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-lg text-xs text-white/60 font-medium">
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+        <div className="relative z-10">
+          <div
+            className={`flex items-start justify-between ${isCompact ? "mb-2" : "mb-6"}`}
+          >
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
+                {displayName}
+              </h3>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                    isOn
+                      ? "bg-emerald-300/20 text-emerald-50"
+                      : "bg-white/5 text-white/60"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-                {devices[0].type}
-              </span>
-              {devices.length > 1 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-500/20 rounded-lg text-xs text-purple-300 font-medium">
-                  {devices.length} devices
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  {devices[0].type}
+                </span>
+                {devices.length > 1 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-500/20 rounded-lg text-xs text-purple-300 font-medium">
+                    {devices.length} devices
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Status indicator */}
+            <div className="flex items-center gap-2">
+              {isCompact && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide ${
+                    isOn
+                      ? "bg-emerald-400/30 text-emerald-50 border border-emerald-200/40 shadow-[0_0_18px_rgba(34,197,94,0.45)]"
+                      : "bg-white/10 text-white/75 border border-white/20"
+                  }`}
+                >
+                  {loading ? "..." : isOn ? "ON" : "OFF"}
                 </span>
               )}
-            </div>
-          </div>
-
-          {/* Status indicator */}
-          <div className="flex items-center gap-2">
-            {isCompact && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide ${
+              <div
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   isOn
-                    ? "bg-emerald-400/30 text-emerald-50 border border-emerald-200/40 shadow-[0_0_18px_rgba(34,197,94,0.45)]"
-                    : "bg-white/10 text-white/75 border border-white/20"
+                    ? "bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"
+                    : "bg-white/20"
                 }`}
-              >
-                {loading ? "..." : isOn ? "ON" : "OFF"}
-              </span>
-            )}
-            <div
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                isOn
-                  ? "bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"
-                  : "bg-white/20"
-              }`}
-            ></div>
+              ></div>
+            </div>
           </div>
         </div>
 
@@ -177,7 +192,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
           /* Toggle Button */
           <div
             className={`
-              relative w-full flex-1 min-h-0 transition-all duration-300 flex items-center justify-center
+              relative z-10 w-full flex-1 min-h-0 transition-all duration-300 flex items-center justify-center
               ${isActionDisabled ? "opacity-30" : ""}
               ${!loading && !isActionDisabled ? "hover:scale-[1.02] active:scale-[0.98]" : ""}
             `}
@@ -188,13 +203,13 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                 transition-all duration-300
                 ${
                   isOn
-                    ? "bg-gradient-to-r from-fuchsia-500/80 via-violet-500/75 to-cyan-500/80 border-cyan-200/40 shadow-[0_0_35px_rgba(56,189,248,0.55),0_0_70px_rgba(217,70,239,0.35)]"
+                    ? "bg-gradient-to-r from-emerald-400/75 via-green-500/70 to-emerald-600/80 border-emerald-100/45 shadow-[0_0_35px_rgba(34,197,94,0.55),0_0_70px_rgba(22,163,74,0.35)]"
                     : "bg-white/8 border-white/15 shadow-[inset_0_0_18px_rgba(255,255,255,0.06)]"
                 }
               `}
             >
               {isOn && (
-                <div className="absolute -inset-4 bg-gradient-to-r from-fuchsia-500/25 via-cyan-400/25 to-blue-500/25 blur-2xl pointer-events-none" />
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-400/30 via-green-400/25 to-emerald-600/30 blur-2xl pointer-events-none" />
               )}
               {isOn && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
