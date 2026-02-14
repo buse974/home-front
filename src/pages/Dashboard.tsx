@@ -1143,6 +1143,7 @@ function AddWidgetModal({
   const [weatherSuggestions, setWeatherSuggestions] = useState<string[]>([]);
   const [weatherAutocompleteLoading, setWeatherAutocompleteLoading] =
     useState(false);
+  const [photoUrlInput, setPhotoUrlInput] = useState("");
 
   useEffect(() => {
     loadWidgets();
@@ -1213,13 +1214,15 @@ function AddWidgetModal({
     widget?.name === "StateMessage" ||
     widget?.name === "TextTicker" ||
     widget?.name === "Clock" ||
-    widget?.name === "Weather";
+    widget?.name === "Weather" ||
+    widget?.name === "PhotoFrame";
 
   const widgetNeedsDevice = (widget: Widget | null) =>
     widget
       ? widget.name === "TextTicker" ||
         widget.name === "Clock" ||
-        widget.name === "Weather"
+        widget.name === "Weather" ||
+        widget.name === "PhotoFrame"
         ? false
         : widget.requiresDevice !== false
       : false;
@@ -1258,6 +1261,13 @@ function AddWidgetModal({
     if (widget.name === "Clock") {
       return {
         clockMode: "analog",
+      };
+    }
+
+    if (widget.name === "PhotoFrame") {
+      return {
+        photos: [],
+        intervalSeconds: 6,
       };
     }
 
@@ -1315,6 +1325,7 @@ function AddWidgetModal({
     setSelectedWidget(widget);
     setSelectedDevices([]);
     setWidgetConfig(getDefaultConfig(widget));
+    setPhotoUrlInput("");
 
     if (widgetNeedsDevice(widget)) {
       await loadAllDevices();
@@ -1408,6 +1419,56 @@ function AddWidgetModal({
     }
 
     await handleAddWidget();
+  };
+
+  const handleAddPhotoUrl = () => {
+    const value = photoUrlInput.trim();
+    if (!value) return;
+    setWidgetConfig((prev: any) => ({
+      ...prev,
+      photos: [...(Array.isArray(prev.photos) ? prev.photos : []), value],
+    }));
+    setPhotoUrlInput("");
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setWidgetConfig((prev: any) => ({
+      ...prev,
+      photos: (Array.isArray(prev.photos) ? prev.photos : []).filter(
+        (_: string, i: number) => i !== index,
+      ),
+    }));
+  };
+
+  const handleUploadPhotos = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const readAsDataUrl = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("File read failed"));
+        reader.readAsDataURL(file);
+      });
+
+    try {
+      const uploaded = await Promise.all(files.map((f) => readAsDataUrl(f)));
+      setWidgetConfig((prev: any) => ({
+        ...prev,
+        photos: [
+          ...(Array.isArray(prev.photos) ? prev.photos : []),
+          ...uploaded,
+        ],
+      }));
+    } catch (error) {
+      console.error("Failed to load photos:", error);
+      alert("Impossible de charger certaines photos");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   return (
@@ -1632,6 +1693,10 @@ function AddWidgetModal({
                         Weather: {
                           gradient: "from-sky-500/20 to-cyan-500/20",
                           icon: "🌤️",
+                        },
+                        PhotoFrame: {
+                          gradient: "from-pink-500/20 to-rose-500/20",
+                          icon: "🖼️",
                         },
                       };
 
@@ -2063,6 +2128,109 @@ function AddWidgetModal({
                         </button>
                       ))}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedWidget.name === "PhotoFrame" && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Ajouter une URL photo
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={photoUrlInput}
+                        onChange={(e) => setPhotoUrlInput(e.target.value)}
+                        placeholder="https://..."
+                        className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                      <button
+                        onClick={handleAddPhotoUrl}
+                        className="px-4 py-3 rounded-xl bg-purple-500/80 hover:bg-purple-500 text-white text-sm font-medium transition-colors"
+                      >
+                        Ajouter
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Importer des photos
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => void handleUploadPhotos(e)}
+                      className="w-full text-sm text-white/80 file:mr-3 file:px-4 file:py-2.5 file:rounded-lg file:border-0 file:bg-white/15 file:text-white hover:file:bg-white/25"
+                    />
+                    <p className="text-xs text-white/50 mt-2">
+                      Les photos importées sont stockées dans la config du
+                      widget côté API (base de données).
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Vitesse de défilement (secondes)
+                    </label>
+                    <input
+                      type="range"
+                      min={2}
+                      max={20}
+                      step={1}
+                      value={widgetConfig.intervalSeconds || 6}
+                      onChange={(e) =>
+                        setWidgetConfig({
+                          ...widgetConfig,
+                          intervalSeconds: Number(e.target.value),
+                        })
+                      }
+                      className="w-full"
+                    />
+                    <p className="text-xs text-white/50 mt-1">
+                      {widgetConfig.intervalSeconds || 6}s
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Photos (
+                      {Array.isArray(widgetConfig.photos)
+                        ? widgetConfig.photos.length
+                        : 0}
+                      )
+                    </label>
+                    {Array.isArray(widgetConfig.photos) &&
+                    widgetConfig.photos.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-3">
+                        {widgetConfig.photos.map((src: string, i: number) => (
+                          <div
+                            key={`${i}-${src.slice(0, 20)}`}
+                            className="relative rounded-xl overflow-hidden border border-white/10 bg-black/30 h-24"
+                          >
+                            <img
+                              src={src}
+                              alt={`Photo ${i + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              onClick={() => handleRemovePhoto(i)}
+                              className="absolute top-1 right-1 w-6 h-6 rounded-md bg-black/65 text-white text-xs hover:bg-black/85"
+                              title="Supprimer"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-white/55">
+                        Aucune photo ajoutée.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
