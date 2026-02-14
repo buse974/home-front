@@ -150,7 +150,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide ${
                   isOn
-                    ? "bg-blue-500/30 text-blue-100 border border-blue-300/30"
+                    ? "bg-cyan-400/30 text-cyan-50 border border-cyan-200/40 shadow-[0_0_18px_rgba(34,211,238,0.45)]"
                     : "bg-white/10 text-white/75 border border-white/20"
                 }`}
               >
@@ -182,11 +182,14 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                 transition-all duration-300
                 ${
                   isOn
-                    ? "bg-gradient-to-r from-purple-500/70 to-blue-500/70 border-white/20 shadow-xl shadow-blue-500/25"
-                    : "bg-white/8 border-white/15"
+                    ? "bg-gradient-to-r from-fuchsia-500/80 via-violet-500/75 to-cyan-500/80 border-cyan-200/40 shadow-[0_0_35px_rgba(56,189,248,0.55),0_0_70px_rgba(217,70,239,0.35)]"
+                    : "bg-white/8 border-white/15 shadow-[inset_0_0_18px_rgba(255,255,255,0.06)]"
                 }
               `}
             >
+              {isOn && (
+                <div className="absolute -inset-4 bg-gradient-to-r from-fuchsia-500/25 via-cyan-400/25 to-blue-500/25 blur-2xl pointer-events-none" />
+              )}
               {isOn && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               )}
