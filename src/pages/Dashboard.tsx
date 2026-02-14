@@ -1700,6 +1700,14 @@ function AddWidgetModal({
                           gradient: "from-pink-500/20 to-rose-500/20",
                           icon: "🖼️",
                         },
+                        ColorSlider: {
+                          gradient: "from-fuchsia-500/20 to-cyan-500/20",
+                          icon: "🎨",
+                        },
+                        WhiteSlider: {
+                          gradient: "from-amber-500/20 to-sky-500/20",
+                          icon: "🤍",
+                        },
                       };
 
                       const visual = widgetVisuals[widget.name] || {

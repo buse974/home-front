@@ -10,6 +10,8 @@ import { TextTicker } from "./TextTicker/TextTicker";
 import { Clock } from "./Clock/Clock";
 import { Weather } from "./Weather/Weather";
 import { PhotoFrame } from "./PhotoFrame/PhotoFrame";
+import { ColorSlider } from "./ColorSlider/ColorSlider";
+import { WhiteSlider } from "./WhiteSlider/WhiteSlider";
 
 /**
  * Registry des widgets disponibles
@@ -34,6 +36,8 @@ export const widgetRegistry: WidgetRegistryMap = {
   Clock: Clock,
   Weather: Weather,
   PhotoFrame: PhotoFrame,
+  ColorSlider: ColorSlider,
+  WhiteSlider: WhiteSlider,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // etc.

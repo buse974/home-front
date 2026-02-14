@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import type { WidgetComponentProps } from "../../types";
 import { api } from "../../services/api";
 import { useWidgetRealtimeState } from "../hooks/useWidgetRealtimeState";
@@ -18,10 +18,6 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
 
   // Vérifier si au moins un device a la capability toggle
   const hasToggleCapability = devices.some((d) => d.capabilities?.toggle);
-  const hasColorCapability = devices.some((d) => d.capabilities?.color);
-  const hasTemperatureCapability = devices.some(
-    (d) => d.capabilities?.temperature,
-  );
 
   // Log capability error with full device details
   useEffect(() => {
@@ -75,119 +71,6 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
   const widgetWidth = dashboardWidget.position?.w ?? 2;
   const widgetHeight = dashboardWidget.position?.h ?? 2;
   const isCompact = widgetHeight <= 1 || widgetWidth <= 1;
-  const [hue, setHue] = useState(145);
-  const [whiteTone, setWhiteTone] = useState(50);
-  const [isSendingColor, setIsSendingColor] = useState(false);
-  const [isSendingWhiteTone, setIsSendingWhiteTone] = useState(false);
-  const colorTimeoutRef = useRef<number | null>(null);
-  const whiteToneTimeoutRef = useRef<number | null>(null);
-
-  const hslToHex = (h: number, s: number, l: number) => {
-    const saturation = s / 100;
-    const lightness = l / 100;
-    const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
-    const prime = h / 60;
-    const x = chroma * (1 - Math.abs((prime % 2) - 1));
-    let red = 0;
-    let green = 0;
-    let blue = 0;
-
-    if (prime >= 0 && prime < 1) {
-      red = chroma;
-      green = x;
-    } else if (prime >= 1 && prime < 2) {
-      red = x;
-      green = chroma;
-    } else if (prime >= 2 && prime < 3) {
-      green = chroma;
-      blue = x;
-    } else if (prime >= 3 && prime < 4) {
-      green = x;
-      blue = chroma;
-    } else if (prime >= 4 && prime < 5) {
-      red = x;
-      blue = chroma;
-    } else {
-      red = chroma;
-      blue = x;
-    }
-
-    const match = lightness - chroma / 2;
-    const toHex = (value: number) =>
-      Math.round((value + match) * 255)
-        .toString(16)
-        .padStart(2, "0");
-
-    return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
-  };
-
-  const applyHue = async (nextHue: number) => {
-    if (!hasColorCapability) return;
-
-    setIsSendingColor(true);
-    try {
-      const hex = hslToHex(nextHue, 90, 56);
-      await api.executeWidgetCommand(dashboardWidget.id, "color", {
-        value: hex,
-        hex,
-        color: hex,
-        hue: nextHue,
-      });
-      await refresh();
-    } catch (error) {
-      console.error("Failed to set color:", error);
-    } finally {
-      setIsSendingColor(false);
-    }
-  };
-
-  const applyWhiteTone = async (nextTone: number) => {
-    if (!hasTemperatureCapability) return;
-
-    setIsSendingWhiteTone(true);
-    try {
-      const kelvin = Math.round(2200 + (nextTone / 100) * (6500 - 2200));
-      await api.executeWidgetCommand(dashboardWidget.id, "temperature", {
-        value: nextTone,
-        kelvin,
-      });
-      await refresh();
-    } catch (error) {
-      console.error("Failed to set white tone:", error);
-    } finally {
-      setIsSendingWhiteTone(false);
-    }
-  };
-
-  const scheduleHueApply = (nextHue: number) => {
-    if (colorTimeoutRef.current) {
-      window.clearTimeout(colorTimeoutRef.current);
-    }
-    colorTimeoutRef.current = window.setTimeout(() => {
-      void applyHue(nextHue);
-    }, 180);
-  };
-
-  const scheduleWhiteToneApply = (nextTone: number) => {
-    if (whiteToneTimeoutRef.current) {
-      window.clearTimeout(whiteToneTimeoutRef.current);
-    }
-    whiteToneTimeoutRef.current = window.setTimeout(() => {
-      void applyWhiteTone(nextTone);
-    }, 180);
-  };
-
-  useEffect(
-    () => () => {
-      if (colorTimeoutRef.current) {
-        window.clearTimeout(colorTimeoutRef.current);
-      }
-      if (whiteToneTimeoutRef.current) {
-        window.clearTimeout(whiteToneTimeoutRef.current);
-      }
-    },
-    [],
-  );
 
   const handleCardClick = () => {
     if (isActionDisabled) return;
@@ -387,85 +270,6 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {!isCompact && (hasColorCapability || hasTemperatureCapability) && (
-          <div
-            className="relative z-10 mt-3 p-3 rounded-xl border border-white/15 bg-black/15 backdrop-blur-sm space-y-3"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            {hasColorCapability && (
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] uppercase tracking-[0.2em] text-white/65">
-                    Neon Color
-                  </span>
-                  <span
-                    className="inline-flex items-center gap-1.5 text-[11px] text-white/80 font-medium"
-                    style={{ color: hslToHex(hue, 90, 70) }}
-                  >
-                    {isSendingColor ? "..." : "Live"}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={360}
-                  step={1}
-                  value={hue}
-                  onChange={(event) => {
-                    const nextHue = Number(event.target.value);
-                    setHue(nextHue);
-                    scheduleHueApply(nextHue);
-                  }}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, #ff3f3f 0%, #ffd93f 17%, #52ff3f 33%, #3fffd6 50%, #3f7bff 67%, #b13fff 83%, #ff3f8f 100%)",
-                  }}
-                />
-              </div>
-            )}
-
-            {hasTemperatureCapability && (
-              <div>
-                <div className="flex items-center justify-between mb-1.5 text-[11px] text-white/70">
-                  <span className="uppercase tracking-[0.2em]">White Tone</span>
-                  <span className="font-semibold text-white/85">
-                    {isSendingWhiteTone
-                      ? "..."
-                      : whiteTone < 35
-                        ? "Warm"
-                        : whiteTone > 65
-                          ? "Cool"
-                          : "Neutral"}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={whiteTone}
-                  onChange={(event) => {
-                    const nextTone = Number(event.target.value);
-                    setWhiteTone(nextTone);
-                    scheduleWhiteToneApply(nextTone);
-                  }}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, #ffb366 0%, #ffdca8 45%, #f6f6f6 55%, #d6ecff 100%)",
-                  }}
-                />
-                <div className="mt-1 flex items-center justify-between text-[10px] text-white/50 uppercase tracking-[0.18em]">
-                  <span>Warm</span>
-                  <span>Cool</span>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
