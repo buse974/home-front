@@ -53,6 +53,8 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   const [hue, setHue] = useState(145);
   const [isSending, setIsSending] = useState(false);
   const debounceRef = useRef<number | null>(null);
+  const wheelRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
 
   const { anyOn: isOn, refresh } = useWidgetRealtimeState(
     dashboardWidget.id,
@@ -96,6 +98,36 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
     [],
   );
 
+  useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      if (!isDraggingRef.current) return;
+      const wheel = wheelRef.current;
+      if (!wheel) return;
+
+      const rect = wheel.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const angleDeg =
+        (Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180) /
+        Math.PI;
+      const nextHue = (Math.round(angleDeg + 450) + 360) % 360;
+      setHue(nextHue);
+      scheduleApply(nextHue);
+    };
+
+    const onPointerUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, []);
+
   if (devices.length === 0) {
     return (
       <div className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-red-500/20">
@@ -105,6 +137,9 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   }
 
   const previewColor = hslToHex(hue, 90, 58);
+  const knobAngle = ((hue - 90) * Math.PI) / 180;
+  const knobX = 50 + Math.cos(knobAngle) * 38;
+  const knobY = 50 + Math.sin(knobAngle) * 38;
 
   return (
     <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
@@ -120,7 +155,7 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
           <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
             {displayName}
           </h3>
-          <p className="text-xs text-white/45">Neon color slider</p>
+          <p className="text-xs text-white/45">Neon color wheel</p>
           {!hasColorCapability && (
             <p className="text-[11px] text-amber-200/75 mt-1">
               Capability not detected, trying anyway
@@ -147,23 +182,45 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
           </span>
         </div>
 
-        <input
-          type="range"
-          min={0}
-          max={360}
-          step={1}
-          value={hue}
-          onChange={(event) => {
-            const nextHue = Number(event.target.value);
-            setHue(nextHue);
-            scheduleApply(nextHue);
-          }}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-          style={{
-            background:
-              "linear-gradient(90deg, #ff3f3f 0%, #ffd93f 17%, #52ff3f 33%, #3fffd6 50%, #3f7bff 67%, #b13fff 83%, #ff3f8f 100%)",
-          }}
-        />
+        <div className="grid place-items-center pt-1">
+          <div
+            ref={wheelRef}
+            className="relative w-[170px] h-[170px] rounded-full cursor-pointer touch-none select-none"
+            style={{
+              background:
+                "conic-gradient(from -90deg, #ff3f3f, #ffd93f, #52ff3f, #3fffd6, #3f7bff, #b13fff, #ff3f8f, #ff3f3f)",
+            }}
+            onPointerDown={(event) => {
+              isDraggingRef.current = true;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              const rect = event.currentTarget.getBoundingClientRect();
+              const centerX = rect.left + rect.width / 2;
+              const centerY = rect.top + rect.height / 2;
+              const angleDeg =
+                (Math.atan2(event.clientY - centerY, event.clientX - centerX) *
+                  180) /
+                Math.PI;
+              const nextHue = (Math.round(angleDeg + 450) + 360) % 360;
+              setHue(nextHue);
+              scheduleApply(nextHue);
+            }}
+          >
+            <div className="absolute inset-[18px] rounded-full bg-[#251b4f]/85 border border-white/15 backdrop-blur-sm grid place-items-center">
+              <div
+                className="w-14 h-14 rounded-full border border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.25)]"
+                style={{ backgroundColor: previewColor }}
+              />
+            </div>
+            <div
+              className="absolute w-6 h-6 rounded-full border-2 border-white shadow-[0_0_15px_rgba(255,255,255,0.8)] -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${knobX}%`,
+                top: `${knobY}%`,
+                backgroundColor: previewColor,
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
