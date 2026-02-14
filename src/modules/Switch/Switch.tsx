@@ -96,7 +96,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
     <div className="group relative h-full flex flex-col">
       {/* Glow effect when ON */}
       {isOn && (
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-2xl blur-xl transition-opacity duration-500"></div>
+        <div className="absolute -inset-2 bg-[radial-gradient(circle_at_50%_45%,rgba(34,197,94,0.55),rgba(34,197,94,0.18)_45%,rgba(16,185,129,0.10)_70%,transparent_100%)] rounded-3xl blur-xl transition-opacity duration-500 pointer-events-none"></div>
       )}
 
       <div
@@ -105,10 +105,16 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         aria-disabled={isActionDisabled}
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
-        className={`relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 transition-all duration-300 ${
+        className={`relative h-full flex flex-col p-6 backdrop-blur-xl rounded-2xl border transition-all duration-300 ${
+          isOn
+            ? "bg-gradient-to-br from-emerald-400/22 via-emerald-500/14 to-cyan-500/18 border-emerald-300/45 shadow-[0_0_38px_rgba(34,197,94,0.38),inset_0_0_40px_rgba(16,185,129,0.14)]"
+            : "bg-white/5 border-white/10"
+        } ${
           isActionDisabled
             ? "opacity-80 cursor-not-allowed"
-            : "cursor-pointer hover:border-white/20 hover:scale-[1.02]"
+            : `cursor-pointer hover:scale-[1.02] ${
+                isOn ? "hover:border-emerald-200/65" : "hover:border-white/20"
+              }`
         }`}
       >
         {/* Header */}
@@ -150,7 +156,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide ${
                   isOn
-                    ? "bg-cyan-400/30 text-cyan-50 border border-cyan-200/40 shadow-[0_0_18px_rgba(34,211,238,0.45)]"
+                    ? "bg-emerald-400/30 text-emerald-50 border border-emerald-200/40 shadow-[0_0_18px_rgba(34,197,94,0.45)]"
                     : "bg-white/10 text-white/75 border border-white/20"
                 }`}
               >
