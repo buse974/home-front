@@ -14,7 +14,6 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
     const timer = window.setInterval(() => {
       setNow(new Date());
     }, 1000);
-
     return () => window.clearInterval(timer);
   }, []);
 
@@ -32,7 +31,6 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
     updateBounds();
     const observer = new ResizeObserver(updateBounds);
     observer.observe(node);
-
     return () => observer.disconnect();
   }, []);
 
@@ -59,7 +57,7 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
   const secondDeg = seconds * 6;
 
   const analogSize = useMemo(() => {
-    const available = Math.min(bounds.width - 24, bounds.height - 90);
+    const available = Math.min(bounds.width - 24, bounds.height - 92);
     return Math.max(120, Math.min(available, 320));
   }, [bounds.height, bounds.width]);
 
@@ -75,63 +73,66 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
       ref={containerRef}
       className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-white/2 to-violet-500/8" />
-      <div className="absolute -top-16 -right-16 w-40 h-40 bg-cyan-400/15 rounded-full blur-3xl" />
-      <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-blue-500/15 rounded-full blur-3xl" />
-      <div className="absolute top-1/2 left-1/2 w-[78%] h-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/8 blur-3xl animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45" />
+      <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
 
       <div className="relative z-10 flex-1 min-h-0 grid place-items-center">
         {mode === "analog" ? (
           <div
-            className="relative rounded-full border border-cyan-200/25 bg-gradient-to-br from-white/20 via-white/6 to-black/20 shadow-[0_18px_60px_rgba(6,12,30,0.55)] clock-float"
+            className="relative rounded-full border border-white/20 bg-gradient-to-br from-white/12 via-white/3 to-black/50 shadow-[0_20px_55px_rgba(0,0,0,0.55)] clock-float"
             style={{ width: analogSize, height: analogSize }}
           >
-            <div className="absolute inset-[3.5%] rounded-full border border-white/15 bg-black/35" />
-            <div className="absolute inset-[10%] rounded-full border border-cyan-200/25 bg-gradient-to-br from-cyan-300/10 to-transparent" />
+            <div className="absolute inset-[3.5%] rounded-full border border-white/20 bg-slate-950/75" />
+            <div className="absolute inset-[8.5%] rounded-full border border-white/10" />
+            <div className="absolute inset-[14%] rounded-full border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent" />
 
             {tickMarks.map((_, index) => {
               const deg = index * 30;
+              const major = index % 3 === 0;
               return (
                 <div
                   key={deg}
-                  className="absolute left-1/2 top-1/2 w-[1.6%] h-[7.2%] origin-bottom rounded-full bg-white/65"
+                  className={`absolute left-1/2 top-1/2 origin-bottom rounded-full ${
+                    major
+                      ? "w-[1.9%] h-[8.8%] bg-white/75"
+                      : "w-[1.3%] h-[6.4%] bg-white/45"
+                  }`}
                   style={{
-                    transform: `translate(-50%, -100%) rotate(${deg}deg) translateY(-42%)`,
+                    transform: `translate(-50%, -100%) rotate(${deg}deg) translateY(-44%)`,
                   }}
                 />
               );
             })}
 
             <div
-              className="absolute left-1/2 top-1/2 w-[2.8%] h-[26%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.45)]"
-              style={{
-                transform: `translate(-50%, -100%) rotate(${hourDeg}deg)`,
-              }}
+              className="absolute left-1/2 top-1/2 w-[2.5%] h-[26%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-white"
+              style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }}
             />
             <div
-              className="absolute left-1/2 top-1/2 w-[1.7%] h-[36%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-cyan-200 shadow-[0_0_14px_rgba(103,232,249,0.45)]"
+              className="absolute left-1/2 top-1/2 w-[1.4%] h-[36%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-slate-200"
               style={{
                 transform: `translate(-50%, -100%) rotate(${minuteDeg}deg)`,
               }}
             />
             <div
-              className="absolute left-1/2 top-1/2 w-[1%] h-[41%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-rose-300"
+              className="absolute left-1/2 top-1/2 w-[0.9%] h-[41%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-amber-300"
               style={{
                 transform: `translate(-50%, -100%) rotate(${secondDeg}deg)`,
               }}
             />
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[8%] h-[8%] rounded-full bg-white border-2 border-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.75)]" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[8%] h-[8%] rounded-full bg-slate-100 border-2 border-white/70" />
           </div>
         ) : (
-          <div className="w-full max-w-[92%] rounded-3xl border border-cyan-200/25 bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-violet-500/20 p-6 text-center shadow-[0_16px_50px_rgba(6,12,30,0.55)]">
+          <div className="w-full max-w-[92%] rounded-3xl border border-white/20 bg-gradient-to-r from-slate-900/80 via-slate-800/70 to-slate-900/80 p-6 text-center shadow-[0_16px_50px_rgba(0,0,0,0.55)]">
             <p
-              className="font-black text-cyan-100 leading-none tracking-[0.04em] drop-shadow-[0_0_16px_rgba(103,232,249,0.45)]"
+              className="font-black text-white leading-none tracking-[0.06em]"
               style={{ fontSize: `${digitalSize}px` }}
             >
               {time}
             </p>
-            <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/60">
+            <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/45">
               Digital
             </p>
           </div>
@@ -139,19 +140,19 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
       </div>
 
       <div className="relative z-10 text-center mt-3">
-        <p className="text-xs uppercase tracking-[0.22em] text-white/60">
+        <p className="text-xs uppercase tracking-[0.22em] text-white/55">
           {dashboardWidget.name || "Horloge"}
         </p>
-        <p className="mt-1 text-xs text-white/65">{date}</p>
+        <p className="mt-1 text-xs text-white/55">{date}</p>
       </div>
 
       <style>{`
         .clock-float {
-          animation: clock-float 5.2s ease-in-out infinite;
+          animation: clock-float 7.2s ease-in-out infinite;
         }
         @keyframes clock-float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
+          50% { transform: translateY(-4px); }
         }
       `}</style>
     </div>
