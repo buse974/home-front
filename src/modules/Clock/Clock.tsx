@@ -109,7 +109,7 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[8%] h-[8%] rounded-full bg-slate-100 border-2 border-white/70" />
           </div>
         ) : (
-          <div className="w-full max-w-[92%] rounded-3xl border border-white/20 bg-gradient-to-r from-slate-900/80 via-slate-800/70 to-slate-900/80 p-6 text-center shadow-[0_16px_50px_rgba(0,0,0,0.55)]">
+          <div className="w-full max-w-[92%] rounded-3xl bg-gradient-to-r from-slate-900/80 via-slate-800/70 to-slate-900/80 p-6 text-center shadow-[0_16px_50px_rgba(0,0,0,0.55)]">
             <p
               className="font-black text-white leading-none tracking-[0.06em]"
               style={{ fontSize: `${digitalSize}px` }}
