@@ -96,7 +96,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
     <div className="group relative h-full flex flex-col">
       {/* Glow effect when ON */}
       {isOn && (
-        <div className="absolute -inset-2 bg-[radial-gradient(circle_at_50%_45%,rgba(34,197,94,0.55),rgba(34,197,94,0.18)_45%,rgba(16,185,129,0.10)_70%,transparent_100%)] rounded-3xl blur-xl transition-opacity duration-500 pointer-events-none"></div>
+        <div className="absolute -inset-2 bg-[radial-gradient(circle_at_50%_45%,rgba(34,197,94,0.7),rgba(34,197,94,0.32)_45%,rgba(22,163,74,0.18)_70%,transparent_100%)] rounded-3xl blur-xl transition-opacity duration-500 pointer-events-none"></div>
       )}
 
       <div
@@ -107,7 +107,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         onKeyDown={handleCardKeyDown}
         className={`relative h-full flex flex-col p-6 backdrop-blur-xl rounded-2xl border transition-all duration-300 ${
           isOn
-            ? "bg-gradient-to-br from-emerald-400/22 via-emerald-500/14 to-cyan-500/18 border-emerald-300/45 shadow-[0_0_38px_rgba(34,197,94,0.38),inset_0_0_40px_rgba(16,185,129,0.14)]"
+            ? "bg-gradient-to-br from-emerald-400/38 via-emerald-500/28 to-green-700/28 border-emerald-200/60 shadow-[0_0_42px_rgba(34,197,94,0.45),inset_0_0_48px_rgba(22,163,74,0.22)]"
             : "bg-white/5 border-white/10"
         } ${
           isActionDisabled
