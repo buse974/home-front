@@ -46,7 +46,9 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   const devices = dashboardWidget.GenericDevices || [];
   const displayName =
     dashboardWidget.name || devices.map((device) => device.name).join(", ");
-  const hasColorCapability = devices.some((device) => device.capabilities?.color);
+  const hasColorCapability = devices.some(
+    (device) => device.capabilities?.color,
+  );
 
   const [hue, setHue] = useState(145);
   const [isSending, setIsSending] = useState(false);
@@ -58,8 +60,6 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   );
 
   const applyHue = async (nextHue: number) => {
-    if (!hasColorCapability) return;
-
     setIsSending(true);
     try {
       const hex = hslToHex(nextHue, 90, 56);
@@ -104,19 +104,6 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
-  if (!hasColorCapability) {
-    return (
-      <div className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-amber-500/25">
-        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-          {displayName}
-        </h3>
-        <p className="text-amber-300/90 text-sm">
-          This light does not support color control.
-        </p>
-      </div>
-    );
-  }
-
   const previewColor = hslToHex(hue, 90, 58);
 
   return (
@@ -134,10 +121,17 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
             {displayName}
           </h3>
           <p className="text-xs text-white/45">Neon color slider</p>
+          {!hasColorCapability && (
+            <p className="text-[11px] text-amber-200/75 mt-1">
+              Capability not detected, trying anyway
+            </p>
+          )}
         </div>
         <div
           className={`w-2.5 h-2.5 rounded-full ${
-            isOn ? "bg-emerald-400 shadow-lg shadow-emerald-400/50" : "bg-white/20"
+            isOn
+              ? "bg-emerald-400 shadow-lg shadow-emerald-400/50"
+              : "bg-white/20"
           }`}
         />
       </div>
@@ -145,7 +139,10 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
       <div className="relative mt-auto">
         <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-white/65 mb-2">
           <span>Color</span>
-          <span style={{ color: previewColor }} className="font-semibold normal-case tracking-normal">
+          <span
+            style={{ color: previewColor }}
+            className="font-semibold normal-case tracking-normal"
+          >
             {isSending ? "..." : previewColor}
           </span>
         </div>

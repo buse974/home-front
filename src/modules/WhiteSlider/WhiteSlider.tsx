@@ -21,8 +21,6 @@ export function WhiteSlider({ dashboardWidget }: WidgetComponentProps) {
   );
 
   const applyWhiteTone = async (nextTone: number) => {
-    if (!hasTemperatureCapability) return;
-
     setIsSending(true);
     try {
       const kelvin = Math.round(2200 + (nextTone / 100) * (6500 - 2200));
@@ -65,19 +63,6 @@ export function WhiteSlider({ dashboardWidget }: WidgetComponentProps) {
     );
   }
 
-  if (!hasTemperatureCapability) {
-    return (
-      <div className="p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-amber-500/25">
-        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-          {displayName}
-        </h3>
-        <p className="text-amber-300/90 text-sm">
-          This light does not support warm/cool white control.
-        </p>
-      </div>
-    );
-  }
-
   const toneLabel =
     whiteTone < 35 ? "Warm white" : whiteTone > 65 ? "Cool white" : "Neutral";
 
@@ -91,10 +76,17 @@ export function WhiteSlider({ dashboardWidget }: WidgetComponentProps) {
             {displayName}
           </h3>
           <p className="text-xs text-white/45">Warm to cool white</p>
+          {!hasTemperatureCapability && (
+            <p className="text-[11px] text-amber-200/75 mt-1">
+              Capability not detected, trying anyway
+            </p>
+          )}
         </div>
         <div
           className={`w-2.5 h-2.5 rounded-full ${
-            isOn ? "bg-emerald-400 shadow-lg shadow-emerald-400/50" : "bg-white/20"
+            isOn
+              ? "bg-emerald-400 shadow-lg shadow-emerald-400/50"
+              : "bg-white/20"
           }`}
         />
       </div>
