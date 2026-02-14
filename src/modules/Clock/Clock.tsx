@@ -68,28 +68,48 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
     return Math.max(28, Math.min(available, 72));
   }, [bounds.height, bounds.width]);
 
+  const tickMarks = useMemo(() => Array.from({ length: 12 }), []);
+
   return (
     <div
       ref={containerRef}
       className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-white/2 to-violet-500/8" />
       <div className="absolute -top-16 -right-16 w-40 h-40 bg-cyan-400/15 rounded-full blur-3xl" />
       <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-blue-500/15 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 w-[78%] h-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/8 blur-3xl animate-pulse" />
 
       <div className="relative z-10 flex-1 min-h-0 grid place-items-center">
         {mode === "analog" ? (
           <div
-            className="relative rounded-full border border-white/20 bg-gradient-to-br from-white/12 to-white/4 shadow-[0_16px_50px_rgba(6,12,30,0.45)]"
+            className="relative rounded-full border border-cyan-200/25 bg-gradient-to-br from-white/20 via-white/6 to-black/20 shadow-[0_18px_60px_rgba(6,12,30,0.55)] clock-float"
             style={{ width: analogSize, height: analogSize }}
           >
-            <div className="absolute inset-[8%] rounded-full border border-white/10 bg-black/20" />
+            <div className="absolute inset-[3.5%] rounded-full border border-white/15 bg-black/35" />
+            <div className="absolute inset-[10%] rounded-full border border-cyan-200/25 bg-gradient-to-br from-cyan-300/10 to-transparent" />
+
+            {tickMarks.map((_, index) => {
+              const deg = index * 30;
+              return (
+                <div
+                  key={deg}
+                  className="absolute left-1/2 top-1/2 w-[1.6%] h-[7.2%] origin-bottom rounded-full bg-white/65"
+                  style={{
+                    transform: `translate(-50%, -100%) rotate(${deg}deg) translateY(-42%)`,
+                  }}
+                />
+              );
+            })}
 
             <div
-              className="absolute left-1/2 top-1/2 w-[2.6%] h-[27%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-white/85"
-              style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }}
+              className="absolute left-1/2 top-1/2 w-[2.8%] h-[26%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.45)]"
+              style={{
+                transform: `translate(-50%, -100%) rotate(${hourDeg}deg)`,
+              }}
             />
             <div
-              className="absolute left-1/2 top-1/2 w-[1.6%] h-[36%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-cyan-200"
+              className="absolute left-1/2 top-1/2 w-[1.7%] h-[36%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-cyan-200 shadow-[0_0_14px_rgba(103,232,249,0.45)]"
               style={{
                 transform: `translate(-50%, -100%) rotate(${minuteDeg}deg)`,
               }}
@@ -101,15 +121,18 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
               }}
             />
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[7%] h-[7%] rounded-full bg-white border-2 border-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.65)]" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[8%] h-[8%] rounded-full bg-white border-2 border-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.75)]" />
           </div>
         ) : (
-          <div className="w-full max-w-[92%] rounded-2xl border border-white/20 bg-gradient-to-r from-cyan-500/15 to-blue-500/15 p-5 text-center shadow-[0_14px_40px_rgba(6,12,30,0.45)]">
+          <div className="w-full max-w-[92%] rounded-3xl border border-cyan-200/25 bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-violet-500/20 p-6 text-center shadow-[0_16px_50px_rgba(6,12,30,0.55)]">
             <p
-              className="font-black text-cyan-100 leading-none tracking-tight"
+              className="font-black text-cyan-100 leading-none tracking-[0.04em] drop-shadow-[0_0_16px_rgba(103,232,249,0.45)]"
               style={{ fontSize: `${digitalSize}px` }}
             >
               {time}
+            </p>
+            <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/60">
+              Digital
             </p>
           </div>
         )}
@@ -121,6 +144,16 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
         </p>
         <p className="mt-1 text-xs text-white/65">{date}</p>
       </div>
+
+      <style>{`
+        .clock-float {
+          animation: clock-float 5.2s ease-in-out infinite;
+        }
+        @keyframes clock-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+      `}</style>
     </div>
   );
 }
