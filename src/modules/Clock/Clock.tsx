@@ -66,8 +66,6 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
     return Math.max(28, Math.min(available, 72));
   }, [bounds.height, bounds.width]);
 
-  const tickMarks = useMemo(() => Array.from({ length: 12 }), []);
-
   return (
     <div
       ref={containerRef}
@@ -86,31 +84,17 @@ export function Clock({ dashboardWidget }: WidgetComponentProps) {
             <div className="absolute inset-[3.5%] rounded-full border border-white/20 bg-slate-950/75" />
             <div className="absolute inset-[8.5%] rounded-full border border-white/10" />
             <div className="absolute inset-[14%] rounded-full border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent" />
-
-            {tickMarks.map((_, index) => {
-              const deg = index * 30;
-              const major = index % 3 === 0;
-              return (
-                <div
-                  key={deg}
-                  className={`absolute left-1/2 top-1/2 origin-bottom rounded-full ${
-                    major
-                      ? "w-[1.9%] h-[8.8%] bg-white/75"
-                      : "w-[1.3%] h-[6.4%] bg-white/45"
-                  }`}
-                  style={{
-                    transform: `translate(-50%, -100%) rotate(${deg}deg) translateY(-44%)`,
-                  }}
-                />
-              );
-            })}
+            <div className="absolute inset-[18%] rounded-full border border-cyan-300/35 shadow-[0_0_16px_rgba(103,232,249,0.22)]" />
+            <div className="absolute inset-[24%] rounded-full border border-violet-300/20" />
 
             <div
               className="absolute left-1/2 top-1/2 w-[2.5%] h-[26%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-white"
-              style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }}
+              style={{
+                transform: `translate(-50%, -100%) rotate(${hourDeg}deg)`,
+              }}
             />
             <div
-              className="absolute left-1/2 top-1/2 w-[1.4%] h-[36%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-slate-200"
+              className="absolute left-1/2 top-1/2 w-[1.4%] h-[36%] -translate-x-1/2 -translate-y-full origin-bottom rounded-full bg-cyan-200"
               style={{
                 transform: `translate(-50%, -100%) rotate(${minuteDeg}deg)`,
               }}

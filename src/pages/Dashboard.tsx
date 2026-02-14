@@ -392,6 +392,50 @@ export function Dashboard() {
     }
   };
 
+  const handleToggleClockMode = async (widgetId: string) => {
+    if (!dashboard) return;
+
+    const targetWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === widgetId,
+    );
+    if (!targetWidget) return;
+
+    const currentConfig = targetWidget.config || {};
+    const currentMode =
+      currentConfig.clockMode === "digital" ? "digital" : "analog";
+    const nextMode = currentMode === "analog" ? "digital" : "analog";
+    const nextConfig = {
+      ...currentConfig,
+      clockMode: nextMode,
+    };
+
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+          w.id === widgetId ? { ...w, config: nextConfig } : w,
+        ),
+      };
+    });
+
+    try {
+      await api.updateWidget(widgetId, { config: nextConfig });
+    } catch (error) {
+      console.error("Failed to update clock mode:", error);
+      setDashboard((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+            w.id === widgetId ? { ...w, config: currentConfig } : w,
+          ),
+        };
+      });
+      alert("Failed to update clock mode");
+    }
+  };
+
   const handleDeleteWidget = async () => {
     if (!widgetToDelete) return;
     setDeletingWidget(true);
@@ -939,6 +983,25 @@ export function Dashboard() {
                             >
                               Fond
                             </button>
+                            {dashboardWidget.Widget?.component === "Clock" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  void handleToggleClockMode(
+                                    dashboardWidget.id,
+                                  );
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                title="Basculer analog/digital"
+                              >
+                                Mode
+                              </button>
+                            )}
                           </div>
                         )}
 
