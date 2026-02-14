@@ -1149,6 +1149,7 @@ function AddWidgetModal({
     widget?.name === "ActionButton" ||
     widget?.name === "StateMessage" ||
     widget?.name === "TextTicker" ||
+    widget?.name === "Clock" ||
     widget?.name === "Weather";
 
   const widgetNeedsDevice = (widget: Widget | null) =>
@@ -1188,6 +1189,12 @@ function AddWidgetModal({
     if (widget.name === "Weather") {
       return {
         address: "Paris",
+      };
+    }
+
+    if (widget.name === "Clock") {
+      return {
+        clockMode: "analog",
       };
     }
 
@@ -1949,6 +1956,50 @@ function AddWidgetModal({
                       Le widget utilise cette adresse pour afficher la meteo en
                       direct.
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedWidget.name === "Clock" && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      Mode d'affichage
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        {
+                          value: "analog",
+                          label: "Ronde (Analogique)",
+                          icon: "🕒",
+                        },
+                        {
+                          value: "digital",
+                          label: "Digital",
+                          icon: "💻",
+                        },
+                      ].map((mode) => (
+                        <button
+                          key={mode.value}
+                          onClick={() =>
+                            setWidgetConfig({
+                              ...widgetConfig,
+                              clockMode: mode.value,
+                            })
+                          }
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${
+                            (widgetConfig.clockMode || "analog") === mode.value
+                              ? "bg-purple-500/20 border-purple-500"
+                              : "bg-white/5 border-white/10 hover:border-purple-500/50"
+                          }`}
+                        >
+                          <div className="text-2xl mb-2">{mode.icon}</div>
+                          <div className="text-sm font-medium text-white">
+                            {mode.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
