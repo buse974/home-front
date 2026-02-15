@@ -61,6 +61,11 @@ function getWeatherIcon(code: number, isDay: boolean): string {
   return "🌤️";
 }
 
+// Deterministic pseudo-random from seed
+function seeded(seed: number) {
+  return ((Math.sin(seed * 127.1 + 311.7) * 43758.5453) % 1 + 1) % 1;
+}
+
 export function Weather({ dashboardWidget }: WidgetComponentProps) {
   const config = dashboardWidget.config || {};
   const address =
@@ -145,226 +150,348 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
     () => (payload ? getWeatherIcon(payload.weatherCode, payload.isDay) : "🌤️"),
     [payload],
   );
-  const weatherCode = payload?.weatherCode ?? -1;
-  const isRainy = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(
-    weatherCode,
+  const code = payload?.weatherCode ?? -1;
+  const isDay = payload?.isDay ?? true;
+  const isRainy = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code);
+  const isSnowy = [71, 73, 75, 77, 85, 86].includes(code);
+  const isStormy = [95, 96, 99].includes(code);
+  const isClear = code === 0;
+  const isCloudy = [1, 2, 3, 45, 48].includes(code);
+
+  // Temperature-based accent
+  const temp = payload?.temperature ?? 15;
+  const accent = temp >= 30
+    ? { grad: "from-orange-400 to-amber-300", glow: "rgba(251,146,60,0.5)", orbA: "rgba(251,146,60,0.2)", orbB: "rgba(245,158,11,0.15)" }
+    : temp >= 20
+      ? { grad: "from-amber-300 to-yellow-200", glow: "rgba(252,211,77,0.4)", orbA: "rgba(252,211,77,0.15)", orbB: "rgba(250,204,21,0.1)" }
+      : temp >= 10
+        ? { grad: "from-cyan-300 to-sky-200", glow: "rgba(103,232,249,0.4)", orbA: "rgba(125,211,252,0.15)", orbB: "rgba(56,189,248,0.1)" }
+        : temp >= 0
+          ? { grad: "from-blue-300 to-indigo-200", glow: "rgba(147,197,253,0.4)", orbA: "rgba(147,197,253,0.12)", orbB: "rgba(99,102,241,0.1)" }
+          : { grad: "from-indigo-300 to-violet-200", glow: "rgba(165,180,252,0.4)", orbA: "rgba(165,180,252,0.15)", orbB: "rgba(139,92,246,0.1)" };
+
+  // Rain drops array
+  const rainDrops = useMemo(() =>
+    Array.from({ length: 18 }, (_, i) => ({
+      left: `${seeded(i) * 100}%`,
+      delay: `${seeded(i + 50) * 1.5}s`,
+      duration: `${0.5 + seeded(i + 100) * 0.6}s`,
+      height: `${14 + seeded(i + 200) * 12}px`,
+      opacity: 0.3 + seeded(i + 300) * 0.5,
+    })),
+    [],
   );
-  const isCloudy = [1, 2, 3, 45, 48].includes(weatherCode);
-  const dynamicBg = payload?.isDay
-    ? "from-sky-500/25 via-cyan-500/10 to-blue-600/20"
-    : "from-indigo-500/25 via-violet-600/10 to-slate-900/25";
 
-  const tempColor = payload
-    ? payload.temperature >= 30
-      ? "from-orange-300 to-amber-200"
-      : payload.temperature >= 20
-        ? "from-yellow-200 to-amber-100"
-        : payload.temperature >= 10
-          ? "from-cyan-200 to-sky-100"
-          : "from-blue-200 to-indigo-200"
-    : "from-cyan-200 to-sky-100";
+  // Snow flakes array
+  const snowFlakes = useMemo(() =>
+    Array.from({ length: 24 }, (_, i) => ({
+      left: `${seeded(i + 400) * 100}%`,
+      delay: `${seeded(i + 500) * 4}s`,
+      duration: `${3 + seeded(i + 600) * 3}s`,
+      size: `${3 + seeded(i + 700) * 4}px`,
+      opacity: 0.3 + seeded(i + 800) * 0.5,
+      drift: `${-20 + seeded(i + 900) * 40}px`,
+    })),
+    [],
+  );
 
-  const tempGlow = payload
-    ? payload.temperature >= 30
-      ? "rgba(251,146,60,0.3)"
-      : payload.temperature >= 20
-        ? "rgba(250,204,21,0.25)"
-        : payload.temperature >= 10
-          ? "rgba(125,211,252,0.3)"
-          : "rgba(99,102,241,0.25)"
-    : "rgba(125,211,252,0.3)";
+  // Night stars
+  const stars = useMemo(() =>
+    Array.from({ length: 12 }, (_, i) => ({
+      left: `${seeded(i + 1000) * 90 + 5}%`,
+      top: `${seeded(i + 1100) * 40 + 5}%`,
+      delay: `${seeded(i + 1200) * 3}s`,
+      size: `${1.5 + seeded(i + 1300) * 2}px`,
+    })),
+    [],
+  );
 
   return (
-    <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden">
-      {/* Glass base (consistent with other widgets) */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45 pointer-events-none" />
+    <>
+      <style>{`
+        @keyframes w-rain {
+          0% { transform: translateY(-10px); opacity: 0; }
+          15% { opacity: var(--drop-opacity); }
+          100% { transform: translateY(calc(100cqh + 20px)); opacity: 0; }
+        }
+        @keyframes w-snow {
+          0% { transform: translate(0, -10px); opacity: 0; }
+          10% { opacity: var(--flake-opacity); }
+          100% { transform: translate(var(--drift), calc(100cqh + 10px)); opacity: 0; }
+        }
+        @keyframes w-star-twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 0.9; transform: scale(1.3); }
+        }
+        @keyframes w-cloud-a {
+          from { transform: translateX(-40%); }
+          to { transform: translateX(140%); }
+        }
+        @keyframes w-cloud-b {
+          from { transform: translateX(-50%) scale(0.8); }
+          to { transform: translateX(160%) scale(0.8); }
+        }
+        @keyframes w-cloud-c {
+          from { transform: translateX(-30%) scale(0.6); }
+          to { transform: translateX(180%) scale(0.6); }
+        }
+        @keyframes w-sun-rotate {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes w-sun-pulse {
+          0%, 100% { opacity: 0.12; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.08); }
+        }
+        @keyframes w-lightning {
+          0%, 100% { opacity: 0; }
+          4% { opacity: 0.8; }
+          6% { opacity: 0; }
+          8% { opacity: 0.5; }
+          10% { opacity: 0; }
+        }
+        @keyframes w-icon-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+      `}</style>
 
-      {/* Weather-specific atmosphere overlay */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${dynamicBg} pointer-events-none`} />
-
-      {/* Glow orbs with weather tint */}
       <div
-        className="absolute -top-20 -right-10 w-52 h-52 rounded-full blur-3xl pointer-events-none transition-colors duration-1000"
-        style={{ background: payload?.isDay ? "rgba(125,211,252,0.15)" : "rgba(99,102,241,0.12)" }}
-      />
-      <div
-        className="absolute -bottom-20 -left-10 w-52 h-52 rounded-full blur-3xl pointer-events-none transition-colors duration-1000"
-        style={{ background: payload?.isDay ? "rgba(56,189,248,0.12)" : "rgba(79,70,229,0.1)" }}
-      />
+        className="relative h-full flex flex-col rounded-2xl overflow-hidden backdrop-blur-xl"
+        style={{ containerType: "size" }}
+      >
+        {/* === Sky gradient === */}
+        <div
+          className="absolute inset-0 transition-all duration-1000 pointer-events-none"
+          style={{
+            background: isDay
+              ? isRainy || isStormy
+                ? "linear-gradient(to bottom, #374151 0%, #1e293b 40%, #0f172a 100%)"
+                : isCloudy
+                  ? "linear-gradient(to bottom, #475569 0%, #334155 40%, #1e293b 100%)"
+                  : "linear-gradient(to bottom, #0c4a6e 0%, #0369a1 30%, #0284c7 60%, #38bdf8 100%)"
+              : "linear-gradient(to bottom, #0f0a2e 0%, #1a1145 30%, #0f172a 70%, #020617 100%)",
+          }}
+        />
 
-      {(isCloudy || isRainy) && (
-        <>
-          <div className="weather-cloud weather-cloud-a" />
-          <div className="weather-cloud weather-cloud-b" />
-        </>
-      )}
-      {isRainy && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="weather-rain weather-rain-a" />
-          <div className="weather-rain weather-rain-b" />
-          <div className="weather-rain weather-rain-c" />
-        </div>
-      )}
+        {/* === Sun (clear day) === */}
+        {isClear && isDay && (
+          <>
+            {/* Rays */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: "8%", right: "12%", width: "120px", height: "120px",
+                background: "conic-gradient(from 0deg, transparent, rgba(250,204,21,0.08) 10%, transparent 20%)",
+                borderRadius: "50%",
+                animation: "w-sun-rotate 20s linear infinite",
+              }}
+            />
+            {/* Orb */}
+            <div
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                top: "12%", right: "16%", width: "60px", height: "60px",
+                background: "radial-gradient(circle, rgba(253,224,71,0.7) 0%, rgba(250,204,21,0.3) 40%, transparent 70%)",
+                boxShadow: "0 0 60px rgba(250,204,21,0.3), 0 0 120px rgba(250,204,21,0.15)",
+              }}
+            />
+            <div
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                top: "12%", right: "16%", width: "60px", height: "60px",
+                animation: "w-sun-pulse 4s ease-in-out infinite",
+                background: "radial-gradient(circle, rgba(253,224,71,0.2) 0%, transparent 70%)",
+                transform: "translate(-50%, -50%) scale(2.5)",
+              }}
+            />
+          </>
+        )}
 
-      <div className="relative z-10 flex items-start justify-between mb-5">
-        <div>
-          <h3 className="text-xl font-bold text-white line-clamp-1 tracking-tight">
-            {dashboardWidget.name || "Meteo"}
-          </h3>
-          <p className="text-xs text-white/60 line-clamp-1 mt-0.5">{address}</p>
-        </div>
-        <div className="weather-icon-badge" aria-hidden>
-          <span className="text-4xl leading-none">{weatherIcon}</span>
-        </div>
-      </div>
+        {/* === Moon + Stars (night) === */}
+        {!isDay && (
+          <>
+            {/* Moon */}
+            <div
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                top: "10%", right: "14%", width: "44px", height: "44px",
+                background: "radial-gradient(circle at 35% 35%, #e2e8f0 0%, #94a3b8 50%, #64748b 100%)",
+                boxShadow: "0 0 30px rgba(148,163,184,0.3), 0 0 80px rgba(148,163,184,0.1), inset -6px -4px 10px rgba(15,23,42,0.4)",
+              }}
+            />
+            {/* Stars */}
+            {!isCloudy && !isRainy && stars.map((s, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-white pointer-events-none"
+                style={{
+                  left: s.left, top: s.top,
+                  width: s.size, height: s.size,
+                  animation: `w-star-twinkle ${2 + i * 0.3}s ease-in-out infinite ${s.delay}`,
+                }}
+              />
+            ))}
+          </>
+        )}
 
-      <div className="relative z-10 flex-1 min-h-0 rounded-2xl bg-black/25 border border-white/8 p-4 md:p-5 shadow-[0_12px_40px_rgba(8,10,22,0.4)]">
-        {loading ? (
-          <div className="h-full grid place-items-center text-white/50 text-sm">
-            Chargement...
+        {/* === Clouds === */}
+        {(isCloudy || isRainy || isStormy) && (
+          <>
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: "12%", width: "45%", height: "22%", borderRadius: "999px",
+                background: isDay
+                  ? "linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.06))"
+                  : "linear-gradient(135deg, rgba(100,116,139,0.3), rgba(71,85,105,0.08))",
+                border: `1px solid ${isDay ? "rgba(255,255,255,0.15)" : "rgba(100,116,139,0.2)"}`,
+                animation: "w-cloud-a 22s linear infinite",
+              }}
+            />
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: "6%", width: "35%", height: "16%", borderRadius: "999px",
+                background: isDay
+                  ? "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.03))"
+                  : "linear-gradient(135deg, rgba(100,116,139,0.2), rgba(71,85,105,0.04))",
+                border: `1px solid ${isDay ? "rgba(255,255,255,0.1)" : "rgba(100,116,139,0.12)"}`,
+                animation: "w-cloud-b 30s linear infinite",
+              }}
+            />
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                top: "20%", width: "28%", height: "13%", borderRadius: "999px",
+                background: isDay
+                  ? "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))"
+                  : "linear-gradient(135deg, rgba(100,116,139,0.15), rgba(71,85,105,0.03))",
+                animation: "w-cloud-c 26s linear infinite",
+              }}
+            />
+          </>
+        )}
+
+        {/* === Rain === */}
+        {(isRainy || isStormy) && rainDrops.map((d, i) => (
+          <div
+            key={i}
+            className="absolute pointer-events-none rounded-full"
+            style={{
+              left: d.left, top: "-10px",
+              width: "1.5px", height: d.height,
+              background: "linear-gradient(to bottom, transparent, rgba(147,197,253,0.7))",
+              opacity: d.opacity,
+              ["--drop-opacity" as string]: d.opacity,
+              animation: `w-rain ${d.duration} linear infinite ${d.delay}`,
+            }}
+          />
+        ))}
+
+        {/* === Snow === */}
+        {isSnowy && snowFlakes.map((f, i) => (
+          <div
+            key={i}
+            className="absolute pointer-events-none rounded-full bg-white"
+            style={{
+              left: f.left, top: "-10px",
+              width: f.size, height: f.size,
+              opacity: f.opacity,
+              ["--flake-opacity" as string]: f.opacity,
+              ["--drift" as string]: f.drift,
+              animation: `w-snow ${f.duration} linear infinite ${f.delay}`,
+            }}
+          />
+        ))}
+
+        {/* === Lightning flash === */}
+        {isStormy && (
+          <div
+            className="absolute inset-0 bg-white pointer-events-none"
+            style={{ animation: "w-lightning 6s ease-in-out infinite" }}
+          />
+        )}
+
+        {/* === Content === */}
+        <div className="relative z-10 flex flex-col h-full p-5">
+          {/* Top bar: location + icon */}
+          <div className="flex items-start justify-between mb-auto">
+            <div>
+              <p className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                {dashboardWidget.name || "Meteo"}
+              </p>
+              <p className="text-sm text-white/70 mt-0.5 line-clamp-1">
+                {payload?.locationName || address}
+              </p>
+            </div>
+            <span
+              className="text-5xl leading-none"
+              style={{
+                filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))",
+                animation: "w-icon-float 5s ease-in-out infinite",
+              }}
+            >
+              {weatherIcon}
+            </span>
           </div>
-        ) : error ? (
-          <div className="h-full grid place-items-center text-center">
-            <p className="text-sm text-amber-300/90">{error}</p>
-          </div>
-        ) : payload ? (
-          <div className="flex flex-col gap-4 h-full">
-            <div className="flex items-center justify-between gap-3 flex-1">
+
+          {/* Center: temperature hero */}
+          <div className="flex-1 flex items-center">
+            {loading ? (
+              <div className="text-white/40 text-sm">Chargement...</div>
+            ) : error ? (
+              <p className="text-sm text-amber-300/90">{error}</p>
+            ) : payload ? (
               <div>
-                <p
-                  className={`text-5xl md:text-6xl font-black leading-none bg-gradient-to-br ${tempColor} bg-clip-text text-transparent`}
-                  style={{ filter: `drop-shadow(0 0 20px ${tempGlow})` }}
-                >
-                  {Math.round(payload.temperature)}°
-                </p>
-                <p className="mt-2 text-sm text-white/90 font-medium">
+                <div className="flex items-baseline gap-1">
+                  <span
+                    className={`text-7xl md:text-8xl font-black leading-none bg-gradient-to-br ${accent.grad} bg-clip-text text-transparent`}
+                    style={{ filter: `drop-shadow(0 0 30px ${accent.glow})` }}
+                  >
+                    {Math.round(payload.temperature)}
+                  </span>
+                  <span
+                    className={`text-3xl font-bold bg-gradient-to-br ${accent.grad} bg-clip-text text-transparent`}
+                  >
+                    °C
+                  </span>
+                </div>
+                <p className="mt-2 text-base text-white/80 font-medium">
                   {weatherLabel}
                 </p>
-                <p className="mt-0.5 text-xs text-white/45 line-clamp-1">
-                  {payload.locationName}
-                </p>
               </div>
-              <div className="weather-hero-icon" aria-hidden>
-                <span className="weather-hero-emoji">{weatherIcon}</span>
-              </div>
-            </div>
+            ) : null}
+          </div>
 
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div className="rounded-xl bg-white/[0.06] border border-white/[0.08] p-2.5 text-center transition-colors hover:bg-white/[0.09]">
-                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Ressenti</p>
-                <p className="text-white/90 font-bold text-sm tabular-nums">
+          {/* Bottom stats bar */}
+          {payload && !loading && !error && (
+            <div className="flex items-center gap-4 pt-3 border-t border-white/10">
+              <div className="flex-1 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-white/35">Ressenti</p>
+                <p className="text-white/90 font-bold text-sm tabular-nums mt-0.5">
                   {Math.round(payload.feelsLike)}°
                 </p>
               </div>
-              <div className="rounded-xl bg-white/[0.06] border border-white/[0.08] p-2.5 text-center transition-colors hover:bg-white/[0.09]">
-                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Humidite</p>
-                <p className="text-white/90 font-bold text-sm tabular-nums">
+              <div className="w-px h-6 bg-white/10" />
+              <div className="flex-1 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-white/35">Humidite</p>
+                <p className="text-white/90 font-bold text-sm tabular-nums mt-0.5">
                   {Math.round(payload.humidity)}%
                 </p>
               </div>
-              <div className="rounded-xl bg-white/[0.06] border border-white/[0.08] p-2.5 text-center transition-colors hover:bg-white/[0.09]">
-                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Vent</p>
-                <p className="text-white/90 font-bold text-sm tabular-nums">
+              <div className="w-px h-6 bg-white/10" />
+              <div className="flex-1 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-white/35">Vent</p>
+                <p className="text-white/90 font-bold text-sm tabular-nums mt-0.5">
                   {Math.round(payload.windSpeed)}
-                  <span className="text-[10px] text-white/50 ml-0.5">km/h</span>
+                  <span className="text-[10px] text-white/40 ml-0.5">km/h</span>
                 </p>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="h-full grid place-items-center text-white/40 text-sm">
-            Donnees indisponibles
-          </div>
-        )}
+          )}
+        </div>
       </div>
-
-      <style>{`
-        .weather-icon-badge {
-          width: 64px;
-          height: 64px;
-          border-radius: 16px;
-          display: grid;
-          place-items: center;
-          background: linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));
-          border: 1px solid rgba(255,255,255,0.18);
-          box-shadow: 0 10px 28px rgba(4, 6, 20, 0.35);
-          backdrop-filter: blur(8px);
-        }
-        .weather-cloud {
-          position: absolute;
-          width: 170px;
-          height: 58px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.19), rgba(255,255,255,0.05));
-          filter: blur(0.2px);
-          opacity: 0.75;
-          border: 1px solid rgba(255,255,255,0.16);
-          pointer-events: none;
-        }
-        .weather-cloud-a {
-          top: 24%;
-          left: -26%;
-          animation: weather-cloud-drift-a 19s linear infinite;
-        }
-        .weather-cloud-b {
-          top: 11%;
-          left: -34%;
-          transform: scale(0.88);
-          opacity: 0.55;
-          animation: weather-cloud-drift-b 26s linear infinite;
-        }
-        .weather-rain {
-          position: absolute;
-          width: 2px;
-          height: 18px;
-          background: linear-gradient(to bottom, rgba(125,211,252,0), rgba(125,211,252,0.7));
-          border-radius: 2px;
-          opacity: 0.55;
-          animation: weather-rain-fall 1.15s linear infinite;
-        }
-        .weather-rain-a { left: 28%; top: 8%; animation-delay: 0s; }
-        .weather-rain-b { left: 48%; top: 2%; animation-delay: .25s; }
-        .weather-rain-c { left: 68%; top: 12%; animation-delay: .5s; }
-        .weather-hero-icon {
-          width: 120px;
-          height: 120px;
-          border-radius: 28px;
-          display: grid;
-          place-items: center;
-          background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.18), rgba(255,255,255,0.03) 68%);
-          border: 1px solid rgba(255,255,255,0.15);
-          box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.2),
-            0 14px 36px rgba(6, 10, 30, 0.42),
-            0 0 30px rgba(125,211,252,0.18);
-          backdrop-filter: blur(7px);
-          -webkit-backdrop-filter: blur(7px);
-          animation: weather-hero-float 4.8s ease-in-out infinite;
-        }
-        .weather-hero-emoji {
-          font-size: 64px;
-          line-height: 1;
-          filter: drop-shadow(0 8px 12px rgba(4, 8, 24, 0.35));
-          transform: translateY(2px);
-        }
-        @keyframes weather-hero-float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
-        }
-        @keyframes weather-cloud-drift-a {
-          from { transform: translateX(0); }
-          to { transform: translateX(185%); }
-        }
-        @keyframes weather-cloud-drift-b {
-          from { transform: translateX(0) scale(0.88); }
-          to { transform: translateX(210%) scale(0.88); }
-        }
-        @keyframes weather-rain-fall {
-          from { transform: translateY(-8px); opacity: 0; }
-          20% { opacity: 0.75; }
-          to { transform: translateY(140px); opacity: 0; }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
