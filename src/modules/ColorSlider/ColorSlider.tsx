@@ -49,6 +49,9 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   const hasColorCapability = devices.some(
     (device) => device.capabilities?.color,
   );
+  const hasTemperatureCapability = devices.some(
+    (device) => device.capabilities?.temperature,
+  );
 
   const [hue, setHue] = useState(145);
   const [isSending, setIsSending] = useState(false);
@@ -64,13 +67,29 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   const applyHue = async (nextHue: number) => {
     setIsSending(true);
     try {
-      const hex = hslToHex(nextHue, 90, 56);
-      await api.executeWidgetCommand(dashboardWidget.id, "color", {
-        value: hex,
-        hex,
-        color: hex,
-        hue: nextHue,
-      });
+      if (hasColorCapability) {
+        const hex = hslToHex(nextHue, 90, 56);
+        await api.executeWidgetCommand(dashboardWidget.id, "color", {
+          value: hex,
+          hex,
+          color: hex,
+          hue: nextHue,
+        });
+      } else if (hasTemperatureCapability) {
+        // Fallback CT-only: map wheel hue to warm/cool white range.
+        // 0/360 ~= warm, 180 ~= cool.
+        const normalized = Math.abs(((nextHue % 360) - 180) / 180);
+        const value = Math.round((1 - normalized) * 100);
+        const kelvin = Math.round(2200 + (value / 100) * (6500 - 2200));
+        await api.executeWidgetCommand(dashboardWidget.id, "temperature", {
+          value,
+          kelvin,
+          source: "color-wheel-fallback",
+        });
+      } else {
+        throw new Error("No color or temperature capability available");
+      }
+
       await refresh();
     } catch (error) {
       console.error("Failed to set color:", error);
@@ -155,10 +174,17 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
           <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
             {displayName}
           </h3>
-          <p className="text-xs text-white/45">Neon color wheel</p>
-          {!hasColorCapability && (
+          <p className="text-xs text-white/45">
+            {hasColorCapability ? "Neon color wheel" : "Warm/Cool wheel"}
+          </p>
+          {!hasColorCapability && hasTemperatureCapability && (
             <p className="text-[11px] text-amber-200/75 mt-1">
-              Capability not detected, trying anyway
+              RGB unavailable, using white temperature mode
+            </p>
+          )}
+          {!hasColorCapability && !hasTemperatureCapability && (
+            <p className="text-[11px] text-rose-200/80 mt-1">
+              No compatible light capability detected
             </p>
           )}
         </div>
