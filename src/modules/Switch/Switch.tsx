@@ -207,12 +207,19 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               ) : (
                 <svg
                   className="w-32 h-32"
-                  fill="none"
                   viewBox="0 0 24 24"
-                  strokeWidth={0.8}
-                  style={{ stroke: "rgba(255, 255, 255, 0.05)" }}
+                  style={{
+                    fill: "rgba(255, 255, 255, 0.08)",
+                  }}
                 >
-                  <circle cx="12" cy="12" r="10" strokeDasharray="2 3" />
+                  {/* Circle with slash (power off symbol) */}
+                  <circle cx="12" cy="12" r="9" opacity="0.3" />
+                  <path
+                    d="M4.929 4.929l14.142 14.142"
+                    stroke="rgba(255, 255, 255, 0.15)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               )}
             </div>
