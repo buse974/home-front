@@ -1708,6 +1708,11 @@ function AddWidgetModal({
                           gradient: "from-amber-500/20 to-sky-500/20",
                           icon: "🤍",
                         },
+                        LightControl: {
+                          gradient:
+                            "from-fuchsia-500/20 via-amber-500/15 to-cyan-500/20",
+                          icon: "🎛️",
+                        },
                       };
 
                       const visual = widgetVisuals[widget.name] || {

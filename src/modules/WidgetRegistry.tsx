@@ -12,6 +12,7 @@ import { Weather } from "./Weather/Weather";
 import { PhotoFrame } from "./PhotoFrame/PhotoFrame";
 import { ColorSlider } from "./ColorSlider/ColorSlider";
 import { WhiteSlider } from "./WhiteSlider/WhiteSlider";
+import { LightControl } from "./LightControl/LightControl";
 
 /**
  * Registry des widgets disponibles
@@ -38,6 +39,7 @@ export const widgetRegistry: WidgetRegistryMap = {
   PhotoFrame: PhotoFrame,
   ColorSlider: ColorSlider,
   WhiteSlider: WhiteSlider,
+  LightControl: LightControl,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // etc.
