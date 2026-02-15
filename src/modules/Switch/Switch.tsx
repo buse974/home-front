@@ -180,11 +180,12 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               />
             ) : isOn ? (
               <svg
-                className="w-32 h-32 text-emerald-400/20"
+                className="w-32 h-32 text-emerald-400/12 animate-pulse"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={1}
+                strokeWidth={0.8}
+                style={{ animationDuration: "3s" }}
               >
                 <path
                   strokeLinecap="round"
@@ -194,17 +195,13 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               </svg>
             ) : (
               <svg
-                className="w-32 h-32 text-white/8"
+                className="w-32 h-32 text-white/5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={1}
+                strokeWidth={0.8}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 715.636 5.636m12.728 12.728L5.636 5.636"
-                />
+                <circle cx="12" cy="12" r="10" strokeDasharray="2 3" />
               </svg>
             )}
           </div>
