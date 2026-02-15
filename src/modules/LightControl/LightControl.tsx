@@ -241,10 +241,15 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
 
   const canUseColorMode = hasColorCapability;
   const canUseWhiteMode = hasTemperatureCapability;
+
+  // Cool (whiteTone 0) → blue #7ec8ff (hue 207, s 100, l 75)
+  // Warm (whiteTone 100) → amber #ffbe73 (hue 30, s 100, l 73)
+  const whiteHue = 207 - (whiteTone / 100) * 177;
+  const whiteLightness = 75 - (whiteTone / 100) * 2;
   const previewColor =
     mode === "color"
       ? hslToHex(hue, 90, 58)
-      : `hsl(${38 - (whiteTone / 100) * 20} 100% ${75 - (whiteTone / 100) * 12}%)`;
+      : hslToHex(whiteHue, 100, whiteLightness);
 
   const wheelAngle = mode === "color" ? hue : (whiteTone / 100) * 180;
   const knobAngle = ((wheelAngle - 180) * Math.PI) / 180;
@@ -393,7 +398,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
 
         <div
           ref={brightnessRef}
-          className="relative h-7 rounded-full cursor-pointer touch-none select-none overflow-hidden"
+          className="relative h-7 rounded-full cursor-pointer touch-none select-none"
           style={{
             background: "rgba(255,255,255,0.06)",
           }}
@@ -407,16 +412,16 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
           <div
             className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75"
             style={{
-              width: `${brightness}%`,
+              width: `${Math.max(brightness, 2)}%`,
               background: `linear-gradient(90deg, ${previewColor}30 0%, ${previewColor}90 60%, ${previewColor} 100%)`,
             }}
           />
 
           {/* Thumb */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-2 transition-[left] duration-75"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[22px] h-[22px] rounded-full bg-white border-2 transition-[left] duration-75"
             style={{
-              left: `clamp(10px, calc(${brightness}% - 10px), calc(100% - 10px))`,
+              left: `${brightness}%`,
               borderColor: previewColor,
               boxShadow: `0 0 10px ${previewColor}80, 0 1px 4px rgba(0,0,0,0.4)`,
             }}
