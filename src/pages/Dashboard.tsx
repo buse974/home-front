@@ -62,6 +62,7 @@ export function Dashboard() {
     Record<string, string>
   >({});
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const ignoreTouchSwipe = useRef(false);
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
@@ -157,6 +158,13 @@ export function Dashboard() {
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     if (editMode || showAddModal || widgetToDelete) return;
+    const target = event.target as HTMLElement | null;
+    ignoreTouchSwipe.current = Boolean(
+      target?.closest(
+        ".react-grid-item,button,input,select,textarea,[role='button'],[data-no-dashboard-swipe]",
+      ),
+    );
+    if (ignoreTouchSwipe.current) return;
     const touch = event.changedTouches[0];
     touchStart.current = { x: touch.clientX, y: touch.clientY };
   };
@@ -178,6 +186,11 @@ export function Dashboard() {
     if (isFullscreen) return;
 
     if (editMode || showAddModal || widgetToDelete) return;
+    if (ignoreTouchSwipe.current) {
+      ignoreTouchSwipe.current = false;
+      touchStart.current = null;
+      return;
+    }
     if (!touchStart.current) return;
 
     const touch = event.changedTouches[0];
