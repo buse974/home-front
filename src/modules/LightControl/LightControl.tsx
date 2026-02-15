@@ -49,7 +49,9 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
   const displayName =
     dashboardWidget.name || devices.map((device) => device.name).join(", ");
 
-  const hasColorCapability = devices.some((device) => device.capabilities?.color);
+  const hasColorCapability = devices.some(
+    (device) => device.capabilities?.color,
+  );
   const hasTemperatureCapability = devices.some(
     (device) => device.capabilities?.temperature,
   );
@@ -82,7 +84,8 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
     () => () => {
       if (colorTimerRef.current) window.clearTimeout(colorTimerRef.current);
       if (whiteTimerRef.current) window.clearTimeout(whiteTimerRef.current);
-      if (brightnessTimerRef.current) window.clearTimeout(brightnessTimerRef.current);
+      if (brightnessTimerRef.current)
+        window.clearTimeout(brightnessTimerRef.current);
     },
     [],
   );
@@ -135,6 +138,20 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
     }
   };
 
+  const togglePower = async () => {
+    setIsSending(true);
+    try {
+      await api.executeWidgetCommand(dashboardWidget.id, "toggle", {
+        desiredState: !isOn,
+      });
+      await refresh();
+    } catch (error) {
+      console.error("Failed to toggle power:", error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const scheduleColor = (nextHue: number) => {
     if (colorTimerRef.current) window.clearTimeout(colorTimerRef.current);
     colorTimerRef.current = window.setTimeout(() => {
@@ -150,7 +167,8 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
   };
 
   const scheduleBrightness = (nextBrightness: number) => {
-    if (brightnessTimerRef.current) window.clearTimeout(brightnessTimerRef.current);
+    if (brightnessTimerRef.current)
+      window.clearTimeout(brightnessTimerRef.current);
     brightnessTimerRef.current = window.setTimeout(() => {
       void applyBrightness(nextBrightness);
     }, 180);
@@ -209,10 +227,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
       ? hslToHex(hue, 90, 58)
       : `hsl(${38 - (whiteTone / 100) * 20} 100% ${75 - (whiteTone / 100) * 12}%)`;
 
-  const wheelAngle =
-    mode === "color"
-      ? hue
-      : 180 - (whiteTone / 100) * 180;
+  const wheelAngle = mode === "color" ? hue : 180 - (whiteTone / 100) * 180;
   const knobAngle = ((wheelAngle - 90) * Math.PI) / 180;
   const knobX = 50 + Math.cos(knobAngle) * 38;
   const knobY = 50 + Math.sin(knobAngle) * 38;
@@ -228,17 +243,31 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
 
       <div className="relative flex items-start justify-between mb-3">
         <div>
-          <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">{displayName}</h3>
+          <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
+            {displayName}
+          </h3>
           <p className="text-xs text-white/45">Color / White + Brightness</p>
         </div>
         <div
           className={`w-2.5 h-2.5 rounded-full ${
-            isOn ? "bg-emerald-400 shadow-lg shadow-emerald-400/50" : "bg-white/20"
+            isOn
+              ? "bg-emerald-400 shadow-lg shadow-emerald-400/50"
+              : "bg-white/20"
           }`}
         />
       </div>
 
       <div className="relative z-10 flex items-center gap-2 mb-3">
+        <button
+          onClick={() => void togglePower()}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            isOn
+              ? "bg-emerald-500/25 text-emerald-100 border-emerald-300/40"
+              : "bg-white/5 text-white/70 border-white/10"
+          }`}
+        >
+          {isOn ? "ON" : "OFF"}
+        </button>
         <button
           onClick={() => canUseColorMode && setMode("color")}
           disabled={!canUseColorMode}
@@ -261,7 +290,9 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
         >
           White
         </button>
-        <span className="ml-auto text-xs text-white/70">{isSending ? "..." : mode}</span>
+        <span className="ml-auto text-xs text-white/70">
+          {isSending ? "..." : mode}
+        </span>
       </div>
 
       <div className="relative z-10 grid place-items-center mb-4">
@@ -281,7 +312,8 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
             const angleDeg =
-              (Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180) /
+              (Math.atan2(event.clientY - centerY, event.clientX - centerX) *
+                180) /
               Math.PI;
             const nextHue = (Math.round(angleDeg + 450) + 360) % 360;
 
@@ -316,7 +348,9 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
       <div className="relative z-10 mt-auto">
         <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-white/65 mb-2">
           <span>Brightness</span>
-          <span className="font-semibold normal-case tracking-normal text-white/90">{brightness}%</span>
+          <span className="font-semibold normal-case tracking-normal text-white/90">
+            {brightness}%
+          </span>
         </div>
 
         <input
