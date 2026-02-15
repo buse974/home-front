@@ -4,8 +4,8 @@ import { api } from "../../services/api";
 import { useWidgetRealtimeState } from "../hooks/useWidgetRealtimeState";
 
 /**
- * Widget Switch Premium - Design moderne avec animations
- * Supporte plusieurs devices (tous contrôlés ensemble)
+ * Widget Switch - Design minimaliste avec effet glass
+ * Bouton centré, responsive, élégant comme le widget Clock
  */
 export function Switch({ dashboardWidget }: WidgetComponentProps) {
   const [loading, setLoading] = useState(false);
@@ -68,9 +68,6 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
   };
 
   const isActionDisabled = loading || !hasToggleCapability;
-  const widgetWidth = dashboardWidget.position?.w ?? 2;
-  const widgetHeight = dashboardWidget.position?.h ?? 2;
-  const isCompact = widgetHeight <= 1 || widgetWidth <= 1;
 
   const handleCardClick = () => {
     if (isActionDisabled) return;
@@ -93,205 +90,235 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
   }
 
   return (
-    <div className="group relative h-full flex flex-col">
-      {/* Glow effect when ON */}
+    <div
+      role="button"
+      tabIndex={isActionDisabled ? -1 : 0}
+      aria-disabled={isActionDisabled}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      className={`relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden transition-all duration-300 ${
+        isActionDisabled
+          ? "opacity-80 cursor-not-allowed"
+          : "cursor-pointer hover:border-white/20 hover:scale-[1.01] active:scale-[0.99]"
+      }`}
+    >
+      {/* Glass effect background layers (inspired by Clock) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45 pointer-events-none" />
+
+      {/* Subtle glow orbs */}
+      <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Active glow effect */}
       {isOn && (
-        <div className="absolute -inset-2 bg-[radial-gradient(circle_at_50%_45%,rgba(34,197,94,0.7),rgba(34,197,94,0.32)_45%,rgba(22,163,74,0.18)_70%,transparent_100%)] rounded-3xl blur-xl transition-opacity duration-500 pointer-events-none"></div>
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-teal-500/10 pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-3/4 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+        </>
       )}
 
-      <div
-        role="button"
-        tabIndex={isActionDisabled ? -1 : 0}
-        aria-disabled={isActionDisabled}
-        onClick={handleCardClick}
-        onKeyDown={handleCardKeyDown}
-        className={`relative h-full flex flex-col p-6 backdrop-blur-xl rounded-2xl border transition-all duration-300 ${
-          isOn
-            ? "bg-gradient-to-br from-emerald-400/38 via-emerald-500/28 to-green-700/28 border-emerald-200/60 shadow-[0_0_42px_rgba(34,197,94,0.45),inset_0_0_48px_rgba(22,163,74,0.22)]"
-            : "bg-white/5 border-white/10"
-        } ${
-          isActionDisabled
-            ? "opacity-80 cursor-not-allowed"
-            : `cursor-pointer hover:scale-[1.02] ${
-                isOn ? "hover:border-emerald-200/65" : "hover:border-white/20"
-              }`
-        }`}
-      >
-        {isOn && (
-          <div className="absolute inset-0 rounded-2xl bg-emerald-500/20 pointer-events-none" />
-        )}
-        {isOn && (
-          <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.2),transparent_42%)] pointer-events-none" />
-        )}
-
+      <div className="relative z-10 flex-1 flex flex-col">
         {/* Header */}
-        <div className="relative z-10">
-          <div
-            className={`flex items-start justify-between ${isCompact ? "mb-2" : "mb-6"}`}
-          >
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
-                {displayName}
-              </h3>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
-                    isOn
-                      ? "bg-emerald-300/20 text-emerald-50"
-                      : "bg-white/5 text-white/60"
-                  }`}
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                  {devices[0].type}
-                </span>
-                {devices.length > 1 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-500/20 rounded-lg text-xs text-purple-300 font-medium">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-white mb-1.5 line-clamp-2">
+              {displayName}
+            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/40 capitalize">
+                {devices[0].type}
+              </span>
+              {devices.length > 1 && (
+                <>
+                  <span className="text-xs text-white/20">•</span>
+                  <span className="text-xs text-cyan-300/70 font-medium">
                     {devices.length} devices
                   </span>
-                )}
-              </div>
-            </div>
-
-            {/* Status indicator */}
-            <div className="flex items-center gap-2">
-              {isCompact && (
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide ${
-                    isOn
-                      ? "bg-emerald-400/30 text-emerald-50 border border-emerald-200/40 shadow-[0_0_18px_rgba(34,197,94,0.45)]"
-                      : "bg-white/10 text-white/75 border border-white/20"
-                  }`}
-                >
-                  {loading ? "..." : isOn ? "ON" : "OFF"}
-                </span>
+                </>
               )}
-              <div
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  isOn
-                    ? "bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"
-                    : "bg-white/20"
-                }`}
-              ></div>
             </div>
+          </div>
+
+          {/* Status indicator */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all duration-300 ${
+              isOn
+                ? "bg-emerald-500/25 text-emerald-300 border border-emerald-400/30"
+                : "bg-white/5 text-white/40 border border-white/10"
+            }`}
+          >
+            <div
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                isOn
+                  ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+                  : "bg-white/30"
+              }`}
+            />
+            {loading ? "..." : isOn ? "ON" : "OFF"}
           </div>
         </div>
 
-        {!isCompact && (
-          /* Toggle Button */
-          <div
+        {/* Centered switch button */}
+        <div className="flex-1 flex items-center justify-center py-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggle();
+            }}
+            disabled={isActionDisabled}
             className={`
-              relative z-10 w-full flex-1 min-h-0 transition-all duration-300 flex items-center justify-center
-              ${isActionDisabled ? "opacity-30" : ""}
-              ${!loading && !isActionDisabled ? "hover:scale-[1.02] active:scale-[0.98]" : ""}
+              group relative
+              w-full max-w-[280px] aspect-square
+              rounded-full
+              transition-all duration-500
+              ${isActionDisabled ? "opacity-40 cursor-not-allowed" : "hover:scale-105 active:scale-95"}
+              ${
+                isOn
+                  ? "bg-gradient-to-br from-emerald-400/20 via-emerald-500/15 to-teal-500/20"
+                  : "bg-gradient-to-br from-white/8 via-white/3 to-black/20"
+              }
+              border
+              ${isOn ? "border-emerald-400/40" : "border-white/15"}
+              shadow-[0_20px_60px_rgba(0,0,0,0.4)]
             `}
           >
+            {/* Inner glass layers */}
             <div
               className={`
-                relative w-full max-w-[330px] h-20 rounded-2xl border overflow-hidden
-                transition-all duration-300
-                ${
-                  isOn
-                    ? "bg-gradient-to-r from-emerald-400/75 via-green-500/70 to-emerald-600/80 border-emerald-100/45 shadow-[0_0_35px_rgba(34,197,94,0.55),0_0_70px_rgba(22,163,74,0.35)]"
-                    : "bg-white/8 border-white/15 shadow-[inset_0_0_18px_rgba(255,255,255,0.06)]"
-                }
-              `}
-            >
-              {isOn && (
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-400/30 via-green-400/25 to-emerald-600/30 blur-2xl pointer-events-none" />
-              )}
-              {isOn && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              )}
+              absolute inset-[4%] rounded-full border transition-all duration-500
+              ${isOn ? "border-emerald-400/30 bg-emerald-950/40" : "border-white/10 bg-slate-950/60"}
+            `}
+            />
 
-              <div className="relative h-full px-4 flex items-center gap-4">
+            <div
+              className={`
+              absolute inset-[10%] rounded-full border transition-all duration-500
+              ${isOn ? "border-emerald-400/20" : "border-white/8"}
+            `}
+            />
+
+            <div
+              className={`
+              absolute inset-[16%] rounded-full transition-all duration-500
+              ${
+                isOn
+                  ? "bg-gradient-to-b from-emerald-400/10 to-transparent border border-emerald-300/30 shadow-[0_0_30px_rgba(52,211,153,0.3)]"
+                  : "bg-gradient-to-b from-white/5 to-transparent border border-white/10"
+              }
+            `}
+            />
+
+            {/* Center content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {loading ? (
                 <div
-                  className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${
+                  className={`w-12 h-12 border-3 rounded-full animate-spin ${
                     isOn
-                      ? "bg-white/20 border-white/35 text-white"
-                      : "bg-black/25 border-white/20 text-white/70"
+                      ? "border-emerald-400/30 border-t-emerald-400"
+                      : "border-white/20 border-t-white/60"
                   }`}
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/35 border-t-white rounded-full animate-spin" />
-                  ) : isOn ? (
-                    <svg
-                      className="w-7 h-7 animate-in zoom-in duration-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-7 h-7 animate-in zoom-in duration-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                      />
-                    </svg>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/55">
-                    Power
-                  </p>
-                  <p
-                    className={`text-2xl font-black leading-none mt-1 ${
-                      isOn ? "text-white" : "text-white/75"
-                    }`}
+                />
+              ) : (
+                <>
+                  {/* Icon */}
+                  <div
+                    className={`
+                      mb-3 w-16 h-16 rounded-full flex items-center justify-center
+                      transition-all duration-500
+                      ${
+                        isOn
+                          ? "bg-emerald-500/25 text-emerald-300"
+                          : "bg-white/5 text-white/40"
+                      }
+                    `}
                   >
-                    {loading ? "Switching..." : isOn ? "ON" : "OFF"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+                    {isOn ? (
+                      <svg
+                        className="w-8 h-8"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-8 h-8"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                        />
+                      </svg>
+                    )}
+                  </div>
 
-        {/* Capability warning */}
-        {!hasToggleCapability && (
-          <p className="mt-3 text-xs text-red-400/80 flex items-center gap-1.5">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-            Toggle not available
-          </p>
-        )}
+                  {/* Label */}
+                  <div className="text-center">
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/40 mb-1">
+                      Power
+                    </div>
+                    <div
+                      className={`text-3xl font-black tracking-tight transition-all duration-500 ${
+                        isOn
+                          ? "text-transparent bg-clip-text bg-gradient-to-br from-emerald-300 to-teal-300"
+                          : "text-white/60"
+                      }`}
+                    >
+                      {isOn ? "ON" : "OFF"}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Shimmer effect when active */}
+            {isOn && !loading && (
+              <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              </div>
+            )}
+          </button>
+        </div>
+
+        {/* Footer info */}
+        <div className="mt-3 pt-3 border-t border-white/5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/30">
+              {isActionDisabled ? "Unavailable" : "Tap to toggle"}
+            </span>
+            {hasToggleCapability ? (
+              <span className="text-emerald-400/60">Ready</span>
+            ) : (
+              <span className="text-red-400/60 flex items-center gap-1">
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                Error
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
