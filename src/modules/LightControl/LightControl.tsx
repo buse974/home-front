@@ -340,7 +340,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
         >
           {/* Outer glow ring */}
           <div
-            className="absolute -inset-2 rounded-full blur-md opacity-40 transition-all duration-500"
+            className={`absolute -inset-2 rounded-full blur-md transition-all duration-500 ${isOn ? "opacity-40" : "opacity-0"}`}
             style={{
               background:
                 mode === "color"
@@ -369,7 +369,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
               className="w-14 h-14 rounded-full transition-all duration-300 shadow-lg"
               style={{
                 backgroundColor: previewColor,
-                boxShadow: `0 0 25px ${previewColor}50, 0 0 50px ${previewColor}20`,
+                boxShadow: isOn ? `0 0 25px ${previewColor}50, 0 0 50px ${previewColor}20` : "none",
               }}
             />
           </div>
@@ -381,7 +381,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
               left: `${knobX}%`,
               top: `${knobY}%`,
               backgroundColor: previewColor,
-              boxShadow: `0 0 12px ${previewColor}, 0 2px 8px rgba(0,0,0,0.5)`,
+              boxShadow: isOn ? `0 0 12px ${previewColor}, 0 2px 8px rgba(0,0,0,0.5)` : "0 2px 8px rgba(0,0,0,0.5)",
             }}
           />
         </div>
@@ -413,7 +413,9 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
             className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75"
             style={{
               width: `${Math.max(brightness, 2)}%`,
-              background: `linear-gradient(90deg, ${previewColor}30 0%, ${previewColor}90 60%, ${previewColor} 100%)`,
+              background: isOn
+                ? `linear-gradient(90deg, ${previewColor}30 0%, ${previewColor}90 60%, ${previewColor} 100%)`
+                : "linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 100%)",
             }}
           />
 
@@ -422,8 +424,8 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[22px] h-[22px] rounded-full bg-white border-2 transition-[left] duration-75"
             style={{
               left: `${brightness}%`,
-              borderColor: previewColor,
-              boxShadow: `0 0 10px ${previewColor}80, 0 1px 4px rgba(0,0,0,0.4)`,
+              borderColor: isOn ? previewColor : "rgba(255,255,255,0.3)",
+              boxShadow: isOn ? `0 0 10px ${previewColor}80, 0 1px 4px rgba(0,0,0,0.4)` : "0 1px 4px rgba(0,0,0,0.4)",
             }}
           />
         </div>
