@@ -212,11 +212,17 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                     fill: "rgba(255, 255, 255, 0.08)",
                   }}
                 >
-                  {/* Circle with slash (power off symbol) */}
-                  <circle cx="12" cy="12" r="9" opacity="0.2" />
+                  {/* Circle with X (power off symbol) */}
+                  <circle cx="12" cy="12" r="9" opacity="0.15" />
                   <path
                     d="M7.757 7.757l8.486 8.486"
-                    stroke="rgba(255, 255, 255, 0.08)"
+                    stroke="rgba(239, 68, 68, 0.2)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M16.243 7.757l-8.486 8.486"
+                    stroke="rgba(239, 68, 68, 0.2)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                   />
