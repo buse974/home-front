@@ -186,7 +186,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
       const angleDeg =
         (Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180) /
         Math.PI;
-      const nextHue = (Math.round(angleDeg + 450) + 360) % 360;
+      const nextHue = (Math.round(angleDeg + 540) + 360) % 360;
 
       if (mode === "color") {
         setHue(nextHue);
@@ -227,17 +227,26 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
       ? hslToHex(hue, 90, 58)
       : `hsl(${38 - (whiteTone / 100) * 20} 100% ${75 - (whiteTone / 100) * 12}%)`;
 
-  const wheelAngle = mode === "color" ? hue : 180 - (whiteTone / 100) * 180;
-  const knobAngle = ((wheelAngle - 90) * Math.PI) / 180;
+  const wheelAngle = mode === "color" ? hue : (whiteTone / 100) * 180;
+  const knobAngle = ((wheelAngle - 180) * Math.PI) / 180;
   const knobX = 50 + Math.cos(knobAngle) * 38;
   const knobY = 50 + Math.sin(knobAngle) * 38;
 
   return (
-    <div className="relative h-full flex flex-col p-5 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
+    <div className="relative h-full flex flex-col p-5 bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden transition-all duration-300">
+      {/* Glass effect background layers (inspired by Switch) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45 pointer-events-none" />
+
+      {/* Subtle glow orbs */}
+      <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Color-reactive glow */}
       <div
-        className="absolute -inset-8 pointer-events-none blur-3xl opacity-35"
+        className="absolute -inset-8 pointer-events-none blur-3xl transition-all duration-500"
         style={{
           background: `radial-gradient(circle at 35% 30%, ${previewColor}, transparent 65%)`,
+          opacity: isOn ? 0.3 : 0.12,
         }}
       />
 
@@ -315,7 +324,7 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
               (Math.atan2(event.clientY - centerY, event.clientX - centerX) *
                 180) /
               Math.PI;
-            const nextHue = (Math.round(angleDeg + 450) + 360) % 360;
+            const nextHue = (Math.round(angleDeg + 540) + 360) % 360;
 
             if (mode === "color") {
               setHue(nextHue);
