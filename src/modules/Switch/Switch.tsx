@@ -100,10 +100,10 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
       <style>{`
         @keyframes gentle-pulse {
           0%, 100% {
-            opacity: 0.12;
+            opacity: 0.25;
           }
           50% {
-            opacity: 0.18;
+            opacity: 0.35;
           }
         }
       `}</style>
@@ -114,10 +114,10 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
         aria-disabled={isActionDisabled}
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
-        className={`relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden transition-all duration-300 ${
+        className={`relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden transition-all duration-300 ${
           isActionDisabled
             ? "opacity-80 cursor-not-allowed"
-            : "cursor-pointer hover:border-white/20 hover:scale-[1.01] active:scale-[0.99]"
+            : "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
         }`}
       >
         {/* Glass effect background layers (inspired by Clock) */}
@@ -196,9 +196,9 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                   className="w-32 h-32"
                   fill="none"
                   viewBox="0 0 24 24"
-                  strokeWidth={0.8}
+                  strokeWidth={1}
                   style={{
-                    stroke: "rgba(52, 211, 153, 0.12)",
+                    stroke: "rgba(52, 211, 153, 0.25)",
                     animation: "gentle-pulse 3s ease-in-out infinite",
                   }}
                 >
