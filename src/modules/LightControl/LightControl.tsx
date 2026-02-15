@@ -64,7 +64,9 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
   const [isSending, setIsSending] = useState(false);
 
   const wheelRef = useRef<HTMLDivElement | null>(null);
+  const brightnessRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef(false);
+  const isDraggingBrightnessRef = useRef(false);
   const colorTimerRef = useRef<number | null>(null);
   const whiteTimerRef = useRef<number | null>(null);
   const brightnessTimerRef = useRef<number | null>(null);
@@ -174,33 +176,50 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
     }, 180);
   };
 
+  const handleWheelPointer = (clientX: number, clientY: number) => {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+    const rect = wheel.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angleDeg =
+      (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI;
+    const nextHue = (Math.round(angleDeg + 540) + 360) % 360;
+
+    if (mode === "color") {
+      setHue(nextHue);
+      scheduleColor(nextHue);
+    } else {
+      const normalized = Math.abs(((nextHue % 360) - 180) / 180);
+      const tone = Math.round((1 - normalized) * 100);
+      setWhiteTone(tone);
+      scheduleWhite(tone);
+    }
+  };
+
+  const handleBrightnessPointer = (clientX: number) => {
+    const track = brightnessRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const nextBrightness = Math.round(ratio * 100);
+    setBrightness(nextBrightness);
+    if (hasDimCapability) scheduleBrightness(nextBrightness);
+  };
+
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
-      if (!isDraggingRef.current) return;
-      const wheel = wheelRef.current;
-      if (!wheel) return;
-
-      const rect = wheel.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const angleDeg =
-        (Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180) /
-        Math.PI;
-      const nextHue = (Math.round(angleDeg + 540) + 360) % 360;
-
-      if (mode === "color") {
-        setHue(nextHue);
-        scheduleColor(nextHue);
-      } else {
-        const normalized = Math.abs(((nextHue % 360) - 180) / 180);
-        const tone = Math.round((1 - normalized) * 100);
-        setWhiteTone(tone);
-        scheduleWhite(tone);
+      if (isDraggingRef.current) {
+        handleWheelPointer(event.clientX, event.clientY);
+      }
+      if (isDraggingBrightnessRef.current) {
+        handleBrightnessPointer(event.clientX);
       }
     };
 
     const onPointerUp = () => {
       isDraggingRef.current = false;
+      isDraggingBrightnessRef.current = false;
     };
 
     window.addEventListener("pointermove", onPointerMove);
@@ -304,81 +323,105 @@ export function LightControl({ dashboardWidget }: WidgetComponentProps) {
         </span>
       </div>
 
-      <div className="relative z-10 grid place-items-center mb-4">
+      <div className="relative z-10 flex-1 grid place-items-center">
         <div
           ref={wheelRef}
-          className="relative w-[150px] h-[150px] rounded-full cursor-pointer touch-none select-none"
-          style={{
-            background:
-              mode === "color"
-                ? "conic-gradient(from -90deg, #ff3f3f, #ffd93f, #52ff3f, #3fffd6, #3f7bff, #b13fff, #ff3f8f, #ff3f3f)"
-                : "conic-gradient(from -90deg, #7ec8ff, #d6ecff, #f6f6f6, #ffe1b1, #ffbe73, #7ec8ff)",
-          }}
+          className="relative w-[180px] h-[180px] rounded-full cursor-pointer touch-none select-none"
           onPointerDown={(event) => {
             isDraggingRef.current = true;
             event.currentTarget.setPointerCapture(event.pointerId);
-            const rect = event.currentTarget.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const angleDeg =
-              (Math.atan2(event.clientY - centerY, event.clientX - centerX) *
-                180) /
-              Math.PI;
-            const nextHue = (Math.round(angleDeg + 540) + 360) % 360;
-
-            if (mode === "color") {
-              setHue(nextHue);
-              scheduleColor(nextHue);
-            } else {
-              const normalized = Math.abs(((nextHue % 360) - 180) / 180);
-              const tone = Math.round((1 - normalized) * 100);
-              setWhiteTone(tone);
-              scheduleWhite(tone);
-            }
+            handleWheelPointer(event.clientX, event.clientY);
           }}
         >
-          <div className="absolute inset-[18px] rounded-full bg-[#251b4f]/85 border border-white/15 backdrop-blur-sm grid place-items-center">
+          {/* Outer glow ring */}
+          <div
+            className="absolute -inset-2 rounded-full blur-md opacity-40 transition-all duration-500"
+            style={{
+              background:
+                mode === "color"
+                  ? "conic-gradient(from -90deg, #ff3f3f, #ffd93f, #52ff3f, #3fffd6, #3f7bff, #b13fff, #ff3f8f, #ff3f3f)"
+                  : "conic-gradient(from -90deg, #7ec8ff, #d6ecff, #f6f6f6, #ffe1b1, #ffbe73, #7ec8ff)",
+            }}
+          />
+
+          {/* Color ring */}
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background:
+                mode === "color"
+                  ? "conic-gradient(from -90deg, #ff3f3f, #ffd93f, #52ff3f, #3fffd6, #3f7bff, #b13fff, #ff3f8f, #ff3f3f)"
+                  : "conic-gradient(from -90deg, #7ec8ff, #d6ecff, #f6f6f6, #ffe1b1, #ffbe73, #7ec8ff)",
+            }}
+          />
+
+          {/* Inner cutout to make it a ring */}
+          <div className="absolute inset-[22px] rounded-full bg-slate-950/90 border border-white/10 backdrop-blur-sm" />
+
+          {/* Center preview */}
+          <div className="absolute inset-[30px] rounded-full grid place-items-center">
             <div
-              className="w-11 h-11 rounded-full border border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.25)]"
-              style={{ backgroundColor: previewColor }}
+              className="w-14 h-14 rounded-full transition-all duration-300 shadow-lg"
+              style={{
+                backgroundColor: previewColor,
+                boxShadow: `0 0 25px ${previewColor}50, 0 0 50px ${previewColor}20`,
+              }}
             />
           </div>
+
+          {/* Knob */}
           <div
-            className="absolute w-5 h-5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(255,255,255,0.8)] -translate-x-1/2 -translate-y-1/2"
+            className="absolute w-6 h-6 rounded-full border-[2.5px] border-white -translate-x-1/2 -translate-y-1/2 transition-[background-color] duration-150"
             style={{
               left: `${knobX}%`,
               top: `${knobY}%`,
               backgroundColor: previewColor,
+              boxShadow: `0 0 12px ${previewColor}, 0 2px 8px rgba(0,0,0,0.5)`,
             }}
           />
         </div>
       </div>
 
-      <div className="relative z-10 mt-auto">
-        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-white/65 mb-2">
+      {/* Brightness slider */}
+      <div className="relative z-10 mt-auto pt-2">
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-white/50 mb-3">
           <span>Brightness</span>
-          <span className="font-semibold normal-case tracking-normal text-white/90">
+          <span className="font-bold normal-case tracking-normal text-white text-sm tabular-nums">
             {brightness}%
           </span>
         </div>
 
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={1}
-          value={brightness}
-          onChange={(event) => {
-            const nextBrightness = Number(event.target.value);
-            setBrightness(nextBrightness);
-            if (hasDimCapability) scheduleBrightness(nextBrightness);
-          }}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+        <div
+          ref={brightnessRef}
+          className="relative h-7 rounded-full cursor-pointer touch-none select-none overflow-hidden"
           style={{
-            background:
-              "linear-gradient(90deg, #1d2a4f 0%, #3f7bff 35%, #7ec8ff 70%, #ffffff 100%)",
+            background: "rgba(255,255,255,0.06)",
           }}
-        />
+          onPointerDown={(event) => {
+            isDraggingBrightnessRef.current = true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            handleBrightnessPointer(event.clientX);
+          }}
+        >
+          {/* Fill */}
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75"
+            style={{
+              width: `${brightness}%`,
+              background: `linear-gradient(90deg, ${previewColor}30 0%, ${previewColor}90 60%, ${previewColor} 100%)`,
+            }}
+          />
+
+          {/* Thumb */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-2 transition-[left] duration-75"
+            style={{
+              left: `clamp(10px, calc(${brightness}% - 10px), calc(100% - 10px))`,
+              borderColor: previewColor,
+              boxShadow: `0 0 10px ${previewColor}80, 0 1px 4px rgba(0,0,0,0.4)`,
+            }}
+          />
+        </div>
       </div>
     </div>
   );
