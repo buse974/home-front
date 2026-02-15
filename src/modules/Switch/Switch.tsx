@@ -213,11 +213,11 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                   }}
                 >
                   {/* Circle with slash (power off symbol) */}
-                  <circle cx="12" cy="12" r="9" opacity="0.3" />
+                  <circle cx="12" cy="12" r="9" opacity="0.2" />
                   <path
-                    d="M4.929 4.929l14.142 14.142"
-                    stroke="rgba(255, 255, 255, 0.15)"
-                    strokeWidth="2"
+                    d="M7.757 7.757l8.486 8.486"
+                    stroke="rgba(255, 255, 255, 0.12)"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                   />
                 </svg>
