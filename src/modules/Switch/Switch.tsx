@@ -182,7 +182,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
 
           {/* Compact mode: large background icon (watermark style) */}
           {isCompact && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               {loading ? (
                 <div
                   className={`w-24 h-24 border-4 rounded-full animate-spin ${
@@ -193,7 +193,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                 />
               ) : isOn ? (
                 <svg
-                  className="w-32 h-32"
+                  className="w-24 h-24"
                   viewBox="0 0 24 24"
                   style={{
                     fill: "rgba(52, 211, 153, 0.4)",
@@ -206,7 +206,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                 </svg>
               ) : (
                 <svg
-                  className="w-32 h-32"
+                  className="w-24 h-24"
                   viewBox="0 0 24 24"
                   style={{
                     fill: "rgba(255, 255, 255, 0.08)",
@@ -216,7 +216,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                   <circle cx="12" cy="12" r="9" opacity="0.2" />
                   <path
                     d="M7.757 7.757l8.486 8.486"
-                    stroke="rgba(255, 255, 255, 0.12)"
+                    stroke="rgba(255, 255, 255, 0.08)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                   />
