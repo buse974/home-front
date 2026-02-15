@@ -194,19 +194,15 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
               ) : isOn ? (
                 <svg
                   className="w-32 h-32"
-                  fill="none"
                   viewBox="0 0 24 24"
-                  strokeWidth={1}
                   style={{
-                    stroke: "rgba(52, 211, 153, 0.25)",
+                    fill: "rgba(52, 211, 153, 0.4)",
+                    filter:
+                      "drop-shadow(0 0 8px rgba(52, 211, 153, 0.6)) drop-shadow(0 0 16px rgba(52, 211, 153, 0.4))",
                     animation: "gentle-pulse 3s ease-in-out infinite",
                   }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               ) : (
                 <svg
