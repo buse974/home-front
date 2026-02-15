@@ -167,6 +167,62 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
           </div>
         </div>
 
+        {/* Compact mode: small centered icon */}
+        {isCompact && (
+          <div className="flex-1 flex items-center justify-center">
+            <div
+              className={`
+                w-12 h-12 rounded-full
+                flex items-center justify-center
+                transition-all duration-500
+                ${
+                  isOn
+                    ? "bg-emerald-500/15 border border-emerald-400/25"
+                    : "bg-white/5 border border-white/10"
+                }
+              `}
+            >
+              {loading ? (
+                <div
+                  className={`w-5 h-5 border-2 rounded-full animate-spin ${
+                    isOn
+                      ? "border-emerald-400/30 border-t-emerald-400"
+                      : "border-white/20 border-t-white/60"
+                  }`}
+                />
+              ) : isOn ? (
+                <svg
+                  className="w-6 h-6 text-emerald-400/80"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-6 h-6 text-white/25"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  />
+                </svg>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Centered switch button - only in large mode */}
         {!isCompact && (
           <div className="flex-1 flex items-center justify-center py-4">
