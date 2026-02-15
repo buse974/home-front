@@ -154,11 +154,43 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
     ? "from-sky-500/25 via-cyan-500/10 to-blue-600/20"
     : "from-indigo-500/25 via-violet-600/10 to-slate-900/25";
 
+  const tempColor = payload
+    ? payload.temperature >= 30
+      ? "from-orange-300 to-amber-200"
+      : payload.temperature >= 20
+        ? "from-yellow-200 to-amber-100"
+        : payload.temperature >= 10
+          ? "from-cyan-200 to-sky-100"
+          : "from-blue-200 to-indigo-200"
+    : "from-cyan-200 to-sky-100";
+
+  const tempGlow = payload
+    ? payload.temperature >= 30
+      ? "rgba(251,146,60,0.3)"
+      : payload.temperature >= 20
+        ? "rgba(250,204,21,0.25)"
+        : payload.temperature >= 10
+          ? "rgba(125,211,252,0.3)"
+          : "rgba(99,102,241,0.25)"
+    : "rgba(125,211,252,0.3)";
+
   return (
-    <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${dynamicBg}`} />
-      <div className="absolute -top-24 -right-10 w-52 h-52 bg-cyan-300/20 rounded-full blur-3xl" />
-      <div className="absolute -bottom-24 -left-10 w-52 h-52 bg-blue-400/20 rounded-full blur-3xl" />
+    <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden">
+      {/* Glass base (consistent with other widgets) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45 pointer-events-none" />
+
+      {/* Weather-specific atmosphere overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${dynamicBg} pointer-events-none`} />
+
+      {/* Glow orbs with weather tint */}
+      <div
+        className="absolute -top-20 -right-10 w-52 h-52 rounded-full blur-3xl pointer-events-none transition-colors duration-1000"
+        style={{ background: payload?.isDay ? "rgba(125,211,252,0.15)" : "rgba(99,102,241,0.12)" }}
+      />
+      <div
+        className="absolute -bottom-20 -left-10 w-52 h-52 rounded-full blur-3xl pointer-events-none transition-colors duration-1000"
+        style={{ background: payload?.isDay ? "rgba(56,189,248,0.12)" : "rgba(79,70,229,0.1)" }}
+      />
 
       {(isCloudy || isRainy) && (
         <>
@@ -186,26 +218,29 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
         </div>
       </div>
 
-      <div className="relative z-10 flex-1 min-h-0 rounded-2xl bg-black/35 border border-white/10 p-4 md:p-5 shadow-[0_12px_40px_rgba(8,10,22,0.45)]">
+      <div className="relative z-10 flex-1 min-h-0 rounded-2xl bg-black/25 border border-white/8 p-4 md:p-5 shadow-[0_12px_40px_rgba(8,10,22,0.4)]">
         {loading ? (
-          <div className="h-full grid place-items-center text-white/70">
-            Chargement meteo...
+          <div className="h-full grid place-items-center text-white/50 text-sm">
+            Chargement...
           </div>
         ) : error ? (
           <div className="h-full grid place-items-center text-center">
             <p className="text-sm text-amber-300/90">{error}</p>
           </div>
         ) : payload ? (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-4 h-full">
+            <div className="flex items-center justify-between gap-3 flex-1">
               <div>
-                <p className="text-5xl md:text-6xl font-black text-cyan-100 leading-none drop-shadow-[0_0_18px_rgba(125,211,252,0.35)]">
-                  {Math.round(payload.temperature)}°C
+                <p
+                  className={`text-5xl md:text-6xl font-black leading-none bg-gradient-to-br ${tempColor} bg-clip-text text-transparent`}
+                  style={{ filter: `drop-shadow(0 0 20px ${tempGlow})` }}
+                >
+                  {Math.round(payload.temperature)}°
                 </p>
-                <p className="mt-1.5 text-sm text-white/90 font-medium">
+                <p className="mt-2 text-sm text-white/90 font-medium">
                   {weatherLabel}
                 </p>
-                <p className="mt-1 text-xs text-white/60 line-clamp-1">
+                <p className="mt-0.5 text-xs text-white/45 line-clamp-1">
                   {payload.locationName}
                 </p>
               </div>
@@ -214,29 +249,30 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-xs">
-              <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
-                <p className="text-white/55">Ressenti</p>
-                <p className="text-white font-semibold text-sm">
-                  {Math.round(payload.feelsLike)}°C
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded-xl bg-white/[0.06] border border-white/[0.08] p-2.5 text-center transition-colors hover:bg-white/[0.09]">
+                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Ressenti</p>
+                <p className="text-white/90 font-bold text-sm tabular-nums">
+                  {Math.round(payload.feelsLike)}°
                 </p>
               </div>
-              <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
-                <p className="text-white/55">Humidite</p>
-                <p className="text-white font-semibold text-sm">
+              <div className="rounded-xl bg-white/[0.06] border border-white/[0.08] p-2.5 text-center transition-colors hover:bg-white/[0.09]">
+                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Humidite</p>
+                <p className="text-white/90 font-bold text-sm tabular-nums">
                   {Math.round(payload.humidity)}%
                 </p>
               </div>
-              <div className="rounded-xl bg-white/8 border border-white/12 p-2.5 text-center">
-                <p className="text-white/55">Vent</p>
-                <p className="text-white font-semibold text-sm">
-                  {Math.round(payload.windSpeed)} km/h
+              <div className="rounded-xl bg-white/[0.06] border border-white/[0.08] p-2.5 text-center transition-colors hover:bg-white/[0.09]">
+                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Vent</p>
+                <p className="text-white/90 font-bold text-sm tabular-nums">
+                  {Math.round(payload.windSpeed)}
+                  <span className="text-[10px] text-white/50 ml-0.5">km/h</span>
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="h-full grid place-items-center text-white/60">
+          <div className="h-full grid place-items-center text-white/40 text-sm">
             Donnees indisponibles
           </div>
         )}
