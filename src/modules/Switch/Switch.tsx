@@ -96,15 +96,21 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
 
   return (
     <>
-      {/* Custom animation for watermark pulse */}
       <style>{`
         @keyframes gentle-pulse {
-          0%, 100% {
-            opacity: 0.25;
-          }
-          50% {
-            opacity: 0.35;
-          }
+          0%, 100% { opacity: 0.25; }
+          50% { opacity: 0.35; }
+        }
+        @keyframes bolt-flicker {
+          0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(52,211,153,0.6)) drop-shadow(0 0 14px rgba(52,211,153,0.3)); }
+          10% { opacity: 0.6; filter: drop-shadow(0 0 2px rgba(52,211,153,0.2)); }
+          12% { opacity: 1; filter: drop-shadow(0 0 10px rgba(52,211,153,0.8)) drop-shadow(0 0 20px rgba(52,211,153,0.4)); }
+          50% { opacity: 0.9; filter: drop-shadow(0 0 4px rgba(52,211,153,0.4)) drop-shadow(0 0 12px rgba(52,211,153,0.2)); }
+          52% { opacity: 1; filter: drop-shadow(0 0 8px rgba(52,211,153,0.7)) drop-shadow(0 0 18px rgba(52,211,153,0.4)); }
+        }
+        @keyframes bolt-glow-pulse {
+          0%, 100% { opacity: 0.15; transform: scale(1); }
+          50% { opacity: 0.3; transform: scale(1.15); }
         }
       `}</style>
 
@@ -192,18 +198,23 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                   }`}
                 />
               ) : isOn ? (
-                <svg
-                  className="w-24 h-24"
-                  viewBox="0 0 24 24"
-                  style={{
-                    fill: "rgba(52, 211, 153, 0.4)",
-                    filter:
-                      "drop-shadow(0 0 8px rgba(52, 211, 153, 0.6)) drop-shadow(0 0 16px rgba(52, 211, 153, 0.4))",
-                    animation: "gentle-pulse 3s ease-in-out infinite",
-                  }}
-                >
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <div className="relative">
+                  {/* Background glow blob */}
+                  <div
+                    className="absolute inset-0 bg-emerald-400/20 rounded-full blur-2xl"
+                    style={{ animation: "bolt-glow-pulse 2s ease-in-out infinite" }}
+                  />
+                  <svg
+                    className="relative w-24 h-24"
+                    viewBox="0 0 24 24"
+                    style={{
+                      fill: "rgba(52, 211, 153, 0.5)",
+                      animation: "bolt-flicker 3s ease-in-out infinite",
+                    }}
+                  >
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
               ) : (
                 <svg
                   className="w-24 h-24"
@@ -301,6 +312,9 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                             viewBox="0 0 24 24"
                             stroke="currentColor"
                             strokeWidth={2}
+                            style={{
+                              animation: "bolt-flicker 3s ease-in-out infinite",
+                            }}
                           >
                             <path
                               strokeLinecap="round"

@@ -36,8 +36,6 @@ export function PhotoFrame({ dashboardWidget }: WidgetComponentProps) {
     return photos[index % photos.length];
   }, [photos, index]);
 
-  const hasPhotos = photos.length > 0;
-
   return (
     <>
       <style>{`
@@ -51,37 +49,13 @@ export function PhotoFrame({ dashboardWidget }: WidgetComponentProps) {
         }
       `}</style>
 
-      <div className="relative h-full flex flex-col rounded-2xl overflow-hidden transition-all duration-500 bg-black/40 backdrop-blur-xl">
-        {/* Full-bleed image background with blur for ambiance */}
-        {activeSrc && (
-          <div
-            className="absolute inset-0 transition-opacity duration-700"
-            style={{
-              backgroundImage: `url(${activeSrc})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              filter: "blur(40px) saturate(1.4) brightness(0.3)",
-              opacity: 0.6,
-              transform: "scale(1.3)",
-            }}
-          />
-        )}
+      <div className="relative h-full flex flex-col rounded-2xl overflow-hidden transition-all duration-500 bg-white/5 backdrop-blur-xl">
+        {/* Glass background (consistent with other widgets) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45 pointer-events-none" />
 
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60 pointer-events-none" />
-
-        {/* Glass layers */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02] pointer-events-none" />
-
-        {/* Shimmer on the edges */}
-        {hasPhotos && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div
-              className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent"
-              style={{ animation: "frame-shimmer 6s ease-in-out infinite" }}
-            />
-          </div>
-        )}
+        {/* Subtle glow orbs */}
+        <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header bar */}
         <div className="relative z-10 flex items-center justify-between px-5 pt-4 pb-2">
