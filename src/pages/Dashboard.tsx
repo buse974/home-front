@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
 import { Responsive, WidthProvider, type Layouts } from "react-grid-layout";
+import { ParticlesBackground } from "../components/ParticlesBackground";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import type {
@@ -15,10 +16,10 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 const GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
 const GRID_COLS = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
 type GridBreakpoint = keyof typeof GRID_COLS;
-type DashboardTone = "violet" | "ocean" | "emerald" | "sunset";
+type DashboardTone = "violet" | "ocean" | "emerald" | "sunset" | "particles";
 const DASHBOARD_TONES: Record<
   DashboardTone,
-  { gradient: string; swatch: string; label: string }
+  { gradient: string; swatch: string; label: string; particleHue?: number }
 > = {
   violet: {
     gradient: "from-slate-900 via-purple-900 to-slate-900",
@@ -39,6 +40,12 @@ const DASHBOARD_TONES: Record<
     gradient: "from-slate-900 via-rose-900 to-amber-900",
     swatch: "from-rose-500 to-amber-500",
     label: "Sunset",
+  },
+  particles: {
+    gradient: "from-[#0a1628] via-[#162238] to-[#0a1628]",
+    swatch: "from-cyan-400 to-teal-400",
+    label: "Particles",
+    particleHue: 180, // Cyan particles
   },
 };
 
@@ -558,6 +565,8 @@ export function Dashboard() {
 
   const layoutsForRender = editMode ? baseLayouts : centeredLayouts;
   const dashboardGradientClass = DASHBOARD_TONES[dashboardTone].gradient;
+  const showParticles = dashboardTone === "particles";
+  const particleHue = DASHBOARD_TONES[dashboardTone].particleHue;
 
   return (
     <div
@@ -568,6 +577,15 @@ export function Dashboard() {
       onDoubleClick={handleDoubleClick}
       onWheel={handleWheelNavigation}
     >
+      {/* Particles Background (only when particles theme is selected) */}
+      {showParticles && particleHue !== undefined && (
+        <ParticlesBackground
+          count={window.innerWidth < 768 ? 30 : 50}
+          baseHue={particleHue}
+          hueRange={60}
+          speed={0.8}
+        />
+      )}
       {/* CSS pour faire en sorte que les widgets prennent toute la hauteur */}
       <style>{`
         .react-grid-item {
