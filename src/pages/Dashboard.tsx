@@ -71,6 +71,14 @@ export function Dashboard() {
   const [widgetNameDrafts, setWidgetNameDrafts] = useState<
     Record<string, string>
   >({});
+  const [editingWeatherWidget, setEditingWeatherWidget] = useState<
+    string | null
+  >(null);
+  const [weatherEditConfig, setWeatherEditConfig] = useState<{
+    address?: string;
+    debugWeatherCode?: number | null;
+    extendToBackground?: boolean;
+  }>({});
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const ignoreTouchSwipe = useRef(false);
   const lastDashboardNavAt = useRef(0);
@@ -412,6 +420,39 @@ export function Dashboard() {
         };
       });
       alert("Failed to update widget background option");
+    }
+  };
+
+  const handleSaveWeatherConfig = async () => {
+    if (!dashboard || !editingWeatherWidget) return;
+
+    const targetWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === editingWeatherWidget,
+    );
+    if (!targetWidget) return;
+
+    const nextConfig = {
+      ...(targetWidget.config || {}),
+      ...weatherEditConfig,
+    };
+
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+          w.id === editingWeatherWidget ? { ...w, config: nextConfig } : w,
+        ),
+      };
+    });
+
+    try {
+      await api.updateWidget(editingWeatherWidget, { config: nextConfig });
+      setEditingWeatherWidget(null);
+      setWeatherEditConfig({});
+    } catch (error) {
+      console.error("Failed to update weather config:", error);
+      alert("Failed to update weather configuration");
     }
   };
 
@@ -1046,6 +1087,24 @@ export function Dashboard() {
                                 Mode
                               </button>
                             )}
+                            {dashboardWidget.Widget?.component ===
+                              "Weather" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  setEditingWeatherWidget(dashboardWidget.id);
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                title="Configurer la météo"
+                              >
+                                ⚙️ Config
+                              </button>
+                            )}
                           </div>
                         )}
 
@@ -1149,6 +1208,134 @@ export function Dashboard() {
                 className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deletingWidget ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weather Config Modal */}
+      {editingWeatherWidget && dashboard && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <button
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setEditingWeatherWidget(null)}
+            aria-label="Fermer la configuration"
+          />
+          <div className="relative w-full max-w-lg rounded-2xl border border-white/15 bg-slate-900/95 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold text-white mb-6">
+              ⚙️ Configuration Météo
+            </h3>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Adresse / Ville
+                </label>
+                <input
+                  type="text"
+                  value={
+                    weatherEditConfig.address ??
+                    dashboard.DashboardWidgets?.find(
+                      (w) => w.id === editingWeatherWidget,
+                    )?.config?.address ??
+                    ""
+                  }
+                  onChange={(e) =>
+                    setWeatherEditConfig({
+                      ...weatherEditConfig,
+                      address: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder="Ex: Paris, Lyon, Marseille"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Mode Météo
+                </label>
+                <select
+                  value={
+                    weatherEditConfig.debugWeatherCode ??
+                    dashboard.DashboardWidgets?.find(
+                      (w) => w.id === editingWeatherWidget,
+                    )?.config?.debugWeatherCode ??
+                    ""
+                  }
+                  onChange={(e) =>
+                    setWeatherEditConfig({
+                      ...weatherEditConfig,
+                      debugWeatherCode: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                >
+                  <option value="">🔴 Météo en direct (Live)</option>
+                  <option value="0">☀️ Très beau (code 0)</option>
+                  <option value="1">🌤️ Beau temps (code 1)</option>
+                  <option value="2">⛅ Peu nuageux (code 2)</option>
+                  <option value="3">☁️ Couvert (code 3)</option>
+                  <option value="45">🌫️ Brouillard (code 45)</option>
+                  <option value="51">🌧️ Bruine légère (code 51)</option>
+                  <option value="61">🌧️ Pluie (code 61)</option>
+                  <option value="65">🌧️ Forte pluie (code 65)</option>
+                  <option value="71">❄️ Neige légère (code 71)</option>
+                  <option value="75">❄️ Forte neige (code 75)</option>
+                  <option value="95">⛈️ Orage (code 95)</option>
+                </select>
+                <p className="text-xs text-white/50 mt-2">
+                  Force une condition météo pour tester les animations
+                </p>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={
+                      weatherEditConfig.extendToBackground ??
+                      dashboard.DashboardWidgets?.find(
+                        (w) => w.id === editingWeatherWidget,
+                      )?.config?.extendToBackground ??
+                      false
+                    }
+                    onChange={(e) =>
+                      setWeatherEditConfig({
+                        ...weatherEditConfig,
+                        extendToBackground: e.target.checked,
+                      })
+                    }
+                    className="w-5 h-5 rounded border-2 border-white/20 bg-white/5 checked:bg-purple-500 checked:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
+                      Étendre les effets météo au fond d'écran
+                    </span>
+                    <p className="text-xs text-white/50 mt-1">
+                      Les animations météo (pluie, neige, nuages, éclairs)
+                      s'afficheront en arrière-plan de tout le dashboard
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setEditingWeatherWidget(null)}
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/90 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSaveWeatherConfig}
+                className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white transition-colors"
+              >
+                Enregistrer
               </button>
             </div>
           </div>
