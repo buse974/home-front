@@ -4,6 +4,8 @@ import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
 import { Responsive, WidthProvider, type Layouts } from "react-grid-layout";
 import { ParticlesBackground } from "../components/ParticlesBackground";
+import { WeatherEffects } from "../components/WeatherEffects";
+import { useWeather } from "../contexts/WeatherContext";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import type {
@@ -50,6 +52,7 @@ const DASHBOARD_TONES: Record<
 };
 
 export function Dashboard() {
+  const { weatherState } = useWeather();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dashboard, setDashboard] = useState<DashboardType | null>(null);
   const [dashboards, setDashboards] = useState<DashboardType[]>([]);
@@ -584,6 +587,14 @@ export function Dashboard() {
           baseHue={particleHue}
           hueRange={60}
           speed={0.8}
+        />
+      )}
+
+      {/* Weather Effects Background (when weather widget has extendToBackground enabled) */}
+      {weatherState?.enabled && (
+        <WeatherEffects
+          weatherCode={weatherState.weatherCode}
+          isDay={weatherState.isDay}
         />
       )}
       {/* CSS pour faire en sorte que les widgets prennent toute la hauteur */}

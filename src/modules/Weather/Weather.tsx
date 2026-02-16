@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { WidgetComponentProps } from "../../types";
+import { useWeather } from "../../contexts/WeatherContext";
 
 type WeatherPayload = {
   locationName: string;
@@ -70,6 +71,7 @@ function seeded(seed: number) {
 }
 
 export function Weather({ dashboardWidget }: WidgetComponentProps) {
+  const { setWeatherState } = useWeather();
   const config = dashboardWidget.config || {};
   const address =
     typeof config.address === "string" && config.address.trim()
@@ -81,7 +83,7 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
     typeof config.debugWeatherCode === "number"
       ? config.debugWeatherCode
       : null;
-  // const extendToBackground = config.extendToBackground === true; // TODO: implement background propagation
+  const extendToBackground = config.extendToBackground === true;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +170,27 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
   );
   const code = debugWeatherCode ?? payload?.weatherCode ?? -1;
   const isDay = payload?.isDay ?? true;
+
+  // Sync weather state to context when extendToBackground is enabled
+  useEffect(() => {
+    if (extendToBackground && payload) {
+      setWeatherState({
+        weatherCode: code,
+        isDay: isDay,
+        enabled: true,
+      });
+    } else if (!extendToBackground) {
+      setWeatherState(null);
+    }
+
+    // Cleanup when widget unmounts
+    return () => {
+      if (extendToBackground) {
+        setWeatherState(null);
+      }
+    };
+  }, [extendToBackground, code, isDay, payload, setWeatherState]);
+
   const isRainy = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(
     code,
   );
