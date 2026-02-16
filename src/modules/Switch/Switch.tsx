@@ -8,7 +8,7 @@ import { useWidgetRealtimeState } from "../hooks/useWidgetRealtimeState";
  * Bouton centré, responsive, élégant comme le widget Clock
  */
 export function Switch({ dashboardWidget }: WidgetComponentProps) {
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   const devices = dashboardWidget.GenericDevices || [];
 
@@ -43,7 +43,7 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
     dashboardWidget.Widget?.component,
   ]);
 
-  const { anyOn: isOn, refresh } = useWidgetRealtimeState(
+  const { anyOn: isOn, setOptimisticOn } = useWidgetRealtimeState(
     dashboardWidget.id,
     devices.length > 0,
   );
@@ -54,16 +54,18 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
       return;
     }
 
-    setLoading(true);
+    const newState = !isOn;
+    // Optimistic update: change UI immediately
+    setOptimisticOn(newState);
+
     try {
       await api.executeWidgetCommand(dashboardWidget.id, "toggle", {
-        desiredState: !isOn,
+        desiredState: newState,
       });
-      await refresh();
     } catch (error) {
       console.error("Failed to toggle:", error);
-    } finally {
-      setLoading(false);
+      // Revert on error
+      setOptimisticOn(null);
     }
   };
 

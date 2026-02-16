@@ -97,15 +97,25 @@ export function useWidgetRealtimeState(
     };
   }, [enabled, fetchState]);
 
+  const [optimisticOn, setOptimisticOn] = useState<boolean | null>(null);
+
   const anyOn = useMemo(
     () => deviceStates.some((device) => toBooleanState(device.state)),
     [deviceStates],
   );
 
+  // Clear optimistic state when real state catches up
+  useEffect(() => {
+    if (optimisticOn !== null && anyOn === optimisticOn) {
+      setOptimisticOn(null);
+    }
+  }, [anyOn, optimisticOn]);
+
   return {
     deviceStates,
-    anyOn,
+    anyOn: optimisticOn ?? anyOn,
     error,
     refresh: fetchState,
+    setOptimisticOn,
   };
 }
