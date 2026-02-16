@@ -566,6 +566,68 @@ export function Dashboard() {
     }
   };
 
+  // Group drag: when a Section is moved, move all widgets inside it too
+  const handleDragStop = (
+    layout: any[],
+    oldItem: any,
+    newItem: any,
+    _placeholder: any,
+    _e: any,
+    _element: any,
+  ) => {
+    if (!dashboard) return;
+
+    // Check if the dragged item is a Section
+    const draggedWidget = (dashboard.DashboardWidgets || []).find(
+      (dw) => dw.id === newItem.i,
+    );
+    if (!draggedWidget || draggedWidget.Widget?.component !== "Section") return;
+
+    // Calculate movement delta
+    const deltaX = newItem.x - oldItem.x;
+    const deltaY = newItem.y - oldItem.y;
+    if (deltaX === 0 && deltaY === 0) return;
+
+    // Find widgets that were inside the Section BEFORE the move (using oldItem bounds)
+    const containedWidgetIds = layout
+      .filter((item) => {
+        if (item.i === newItem.i) return false; // skip the section itself
+        // Check if widget was inside the old section bounds
+        return (
+          item.x >= oldItem.x &&
+          item.y >= oldItem.y &&
+          item.x + item.w <= oldItem.x + oldItem.w &&
+          item.y + item.h <= oldItem.y + oldItem.h
+        );
+      })
+      .map((item) => item.i);
+
+    if (containedWidgetIds.length === 0) return;
+
+    // Update all breakpoints with the same delta
+    const currentLayouts = dashboard.layouts || {};
+    const updatedLayouts: any = {};
+    for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
+      if (!Array.isArray(bpLayout)) {
+        updatedLayouts[bp] = bpLayout;
+        continue;
+      }
+      updatedLayouts[bp] = (bpLayout as any[]).map((item: any) => {
+        if (containedWidgetIds.includes(item.i)) {
+          return { ...item, x: item.x + deltaX, y: item.y + deltaY };
+        }
+        return item;
+      });
+    }
+
+    setDashboard((prev) =>
+      prev ? { ...prev, layouts: updatedLayouts } : prev,
+    );
+    api.updateDashboardLayouts(dashboard.id, updatedLayouts).catch((error) => {
+      console.error("Failed to update layouts after group drag:", error);
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -1131,7 +1193,9 @@ export function Dashboard() {
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
-                  compactType={editMode ? "vertical" : null}
+                  onDragStop={handleDragStop}
+                  allowOverlap={editMode}
+                  compactType={null}
                   preventCollision={!editMode}
                   resizeHandles={["se"]}
                 >
@@ -1153,10 +1217,16 @@ export function Dashboard() {
                       );
                     }
 
+                    const isSection =
+                      dashboardWidget.Widget?.component === "Section";
+
                     return (
                       <div
                         key={dashboardWidget.id}
                         className="relative h-full w-full"
+                        style={
+                          editMode && isSection ? { zIndex: 0 } : undefined
+                        }
                       >
                         <div
                           className={`h-full w-full ${
@@ -1317,9 +1387,19 @@ export function Dashboard() {
 
                         {/* Overlay en mode édition pour bloquer les clics */}
                         {editMode && (
-                          <div className="absolute inset-0 cursor-move bg-purple-500/10 border-2 border-purple-500/50 rounded-2xl pointer-events-none">
+                          <div
+                            className={`absolute inset-0 cursor-move rounded-2xl pointer-events-none ${
+                              isSection
+                                ? "bg-white/5 border-2 border-dashed border-white/30"
+                                : "bg-purple-500/10 border-2 border-purple-500/50"
+                            }`}
+                          >
                             {/* Poignée de redimensionnement */}
-                            <div className="absolute bottom-0 right-0 w-6 h-6 bg-purple-500 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center">
+                            <div
+                              className={`absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center ${
+                                isSection ? "bg-white/40" : "bg-purple-500"
+                              }`}
+                            >
                               <svg
                                 className="w-4 h-4 text-white"
                                 fill="none"
