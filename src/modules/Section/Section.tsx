@@ -17,8 +17,8 @@ export function Section({ dashboardWidget }: WidgetComponentProps) {
 
   return (
     <div
-      className="h-full w-full rounded-2xl transition-all duration-500"
-      style={{ backgroundColor: bg }}
+      className="section-zone h-full w-full rounded-2xl transition-all duration-500"
+      style={{ backgroundColor: bg, border: "2px solid red" }}
     />
   );
 }
