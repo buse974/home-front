@@ -423,6 +423,47 @@ export function Dashboard() {
     }
   };
 
+  const SECTION_COLORS = [
+    "white",
+    "blue",
+    "emerald",
+    "violet",
+    "rose",
+    "amber",
+    "cyan",
+  ];
+
+  const handleCycleSectionColor = async (widgetId: string) => {
+    if (!dashboard) return;
+    const targetWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === widgetId,
+    );
+    if (!targetWidget) return;
+
+    const currentConfig = targetWidget.config || {};
+    const currentColor = (currentConfig.sectionColor as string) || "white";
+    const currentIndex = SECTION_COLORS.indexOf(currentColor);
+    const nextColor =
+      SECTION_COLORS[(currentIndex + 1) % SECTION_COLORS.length];
+    const nextConfig = { ...currentConfig, sectionColor: nextColor };
+
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+          w.id === widgetId ? { ...w, config: nextConfig } : w,
+        ),
+      };
+    });
+
+    try {
+      await api.updateWidget(widgetId, { config: nextConfig });
+    } catch (error) {
+      console.error("Failed to update section color:", error);
+    }
+  };
+
   const handleSaveWeatherConfig = async () => {
     if (!dashboard || !editingWeatherWidget) return;
 
@@ -1085,6 +1126,26 @@ export function Dashboard() {
                                 title="Basculer analog/digital"
                               >
                                 Mode
+                              </button>
+                            )}
+                            {dashboardWidget.Widget?.component ===
+                              "Section" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  void handleCycleSectionColor(
+                                    dashboardWidget.id,
+                                  );
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white`}
+                                title="Changer la couleur de la section"
+                              >
+                                🎨 Couleur
                               </button>
                             )}
                             {dashboardWidget.Widget?.component ===

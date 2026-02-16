@@ -13,6 +13,7 @@ import { PhotoFrame } from "./PhotoFrame/PhotoFrame";
 import { ColorSlider } from "./ColorSlider/ColorSlider";
 import { WhiteSlider } from "./WhiteSlider/WhiteSlider";
 import { LightControl } from "./LightControl/LightControl";
+import { Section } from "./Section/Section";
 
 /**
  * Registry des widgets disponibles
@@ -40,6 +41,7 @@ export const widgetRegistry: WidgetRegistryMap = {
   ColorSlider: ColorSlider,
   WhiteSlider: WhiteSlider,
   LightControl: LightControl,
+  Section: Section,
   // Ajouter d'autres widgets ici au fur et à mesure:
   // 'Slider': Slider,
   // etc.
