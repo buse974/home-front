@@ -651,6 +651,45 @@ export function Dashboard() {
   const layoutsForRender = editMode ? baseLayouts : centeredLayouts;
   const dashboardGradientClass = DASHBOARD_TONES[dashboardTone].gradient;
   const showParticles = dashboardTone === "particles";
+
+  // Separate Section widgets from regular widgets when not in edit mode
+  const sectionWidgets = !editMode
+    ? (dashboard.DashboardWidgets || []).filter(
+        (dw) => dw.Widget?.component === "Section",
+      )
+    : [];
+  const gridWidgets = editMode
+    ? dashboard.DashboardWidgets || []
+    : (dashboard.DashboardWidgets || []).filter(
+        (dw) => dw.Widget?.component !== "Section",
+      );
+
+  // Grid container width tracking for Section positioning
+  const gridContainerRef = useRef<HTMLDivElement | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+
+  useEffect(() => {
+    const el = gridContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      setGridWidth(entries[0]?.contentRect.width || 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Get current breakpoint cols
+  const currentCols = (() => {
+    const w = gridWidth || window.innerWidth;
+    if (w >= GRID_BREAKPOINTS.lg) return GRID_COLS.lg;
+    if (w >= GRID_BREAKPOINTS.md) return GRID_COLS.md;
+    if (w >= GRID_BREAKPOINTS.sm) return GRID_COLS.sm;
+    if (w >= GRID_BREAKPOINTS.xs) return GRID_COLS.xs;
+    return GRID_COLS.xxs;
+  })();
+
+  const ROW_HEIGHT = 120;
+  const GRID_MARGIN = 10;
   const particleHue = DASHBOARD_TONES[dashboardTone].particleHue;
 
   return (
@@ -1003,13 +1042,89 @@ export function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="w-full px-2 md:px-3">
+              <div
+                ref={gridContainerRef}
+                className="relative w-full px-2 md:px-3"
+              >
+                {/* Section backgrounds rendered behind the grid */}
+                {sectionWidgets.map((sw) => {
+                  const pos = sw.position || { x: 0, y: 0, w: 2, h: 2 };
+                  // Apply same centering shift as centeredLayouts
+                  const currentLayout = layoutsForRender.lg || [];
+                  const maxRight = currentLayout.reduce(
+                    (max, item) => Math.max(max, (item.x || 0) + (item.w || 1)),
+                    0,
+                  );
+                  const usedCols = Math.min(currentCols, Math.max(0, maxRight));
+                  const shift = Math.max(
+                    0,
+                    Math.floor((currentCols - usedCols) / 2),
+                  );
+
+                  const colWidth =
+                    gridWidth > 0
+                      ? (gridWidth - GRID_MARGIN * (currentCols + 1)) /
+                        currentCols
+                      : 0;
+                  const left =
+                    (pos.x + shift) * (colWidth + GRID_MARGIN) + GRID_MARGIN;
+                  const top = pos.y * (ROW_HEIGHT + GRID_MARGIN) + GRID_MARGIN;
+                  const width = pos.w * colWidth + (pos.w - 1) * GRID_MARGIN;
+                  const height = pos.h * ROW_HEIGHT + (pos.h - 1) * GRID_MARGIN;
+
+                  const config = sw.config || {};
+                  const SECTION_COLORS: Record<string, string> = {
+                    blue: "rgba(59, 130, 246, 0.12)",
+                    emerald: "rgba(52, 211, 153, 0.12)",
+                    violet: "rgba(139, 92, 246, 0.12)",
+                    rose: "rgba(244, 63, 94, 0.12)",
+                    amber: "rgba(245, 158, 11, 0.12)",
+                    cyan: "rgba(6, 182, 212, 0.12)",
+                    white: "rgba(255, 255, 255, 0.06)",
+                  };
+                  const bg =
+                    SECTION_COLORS[
+                      (config.sectionColor as string) || "white"
+                    ] || SECTION_COLORS.white;
+
+                  return gridWidth > 0 ? (
+                    <div
+                      key={`section-bg-${sw.id}`}
+                      className="absolute rounded-2xl pointer-events-none transition-all duration-300"
+                      style={{
+                        left,
+                        top,
+                        width,
+                        height,
+                        backgroundColor: bg,
+                        zIndex: 0,
+                      }}
+                    />
+                  ) : null;
+                })}
                 <ResponsiveGridLayout
                   className="layout"
-                  layouts={layoutsForRender}
+                  layouts={
+                    editMode
+                      ? layoutsForRender
+                      : (Object.fromEntries(
+                          Object.entries(layoutsForRender).map(
+                            ([bp, layout]) => [
+                              bp,
+                              (layout || []).filter(
+                                (item) =>
+                                  !sectionWidgets.some(
+                                    (sw) => sw.id === item.i,
+                                  ),
+                              ),
+                            ],
+                          ),
+                        ) as Layouts)
+                  }
                   breakpoints={GRID_BREAKPOINTS}
                   cols={GRID_COLS}
-                  rowHeight={120}
+                  rowHeight={ROW_HEIGHT}
+                  margin={[GRID_MARGIN, GRID_MARGIN]}
                   isDraggable={editMode}
                   isResizable={editMode}
                   draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button"
@@ -1020,7 +1135,7 @@ export function Dashboard() {
                   preventCollision={!editMode}
                   resizeHandles={["se"]}
                 >
-                  {dashboard.DashboardWidgets.map((dashboardWidget) => {
+                  {gridWidgets.map((dashboardWidget) => {
                     const WidgetComponent = getWidgetComponent(
                       dashboardWidget.Widget?.component || "",
                     );
