@@ -1108,7 +1108,12 @@ export function Dashboard() {
               >
                 {/* Section backgrounds rendered behind the grid */}
                 {sectionWidgets.map((sw) => {
-                  const pos = sw.position || { x: 0, y: 0, w: 2, h: 2 };
+                  // Read position from layouts (up-to-date after drags) instead of sw.position (initial DB value)
+                  const layoutItem = (layoutsForRender.lg || []).find(
+                    (item) => item.i === sw.id,
+                  );
+                  const pos = layoutItem ||
+                    sw.position || { x: 0, y: 0, w: 2, h: 2 };
                   // Apply same centering shift as centeredLayouts
                   const currentLayout = layoutsForRender.lg || [];
                   const maxRight = currentLayout.reduce(
@@ -1133,19 +1138,19 @@ export function Dashboard() {
                   const height = pos.h * ROW_HEIGHT + (pos.h - 1) * GRID_MARGIN;
 
                   const config = sw.config || {};
-                  const SECTION_COLORS: Record<string, string> = {
-                    blue: "rgba(59, 130, 246, 0.12)",
-                    emerald: "rgba(52, 211, 153, 0.12)",
-                    violet: "rgba(139, 92, 246, 0.12)",
-                    rose: "rgba(244, 63, 94, 0.12)",
-                    amber: "rgba(245, 158, 11, 0.12)",
-                    cyan: "rgba(6, 182, 212, 0.12)",
-                    white: "rgba(255, 255, 255, 0.06)",
+                  const SECTION_COLORS_MAP: Record<string, string> = {
+                    blue: "rgba(59, 130, 246, 0.18)",
+                    emerald: "rgba(52, 211, 153, 0.18)",
+                    violet: "rgba(139, 92, 246, 0.18)",
+                    rose: "rgba(244, 63, 94, 0.18)",
+                    amber: "rgba(245, 158, 11, 0.18)",
+                    cyan: "rgba(6, 182, 212, 0.18)",
+                    white: "rgba(255, 255, 255, 0.10)",
                   };
                   const bg =
-                    SECTION_COLORS[
+                    SECTION_COLORS_MAP[
                       (config.sectionColor as string) || "white"
-                    ] || SECTION_COLORS.white;
+                    ] || SECTION_COLORS_MAP.white;
 
                   return gridWidth > 0 ? (
                     <div
