@@ -163,9 +163,10 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
   return (
     <div className="relative h-full flex flex-col p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
       <div
-        className="absolute -inset-10 pointer-events-none blur-3xl opacity-40"
+        className="absolute -inset-10 pointer-events-none blur-3xl transition-opacity duration-500"
         style={{
           background: `radial-gradient(circle at 30% 30%, ${previewColor}, transparent 65%)`,
+          opacity: isOn ? 0.4 : 0,
         }}
       />
 
@@ -211,10 +212,12 @@ export function ColorSlider({ dashboardWidget }: WidgetComponentProps) {
         <div className="grid place-items-center pt-1">
           <div
             ref={wheelRef}
-            className="relative w-[170px] h-[170px] rounded-full cursor-pointer touch-none select-none"
+            className="relative w-[170px] h-[170px] rounded-full cursor-pointer touch-none select-none transition-all duration-500"
             style={{
               background:
                 "conic-gradient(from -90deg, #ff3f3f, #ffd93f, #52ff3f, #3fffd6, #3f7bff, #b13fff, #ff3f8f, #ff3f3f)",
+              filter: isOn ? "none" : "grayscale(1) brightness(0.4)",
+              opacity: isOn ? 1 : 0.6,
             }}
             onPointerDown={(event) => {
               isDraggingRef.current = true;
