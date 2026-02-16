@@ -112,6 +112,53 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
           0%, 100% { opacity: 0.15; transform: scale(1); }
           50% { opacity: 0.3; transform: scale(1.15); }
         }
+        @keyframes sw-scan {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(200%); }
+        }
+        @keyframes sw-energy-ring {
+          0% { transform: scale(0.5); opacity: 0.4; }
+          100% { transform: scale(2.5); opacity: 0; }
+        }
+        @keyframes sw-spark-1 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+          100% { transform: translate(-18px, -30px) scale(0); opacity: 0; }
+        }
+        @keyframes sw-spark-2 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(22px, -25px) scale(0); opacity: 0; }
+        }
+        @keyframes sw-spark-3 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+          100% { transform: translate(-10px, -35px) scale(0); opacity: 0; }
+        }
+        @keyframes sw-spark-4 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+          100% { transform: translate(15px, -20px) scale(0); opacity: 0; }
+        }
+        @keyframes sw-spark-5 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+          100% { transform: translate(-25px, -15px) scale(0); opacity: 0; }
+        }
+        @keyframes sw-spark-6 {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(8px, -38px) scale(0); opacity: 0; }
+        }
+        @keyframes sw-arc-1 {
+          0%, 100% { opacity: 0; }
+          15% { opacity: 0.6; }
+          20% { opacity: 0; }
+          45% { opacity: 0.4; }
+          50% { opacity: 0; }
+        }
+        @keyframes sw-arc-2 {
+          0%, 100% { opacity: 0; }
+          30% { opacity: 0; }
+          35% { opacity: 0.5; }
+          40% { opacity: 0; }
+          70% { opacity: 0.3; }
+          75% { opacity: 0; }
+        }
       `}</style>
 
       <div
@@ -126,18 +173,80 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
             : "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
         }`}
       >
-        {/* Glass effect background layers (inspired by Clock) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/45 via-slate-900/20 to-slate-950/45 pointer-events-none" />
-
-        {/* Subtle glow orbs */}
-        <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Active glow effect */}
+        {/* === ON: Rich green atmosphere (inspired by Sensor) === */}
         {isOn && (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-teal-500/10 pointer-events-none" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-3/4 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/25 via-emerald-900/15 to-teal-800/20 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/10 via-transparent to-emerald-400/8 pointer-events-none" />
+            <div className="absolute -top-20 -left-20 w-56 h-56 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -right-16 w-44 h-44 bg-teal-500/12 rounded-full blur-3xl pointer-events-none" />
+            {/* Scan line sweep */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div
+                className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-emerald-400/8 to-transparent"
+                style={{ animation: "sw-scan 4s ease-in-out infinite" }}
+              />
+            </div>
+            {/* Energy ring pulses */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+              <div
+                className="w-24 h-24 rounded-full border border-emerald-400/30"
+                style={{ animation: "sw-energy-ring 3s ease-out infinite" }}
+              />
+              <div
+                className="absolute w-24 h-24 rounded-full border border-emerald-300/20"
+                style={{ animation: "sw-energy-ring 3s ease-out infinite 1s" }}
+              />
+              <div
+                className="absolute w-24 h-24 rounded-full border border-teal-400/25"
+                style={{ animation: "sw-energy-ring 3s ease-out infinite 2s" }}
+              />
+            </div>
+            {/* Electric arcs */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M30 55 L35 48 L32 50 L38 42 L35 44 L40 35"
+                stroke="rgba(52,211,153,0.5)"
+                strokeWidth="0.5"
+                fill="none"
+                strokeLinecap="round"
+                style={{ animation: "sw-arc-1 4s ease-in-out infinite" }}
+              />
+              <path
+                d="M65 60 L60 52 L63 54 L58 45 L61 47 L55 38"
+                stroke="rgba(110,231,183,0.4)"
+                strokeWidth="0.5"
+                fill="none"
+                strokeLinecap="round"
+                style={{ animation: "sw-arc-2 5s ease-in-out infinite" }}
+              />
+            </svg>
+            {/* Spark particles */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className="absolute w-1.5 h-1.5 rounded-full bg-emerald-300"
+                  style={{
+                    filter: "blur(0.5px)",
+                    boxShadow: "0 0 4px rgba(52,211,153,0.8)",
+                    animation: `sw-spark-${i} ${1.5 + i * 0.2}s ease-out infinite ${i * 0.3}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* === OFF: Dark muted atmosphere === */}
+        {!isOn && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/50 via-slate-900/25 to-slate-950/50 pointer-events-none" />
+            <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/3 rounded-full blur-3xl pointer-events-none" />
           </>
         )}
 
@@ -202,7 +311,9 @@ export function Switch({ dashboardWidget }: WidgetComponentProps) {
                   {/* Background glow blob */}
                   <div
                     className="absolute inset-0 bg-emerald-400/20 rounded-full blur-2xl"
-                    style={{ animation: "bolt-glow-pulse 2s ease-in-out infinite" }}
+                    style={{
+                      animation: "bolt-glow-pulse 2s ease-in-out infinite",
+                    }}
                   />
                   <svg
                     className="relative w-24 h-24"
