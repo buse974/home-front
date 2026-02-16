@@ -1108,31 +1108,20 @@ export function Dashboard() {
               >
                 {/* Section backgrounds rendered behind the grid */}
                 {sectionWidgets.map((sw) => {
-                  // Read position from layouts (up-to-date after drags) instead of sw.position (initial DB value)
-                  const layoutItem = (layoutsForRender.lg || []).find(
+                  // Use centeredLayouts which already has the centering shift applied
+                  const layoutItem = (centeredLayouts.lg || []).find(
                     (item) => item.i === sw.id,
                   );
                   const pos = layoutItem ||
                     sw.position || { x: 0, y: 0, w: 2, h: 2 };
-                  // Apply same centering shift as centeredLayouts
-                  const currentLayout = layoutsForRender.lg || [];
-                  const maxRight = currentLayout.reduce(
-                    (max, item) => Math.max(max, (item.x || 0) + (item.w || 1)),
-                    0,
-                  );
-                  const usedCols = Math.min(currentCols, Math.max(0, maxRight));
-                  const shift = Math.max(
-                    0,
-                    Math.floor((currentCols - usedCols) / 2),
-                  );
 
                   const colWidth =
                     gridWidth > 0
                       ? (gridWidth - GRID_MARGIN * (currentCols + 1)) /
                         currentCols
                       : 0;
-                  const left =
-                    (pos.x + shift) * (colWidth + GRID_MARGIN) + GRID_MARGIN;
+                  // No extra shift needed: centeredLayouts already includes the centering offset
+                  const left = pos.x * (colWidth + GRID_MARGIN) + GRID_MARGIN;
                   const top = pos.y * (ROW_HEIGHT + GRID_MARGIN) + GRID_MARGIN;
                   const width = pos.w * colWidth + (pos.w - 1) * GRID_MARGIN;
                   const height = pos.h * ROW_HEIGHT + (pos.h - 1) * GRID_MARGIN;
