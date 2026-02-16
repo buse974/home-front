@@ -84,6 +84,8 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
+  const gridContainerRef = useRef<HTMLDivElement | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -120,6 +122,16 @@ export function Dashboard() {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("keydown", onKeyDown);
     };
+  }, []);
+
+  useEffect(() => {
+    const el = gridContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      setGridWidth(entries[0]?.contentRect.width || 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -725,20 +737,6 @@ export function Dashboard() {
     : (dashboard.DashboardWidgets || []).filter(
         (dw) => dw.Widget?.component !== "Section",
       );
-
-  // Grid container width tracking for Section positioning
-  const gridContainerRef = useRef<HTMLDivElement | null>(null);
-  const [gridWidth, setGridWidth] = useState(0);
-
-  useEffect(() => {
-    const el = gridContainerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      setGridWidth(entries[0]?.contentRect.width || 0);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Get current breakpoint cols
   const currentCols = (() => {
