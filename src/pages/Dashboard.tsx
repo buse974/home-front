@@ -1114,7 +1114,7 @@ export function Dashboard() {
                   }
                   onDragStop={handleDragStop}
                   allowOverlap={true}
-                  compactType="vertical"
+                  compactType={null}
                   resizeHandles={["se"]}
                 >
                   {gridWidgets.map((dashboardWidget) => {
