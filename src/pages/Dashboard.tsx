@@ -132,7 +132,7 @@ export function Dashboard() {
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [dashboard]);
 
   useEffect(() => {
     localStorage.setItem(
