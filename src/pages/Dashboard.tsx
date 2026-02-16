@@ -2142,6 +2142,66 @@ function AddWidgetModal({
                       direct.
                     </p>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Mode Météo
+                    </label>
+                    <select
+                      value={widgetConfig.debugWeatherCode ?? ""}
+                      onChange={(e) =>
+                        setWidgetConfig({
+                          ...widgetConfig,
+                          debugWeatherCode: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        })
+                      }
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    >
+                      <option value="">🔴 Météo en direct (Live)</option>
+                      <option value="0">☀️ Très beau (code 0)</option>
+                      <option value="1">🌤️ Beau temps (code 1)</option>
+                      <option value="2">⛅ Peu nuageux (code 2)</option>
+                      <option value="3">☁️ Couvert (code 3)</option>
+                      <option value="45">🌫️ Brouillard (code 45)</option>
+                      <option value="51">🌧️ Bruine légère (code 51)</option>
+                      <option value="61">🌧️ Pluie (code 61)</option>
+                      <option value="65">🌧️ Forte pluie (code 65)</option>
+                      <option value="71">❄️ Neige légère (code 71)</option>
+                      <option value="75">❄️ Forte neige (code 75)</option>
+                      <option value="95">⛈️ Orage (code 95)</option>
+                    </select>
+                    <p className="text-xs text-white/50 mt-2">
+                      Force une condition météo pour tester les animations (ou
+                      laissez "Live" pour la vraie météo)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={widgetConfig.extendToBackground === true}
+                        onChange={(e) =>
+                          setWidgetConfig({
+                            ...widgetConfig,
+                            extendToBackground: e.target.checked,
+                          })
+                        }
+                        className="w-5 h-5 rounded border-2 border-white/20 bg-white/5 checked:bg-purple-500 checked:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all cursor-pointer"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
+                          Étendre les effets météo au fond d'écran
+                        </span>
+                        <p className="text-xs text-white/50 mt-1">
+                          Les animations météo (pluie, neige, nuages, éclairs)
+                          s'afficheront en arrière-plan de tout le dashboard
+                        </p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               )}
 
