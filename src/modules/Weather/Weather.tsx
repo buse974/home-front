@@ -39,13 +39,16 @@ function buildAddressCandidates(input: string): string[] {
 }
 
 function getWeatherLabel(code: number): string {
-  if (code === 0) return "Ciel degage";
-  if ([1, 2].includes(code)) return "Peu nuageux";
+  if (code === 0) return "Tres beau";
+  if (code === 1) return "Beau temps";
+  if (code === 2) return "Peu nuageux";
   if (code === 3) return "Couvert";
   if ([45, 48].includes(code)) return "Brouillard";
   if ([51, 53, 55, 56, 57].includes(code)) return "Bruine";
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "Pluie";
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return "Neige";
+  if ([61, 63, 65].includes(code)) return "Pluie";
+  if ([66, 67, 80, 81, 82].includes(code)) return "Forte pluie";
+  if ([71, 73, 75].includes(code)) return "Neige";
+  if ([77, 85, 86].includes(code)) return "Forte neige";
   if ([95, 96, 99].includes(code)) return "Orage";
   return "Meteo";
 }
@@ -73,10 +76,16 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
       ? config.address.trim()
       : "Paris";
 
+  // Read debug weather code from config (set via DB or future edit UI)
+  const debugWeatherCode =
+    typeof config.debugWeatherCode === "number"
+      ? config.debugWeatherCode
+      : null;
+  // const extendToBackground = config.extendToBackground === true; // TODO: implement background propagation
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payload, setPayload] = useState<WeatherPayload | null>(null);
-  const [debugWeatherCode, setDebugWeatherCode] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -491,31 +500,6 @@ export function Weather({ dashboardWidget }: WidgetComponentProps) {
 
         {/* === Content === */}
         <div className="relative z-10 flex flex-col h-full p-5">
-          {/* Debug mode selector */}
-          <div className="absolute top-2 left-2 z-50">
-            <select
-              value={debugWeatherCode ?? ""}
-              onChange={(e) =>
-                setDebugWeatherCode(
-                  e.target.value ? Number(e.target.value) : null,
-                )
-              }
-              className="text-xs px-2 py-1 rounded bg-black/40 text-white/90 border border-white/20 backdrop-blur-sm"
-            >
-              <option value="">🔴 Live</option>
-              <option value="0">☀️ Ciel dégagé (0)</option>
-              <option value="1">⛅ Peu nuageux (1)</option>
-              <option value="3">☁️ Couvert (3)</option>
-              <option value="45">🌫️ Brouillard (45)</option>
-              <option value="51">🌧️ Bruine légère (51)</option>
-              <option value="61">🌧️ Pluie (61)</option>
-              <option value="65">🌧️ Pluie forte (65)</option>
-              <option value="71">❄️ Neige légère (71)</option>
-              <option value="75">❄️ Neige forte (75)</option>
-              <option value="95">⛈️ Orage (95)</option>
-            </select>
-          </div>
-
           {/* Top bar: location + icon */}
           <div className="flex items-start justify-between mb-auto">
             <div>
