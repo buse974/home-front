@@ -714,7 +714,28 @@ export function Dashboard() {
   const dashboardGradientClass = DASHBOARD_TONES[dashboardTone].gradient;
   const showParticles = dashboardTone === "particles";
 
-  // All widgets go through the grid — Sections overlap other widgets via allowOverlap + low z-index
+  // Identify section widgets to mark them as static (they stay in place while others compact)
+  const sectionIds = new Set(
+    (dashboard.DashboardWidgets || [])
+      .filter((dw) => dw.Widget?.component === "Section")
+      .map((dw) => dw.id),
+  );
+
+  // Inject static: true on sections (except in edit mode where we need to move them)
+  const injectStatic = (layouts: Layouts): Layouts =>
+    Object.fromEntries(
+      Object.entries(layouts).map(([bp, items]) => [
+        bp,
+        Array.isArray(items)
+          ? items.map((item) => ({
+              ...item,
+              static: !editMode && sectionIds.has(item.i),
+            }))
+          : items,
+      ]),
+    ) as Layouts;
+
+  const layoutsForGrid = injectStatic(layoutsForRender);
   const gridWidgets = dashboard.DashboardWidgets || [];
 
   const ROW_HEIGHT = 120;
@@ -1074,7 +1095,7 @@ export function Dashboard() {
               <div className="relative w-full px-2 md:px-3">
                 <ResponsiveGridLayout
                   className="layout"
-                  layouts={layoutsForRender}
+                  layouts={layoutsForGrid}
                   breakpoints={GRID_BREAKPOINTS}
                   cols={GRID_COLS}
                   rowHeight={ROW_HEIGHT}
@@ -1087,8 +1108,7 @@ export function Dashboard() {
                   }
                   onDragStop={handleDragStop}
                   allowOverlap={true}
-                  compactType={null}
-                  preventCollision={!editMode}
+                  compactType="vertical"
                   resizeHandles={["se"]}
                 >
                   {gridWidgets.map((dashboardWidget) => {
