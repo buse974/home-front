@@ -779,6 +779,12 @@ export function Dashboard() {
           display: flex !important;
           flex-direction: column !important;
         }
+        .react-grid-item:has(> [data-section]) {
+          z-index: 0 !important;
+        }
+        .react-grid-item:not(:has(> [data-section])) {
+          z-index: 1 !important;
+        }
         .widget-no-background > div:first-child {
           background: transparent !important;
           backdrop-filter: none !important;
@@ -1138,7 +1144,7 @@ export function Dashboard() {
                         className={`relative h-full w-full ${
                           isSection && !editMode ? "pointer-events-none" : ""
                         }`}
-                        style={isSection ? { zIndex: 0 } : undefined}
+                        {...(isSection ? { "data-section": true } : {})}
                       >
                         <div
                           className={`h-full w-full ${
