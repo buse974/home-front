@@ -588,11 +588,18 @@ export function Dashboard() {
     const deltaY = newItem.y - oldItem.y;
     if (deltaX === 0 && deltaY === 0) return;
 
-    // Find widgets that were inside the Section BEFORE the move (using oldItem bounds)
+    // Find widgets that were inside the Section BEFORE the move
+    // In layout[], other widgets still have their old positions (only the section moved)
+    const sectionWidgetIds = new Set(
+      (dashboard.DashboardWidgets || [])
+        .filter((dw) => dw.Widget?.component === "Section")
+        .map((dw) => dw.id),
+    );
+
     const containedWidgetIds = layout
       .filter((item) => {
-        if (item.i === newItem.i) return false; // skip the section itself
-        // Check if widget was inside the old section bounds
+        if (item.i === newItem.i) return false;
+        if (sectionWidgetIds.has(item.i)) return false; // skip other sections
         return (
           item.x >= oldItem.x &&
           item.y >= oldItem.y &&
@@ -604,7 +611,7 @@ export function Dashboard() {
 
     if (containedWidgetIds.length === 0) return;
 
-    // Update all breakpoints with the same delta
+    // Apply delta to contained widgets in all breakpoints
     const currentLayouts = dashboard.layouts || {};
     const updatedLayouts: any = {};
     for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
