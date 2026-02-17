@@ -84,6 +84,12 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
+  // Group drag state: tracks contained widgets when dragging a section
+  const groupDragRef = useRef<{
+    sectionId: string;
+    containedIds: string[];
+    initialPositions: Record<string, { x: number; y: number }>;
+  } | null>(null);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -566,71 +572,94 @@ export function Dashboard() {
     }
   };
 
-  // Group drag: when a Section is moved, move all widgets inside it too
-  const handleDragStop = (
+  // Group drag: when a Section is dragged, move all contained widgets in real-time
+  const handleDragStart = (
     layout: any[],
     oldItem: any,
-    newItem: any,
-    _placeholder: any,
-    _e: any,
-    _element: any,
   ) => {
     if (!dashboard) return;
 
-    // Check if the dragged item is a Section
     const draggedWidget = (dashboard.DashboardWidgets || []).find(
-      (dw) => dw.id === newItem.i,
+      (dw) => dw.id === oldItem.i,
     );
-    if (!draggedWidget || draggedWidget.Widget?.component !== "Section") return;
+    if (!draggedWidget || draggedWidget.Widget?.component !== "Section") {
+      groupDragRef.current = null;
+      return;
+    }
 
-    // Calculate movement delta
-    const deltaX = newItem.x - oldItem.x;
-    const deltaY = newItem.y - oldItem.y;
-    if (deltaX === 0 && deltaY === 0) return;
-
-    // Find widgets that were inside the Section BEFORE the move
-    // In layout[], other widgets still have their old positions (only the section moved)
+    // Find non-section widgets fully inside the section bounds
     const sectionWidgetIds = new Set(
       (dashboard.DashboardWidgets || [])
         .filter((dw) => dw.Widget?.component === "Section")
         .map((dw) => dw.id),
     );
 
-    const containedWidgetIds = layout
-      .filter((item) => {
-        if (item.i === newItem.i) return false;
-        if (sectionWidgetIds.has(item.i)) return false; // skip other sections
-        return (
-          item.x >= oldItem.x &&
-          item.y >= oldItem.y &&
-          item.x + item.w <= oldItem.x + oldItem.w &&
-          item.y + item.h <= oldItem.y + oldItem.h
-        );
-      })
-      .map((item) => item.i);
+    const containedIds: string[] = [];
+    const initialPositions: Record<string, { x: number; y: number }> = {};
 
-    if (containedWidgetIds.length === 0) return;
-
-    // Apply delta to contained widgets in all breakpoints
-    const currentLayouts = dashboard.layouts || {};
-    const updatedLayouts: any = {};
-    for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
-      if (!Array.isArray(bpLayout)) {
-        updatedLayouts[bp] = bpLayout;
-        continue;
+    for (const item of layout) {
+      if (item.i === oldItem.i) continue;
+      if (sectionWidgetIds.has(item.i)) continue;
+      if (
+        item.x >= oldItem.x &&
+        item.y >= oldItem.y &&
+        item.x + item.w <= oldItem.x + oldItem.w &&
+        item.y + item.h <= oldItem.y + oldItem.h
+      ) {
+        containedIds.push(item.i);
+        initialPositions[item.i] = { x: item.x, y: item.y };
       }
-      updatedLayouts[bp] = (bpLayout as any[]).map((item: any) => {
-        if (containedWidgetIds.includes(item.i)) {
-          return { ...item, x: item.x + deltaX, y: item.y + deltaY };
-        }
-        return item;
-      });
     }
 
-    setDashboard((prev) =>
-      prev ? { ...prev, layouts: updatedLayouts } : prev,
-    );
-    api.updateDashboardLayouts(dashboard.id, updatedLayouts).catch((error) => {
+    groupDragRef.current = containedIds.length > 0
+      ? { sectionId: oldItem.i, containedIds, initialPositions }
+      : null;
+  };
+
+  const handleDrag = (
+    _layout: any[],
+    oldItem: any,
+    newItem: any,
+  ) => {
+    const group = groupDragRef.current;
+    if (!group || group.sectionId !== newItem.i) return;
+
+    const deltaX = newItem.x - oldItem.x;
+    const deltaY = newItem.y - oldItem.y;
+
+    // Update layouts in real-time so contained widgets follow
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      const currentLayouts = prev.layouts || {};
+      const updatedLayouts: any = {};
+      for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
+        if (!Array.isArray(bpLayout)) {
+          updatedLayouts[bp] = bpLayout;
+          continue;
+        }
+        updatedLayouts[bp] = (bpLayout as any[]).map((item: any) => {
+          const initPos = group.initialPositions[item.i];
+          if (initPos) {
+            return { ...item, x: initPos.x + deltaX, y: initPos.y + deltaY };
+          }
+          return item;
+        });
+      }
+      return { ...prev, layouts: updatedLayouts };
+    });
+  };
+
+  const handleDragStop = () => {
+    const group = groupDragRef.current;
+    if (!group || !dashboard) {
+      groupDragRef.current = null;
+      return;
+    }
+    groupDragRef.current = null;
+
+    // Save final layouts to DB
+    const finalLayouts = dashboard.layouts || {};
+    api.updateDashboardLayouts(dashboard.id, finalLayouts).catch((error) => {
       console.error("Failed to update layouts after group drag:", error);
     });
   };
@@ -1097,6 +1126,8 @@ export function Dashboard() {
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
+                  onDragStart={handleDragStart}
+                  onDrag={handleDrag}
                   onDragStop={handleDragStop}
                   allowOverlap={true}
                   compactType={null}
