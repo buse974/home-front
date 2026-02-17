@@ -86,14 +86,6 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
-  // Group drag state: tracks contained widget DOM elements when dragging a section
-  const groupDragRef = useRef<{
-    sectionId: string;
-    containedIds: string[];
-    initialPositions: Record<string, { x: number; y: number }>;
-    elements: Record<string, HTMLElement>;
-    colWidth: number;
-  } | null>(null);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -576,127 +568,49 @@ export function Dashboard() {
     }
   };
 
-  // Group drag: move contained widgets visually via DOM transforms during drag
-  const handleDragStart = (
+  // Group drag: when a Section is dropped, move all contained widgets by the same delta
+  const handleDragStop = (
     layout: any[],
     oldItem: any,
-    _newItem: any,
-    _placeholder: any,
-    _e: any,
-    element: HTMLElement,
+    newItem: any,
   ) => {
     if (!dashboard) return;
 
+    // Only for Section widgets
     const draggedWidget = (dashboard.DashboardWidgets || []).find(
-      (dw) => dw.id === oldItem.i,
+      (dw) => dw.id === newItem.i,
     );
-    if (!draggedWidget || draggedWidget.Widget?.component !== "Section") {
-      groupDragRef.current = null;
-      return;
-    }
+    if (!draggedWidget || draggedWidget.Widget?.component !== "Section") return;
 
-    // Calculate column width from the grid container
-    const gridEl = element.closest(".react-grid-layout") as HTMLElement | null;
-    if (!gridEl) { groupDragRef.current = null; return; }
-    const containerWidth = gridEl.clientWidth;
-    // Detect current breakpoint columns
-    let cols = GRID_COLS.lg;
-    for (const [bp, minW] of Object.entries(GRID_BREAKPOINTS) as [GridBreakpoint, number][]) {
-      if (containerWidth >= minW) { cols = GRID_COLS[bp]; break; }
-    }
-    const colWidth = (containerWidth - GRID_MARGIN * (cols + 1)) / cols;
+    const deltaX = newItem.x - oldItem.x;
+    const deltaY = newItem.y - oldItem.y;
+    if (deltaX === 0 && deltaY === 0) return;
 
-    // Find non-section widgets fully inside the section bounds
+    // Find non-section widgets that were inside the section BEFORE the move
     const sectionWidgetIds = new Set(
       (dashboard.DashboardWidgets || [])
         .filter((dw) => dw.Widget?.component === "Section")
         .map((dw) => dw.id),
     );
 
-    const containedIds: string[] = [];
-    const initialPositions: Record<string, { x: number; y: number }> = {};
-    const elements: Record<string, HTMLElement> = {};
-
+    const containedWidgetIds: string[] = [];
     for (const item of layout) {
-      if (item.i === oldItem.i) continue;
+      if (item.i === newItem.i) continue;
       if (sectionWidgetIds.has(item.i)) continue;
+      // layout[] has old positions for non-dragged items
       if (
         item.x >= oldItem.x &&
         item.y >= oldItem.y &&
         item.x + item.w <= oldItem.x + oldItem.w &&
         item.y + item.h <= oldItem.y + oldItem.h
       ) {
-        // Find DOM element for this widget
-        const el = gridEl.querySelector(`[data-grid-id="${item.i}"]`) as HTMLElement;
-        if (el) {
-          const gridItem = el.closest(".react-grid-item") as HTMLElement;
-          if (gridItem) {
-            containedIds.push(item.i);
-            initialPositions[item.i] = { x: item.x, y: item.y };
-            elements[item.i] = gridItem;
-          }
-        }
+        containedWidgetIds.push(item.i);
       }
     }
 
-    groupDragRef.current = containedIds.length > 0
-      ? { sectionId: oldItem.i, containedIds, initialPositions, elements, colWidth }
-      : null;
-  };
+    if (containedWidgetIds.length === 0) return;
 
-  const handleDrag = (
-    _layout: any[],
-    oldItem: any,
-    newItem: any,
-  ) => {
-    const group = groupDragRef.current;
-    if (!group || group.sectionId !== newItem.i) return;
-
-    const deltaX = newItem.x - oldItem.x;
-    const deltaY = newItem.y - oldItem.y;
-
-    // Move contained widgets visually via CSS transform
-    const pxDeltaX = deltaX * (group.colWidth + GRID_MARGIN);
-    const pxDeltaY = deltaY * (ROW_HEIGHT + GRID_MARGIN);
-
-    for (const id of group.containedIds) {
-      const el = group.elements[id];
-      if (el) {
-        el.style.transform = `translate(${pxDeltaX}px, ${pxDeltaY}px)`;
-        el.style.transition = "none";
-        el.style.zIndex = "3";
-      }
-    }
-  };
-
-  const handleDragStop = (
-    _layout: any[],
-    oldItem: any,
-    newItem: any,
-  ) => {
-    const group = groupDragRef.current;
-    if (!group || !dashboard) {
-      groupDragRef.current = null;
-      return;
-    }
-
-    const deltaX = newItem.x - oldItem.x;
-    const deltaY = newItem.y - oldItem.y;
-
-    // Remove CSS transforms
-    for (const id of group.containedIds) {
-      const el = group.elements[id];
-      if (el) {
-        el.style.transform = "";
-        el.style.transition = "";
-        el.style.zIndex = "";
-      }
-    }
-
-    groupDragRef.current = null;
-    if (deltaX === 0 && deltaY === 0) return;
-
-    // Update layout positions for contained widgets
+    // Apply same delta to contained widgets in all breakpoints
     const currentLayouts = dashboard.layouts || {};
     const updatedLayouts: any = {};
     for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
@@ -705,9 +619,8 @@ export function Dashboard() {
         continue;
       }
       updatedLayouts[bp] = (bpLayout as any[]).map((item: any) => {
-        const initPos = group.initialPositions[item.i];
-        if (initPos) {
-          return { ...item, x: initPos.x + deltaX, y: initPos.y + deltaY };
+        if (containedWidgetIds.includes(item.i)) {
+          return { ...item, x: item.x + deltaX, y: item.y + deltaY };
         }
         return item;
       });
@@ -1180,8 +1093,6 @@ export function Dashboard() {
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
-                  onDragStart={handleDragStart}
-                  onDrag={handleDrag}
                   onDragStop={handleDragStop}
                   allowOverlap={true}
                   compactType={null}
@@ -1214,7 +1125,6 @@ export function Dashboard() {
                         className={`relative h-full w-full ${
                           isSection && !editMode ? "pointer-events-none" : ""
                         }`}
-                        data-grid-id={dashboardWidget.id}
                         {...(isSection ? { "data-section": true } : {})}
                       >
                         <div
