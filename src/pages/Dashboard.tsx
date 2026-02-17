@@ -1683,7 +1683,7 @@ export function Dashboard() {
 
       {/* Version */}
       <span className="fixed bottom-1 right-2 text-[10px] text-white/20 pointer-events-none select-none">
-        v0.5
+        v0.6
       </span>
     </div>
   );
