@@ -560,13 +560,45 @@ export function Dashboard() {
     }
   };
 
-  const handleLayoutChange = async (layouts: any) => {
+  // Merge partial layouts (from one grid) into the full layouts
+  const mergeLayouts = (partialLayouts: Layouts): Layouts => {
+    const current = dashboard?.layouts || {};
+    const merged: any = {};
+    const allBreakpoints = new Set([
+      ...Object.keys(current),
+      ...Object.keys(partialLayouts),
+    ]);
+    for (const bp of allBreakpoints) {
+      const currentItems = (current as any)[bp] || [];
+      const partialItems = (partialLayouts as any)[bp] || [];
+      const partialIds = new Set(partialItems.map((i: any) => i.i));
+      merged[bp] = [
+        ...currentItems.filter((i: any) => !partialIds.has(i.i)),
+        ...partialItems,
+      ];
+    }
+    return merged as Layouts;
+  };
+
+  const handleSectionLayoutChange = async (sectionLayouts: Layouts) => {
     if (!editMode || !dashboard) return;
-    setDashboard((prev) => (prev ? { ...prev, layouts } : prev));
+    const merged = mergeLayouts(sectionLayouts);
+    setDashboard((prev) => (prev ? { ...prev, layouts: merged } : prev));
     try {
-      await api.updateDashboardLayouts(dashboard.id, layouts);
+      await api.updateDashboardLayouts(dashboard.id, merged);
     } catch (error) {
-      console.error("Failed to update dashboard layouts:", error);
+      console.error("Failed to update section layouts:", error);
+    }
+  };
+
+  const handleWidgetLayoutChange = async (widgetLayouts: Layouts) => {
+    if (!editMode || !dashboard) return;
+    const merged = mergeLayouts(widgetLayouts);
+    setDashboard((prev) => (prev ? { ...prev, layouts: merged } : prev));
+    try {
+      await api.updateDashboardLayouts(dashboard.id, merged);
+    } catch (error) {
+      console.error("Failed to update widget layouts:", error);
     }
   };
 
@@ -595,8 +627,18 @@ export function Dashboard() {
     );
 
     // Capture IDs of widgets fully inside the section at this exact moment
-    sectionDragContainedRef.current = layout
-      .filter((item) => {
+    // Use the full layouts (not just section grid) to find contained normal widgets
+    const currentLayouts = dashboard.layouts || {};
+    const currentBp = Object.keys(currentLayouts).find(
+      (bp) => Array.isArray(currentLayouts[bp as keyof typeof currentLayouts]) &&
+        (currentLayouts[bp as keyof typeof currentLayouts] as any[]).some((i: any) => i.i === oldItem.i),
+    );
+    const fullLayout = currentBp
+      ? (currentLayouts[currentBp as keyof typeof currentLayouts] as any[])
+      : layout;
+
+    sectionDragContainedRef.current = fullLayout
+      .filter((item: any) => {
         if (item.i === oldItem.i) return false;
         if (sectionWidgetIds.has(item.i)) return false;
         return (
@@ -606,7 +648,7 @@ export function Dashboard() {
           item.y + item.h <= oldItem.y + oldItem.h
         );
       })
-      .map((item) => item.i);
+      .map((item: any) => item.i);
   };
 
   // On drop: apply delta to the widgets we captured at drag start
@@ -734,7 +776,34 @@ export function Dashboard() {
   const dashboardGradientClass = DASHBOARD_TONES[dashboardTone].gradient;
   const showParticles = dashboardTone === "particles";
 
-  const gridWidgets = dashboard.DashboardWidgets || [];
+  const allWidgets = dashboard.DashboardWidgets || [];
+  const sectionIds = new Set(
+    allWidgets
+      .filter((dw) => dw.Widget?.component === "Section")
+      .map((dw) => dw.id),
+  );
+  const sectionWidgets = allWidgets.filter((dw) => sectionIds.has(dw.id));
+  const normalWidgets = allWidgets.filter((dw) => !sectionIds.has(dw.id));
+
+  const filterLayouts = (layouts: Layouts, keepIds: Set<string>): Layouts =>
+    Object.fromEntries(
+      Object.entries(layouts).map(([bp, layout]) => [
+        bp,
+        Array.isArray(layout)
+          ? layout.filter((item) => keepIds.has(item.i))
+          : layout,
+      ]),
+    ) as Layouts;
+
+  const sectionLayoutsForRender = filterLayouts(
+    layoutsForRender,
+    sectionIds,
+  );
+  const widgetLayoutsForRender = filterLayouts(
+    layoutsForRender,
+    new Set(normalWidgets.map((w) => w.id)),
+  );
+
   const particleHue = DASHBOARD_TONES[dashboardTone].particleHue;
 
   return (
@@ -773,12 +842,6 @@ export function Dashboard() {
           flex: 1 !important;
           display: flex !important;
           flex-direction: column !important;
-        }
-        .react-grid-item:has(> [data-section]) {
-          z-index: 0 !important;
-        }
-        .react-grid-item:not(:has(> [data-section])) {
-          z-index: 1 !important;
         }
         .widget-no-background > div:first-child {
           background: transparent !important;
@@ -1094,228 +1157,311 @@ export function Dashboard() {
               </div>
             ) : (
               <div className="relative w-full px-2 md:px-3">
-                <ResponsiveGridLayout
-                  className="layout"
-                  layouts={layoutsForRender}
-                  breakpoints={GRID_BREAKPOINTS}
-                  cols={GRID_COLS}
-                  rowHeight={ROW_HEIGHT}
-                  margin={[GRID_MARGIN, GRID_MARGIN]}
-                  isDraggable={editMode}
-                  isResizable={editMode}
-                  draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button"
-                  onLayoutChange={(_, layouts: Layouts) =>
-                    handleLayoutChange(layouts)
-                  }
-                  onDragStart={handleDragStart}
-                  onDragStop={handleDragStop}
-                  allowOverlap={false}
-                  compactType={null}
-                  resizeHandles={["se"]}
-                >
-                  {gridWidgets.map((dashboardWidget) => {
-                    const WidgetComponent = getWidgetComponent(
-                      dashboardWidget.Widget?.component || "",
-                    );
+                {/* Grid sections (fond, z-index bas) */}
+                {sectionWidgets.length > 0 && (
+                  <div className={`absolute inset-0 px-2 md:px-3 ${editMode ? "" : "pointer-events-none"}`} style={{ zIndex: 0 }}>
+                    <ResponsiveGridLayout
+                      className="layout"
+                      layouts={sectionLayoutsForRender}
+                      breakpoints={GRID_BREAKPOINTS}
+                      cols={GRID_COLS}
+                      rowHeight={ROW_HEIGHT}
+                      margin={[GRID_MARGIN, GRID_MARGIN]}
+                      isDraggable={editMode}
+                      isResizable={editMode}
+                      draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button"
+                      onLayoutChange={(_, layouts: Layouts) =>
+                        handleSectionLayoutChange(layouts)
+                      }
+                      onDragStart={handleDragStart}
+                      onDragStop={handleDragStop}
+                      allowOverlap={true}
+                      compactType={null}
+                      resizeHandles={["se"]}
+                    >
+                      {sectionWidgets.map((dashboardWidget) => {
+                        const WidgetComponent = getWidgetComponent(
+                          dashboardWidget.Widget?.component || "",
+                        );
 
-                    if (!WidgetComponent) {
+                        if (!WidgetComponent) return <div key={dashboardWidget.id} />;
+
+                        return (
+                          <div
+                            key={dashboardWidget.id}
+                            className="relative h-full w-full"
+                          >
+                            <div className="h-full w-full pointer-events-none">
+                              <WidgetComponent
+                                dashboardWidget={dashboardWidget}
+                                onCommand={async () => {}}
+                              />
+                            </div>
+
+                            {editMode && (
+                              <div className="absolute top-2 left-2 z-[101] flex items-center gap-2">
+                                <input
+                                  value={widgetNameDrafts[dashboardWidget.id] || ""}
+                                  onChange={(e) =>
+                                    setWidgetNameDrafts((prev) => ({
+                                      ...prev,
+                                      [dashboardWidget.id]: e.target.value,
+                                    }))
+                                  }
+                                  onBlur={() =>
+                                    handleSaveWidgetName(dashboardWidget.id)
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      e.currentTarget.blur();
+                                    }
+                                  }}
+                                  className="rename-widget-input w-44 px-2.5 py-1.5 rounded-md bg-slate-900/80 border border-white/25 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                  placeholder="Nom du widget"
+                                />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    void handleCycleSectionColor(
+                                      dashboardWidget.id,
+                                    );
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
+                                  className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                  title="Changer la couleur de la section"
+                                >
+                                  Couleur
+                                </button>
+                              </div>
+                            )}
+
+                            {editMode && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  setWidgetToDelete(dashboardWidget.id);
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className="delete-button absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
+                                title="Supprimer le widget"
+                              >
+                                <svg
+                                  className="w-4 h-4 text-white pointer-events-none"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+
+                            {editMode && (
+                              <div className="absolute inset-0 cursor-move rounded-2xl pointer-events-none bg-white/5 border-2 border-dashed border-white/30">
+                                <div className="absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center bg-white/40">
+                                  <svg
+                                    className="w-4 h-4 text-white"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </ResponsiveGridLayout>
+                  </div>
+                )}
+
+                {/* Grid widgets (contenu, z-index haut) */}
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <ResponsiveGridLayout
+                    className="layout"
+                    layouts={widgetLayoutsForRender}
+                    breakpoints={GRID_BREAKPOINTS}
+                    cols={GRID_COLS}
+                    rowHeight={ROW_HEIGHT}
+                    margin={[GRID_MARGIN, GRID_MARGIN]}
+                    isDraggable={editMode}
+                    isResizable={editMode}
+                    draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button"
+                    onLayoutChange={(_, layouts: Layouts) =>
+                      handleWidgetLayoutChange(layouts)
+                    }
+                    onDragStart={() => {}}
+                    onDragStop={() => {}}
+                    allowOverlap={false}
+                    compactType={null}
+                    resizeHandles={["se"]}
+                  >
+                    {normalWidgets.map((dashboardWidget) => {
+                      const WidgetComponent = getWidgetComponent(
+                        dashboardWidget.Widget?.component || "",
+                      );
+
+                      if (!WidgetComponent) {
+                        return (
+                          <div
+                            key={dashboardWidget.id}
+                            className="p-6 bg-red-500/10 backdrop-blur-sm rounded-2xl border border-red-500/20"
+                          >
+                            <p className="text-red-400">
+                              Unknown widget: {dashboardWidget.Widget?.component}
+                            </p>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div
                           key={dashboardWidget.id}
-                          className="p-6 bg-red-500/10 backdrop-blur-sm rounded-2xl border border-red-500/20"
+                          className="relative h-full w-full"
                         >
-                          <p className="text-red-400">
-                            Unknown widget: {dashboardWidget.Widget?.component}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    const isSection =
-                      dashboardWidget.Widget?.component === "Section";
-
-                    return (
-                      <div
-                        key={dashboardWidget.id}
-                        className={`relative h-full w-full ${
-                          isSection && !editMode ? "pointer-events-none" : ""
-                        }`}
-                        {...(isSection ? { "data-section": true } : {})}
-                      >
-                        <div
-                          className={`h-full w-full ${
-                            editMode ? "pointer-events-none" : ""
-                          } ${
-                            dashboardWidget.config?.transparentBackground
-                              ? "widget-no-background"
-                              : ""
-                          }`}
-                        >
-                          <WidgetComponent
-                            dashboardWidget={dashboardWidget}
-                            onCommand={(capability, params, deviceId) =>
-                              handleExecuteCommand(
-                                deviceId ||
-                                  dashboardWidget.GenericDevices?.[0]?.id ||
-                                  "",
-                                capability,
-                                params,
-                              )
-                            }
-                          />
-                        </div>
-
-                        {editMode && (
-                          <div className="absolute top-2 left-2 z-[101] flex items-center gap-2">
-                            <input
-                              value={widgetNameDrafts[dashboardWidget.id] || ""}
-                              onChange={(e) =>
-                                setWidgetNameDrafts((prev) => ({
-                                  ...prev,
-                                  [dashboardWidget.id]: e.target.value,
-                                }))
+                          <div
+                            className={`h-full w-full ${
+                              editMode ? "pointer-events-none" : ""
+                            } ${
+                              dashboardWidget.config?.transparentBackground
+                                ? "widget-no-background"
+                                : ""
+                            }`}
+                          >
+                            <WidgetComponent
+                              dashboardWidget={dashboardWidget}
+                              onCommand={(capability, params, deviceId) =>
+                                handleExecuteCommand(
+                                  deviceId ||
+                                    dashboardWidget.GenericDevices?.[0]?.id ||
+                                    "",
+                                  capability,
+                                  params,
+                                )
                               }
-                              onBlur={() =>
-                                handleSaveWidgetName(dashboardWidget.id)
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  e.currentTarget.blur();
-                                }
-                              }}
-                              className="rename-widget-input w-44 px-2.5 py-1.5 rounded-md bg-slate-900/80 border border-white/25 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                              placeholder="Nom du widget"
                             />
+                          </div>
+
+                          {editMode && (
+                            <div className="absolute top-2 left-2 z-[101] flex items-center gap-2">
+                              <input
+                                value={widgetNameDrafts[dashboardWidget.id] || ""}
+                                onChange={(e) =>
+                                  setWidgetNameDrafts((prev) => ({
+                                    ...prev,
+                                    [dashboardWidget.id]: e.target.value,
+                                  }))
+                                }
+                                onBlur={() =>
+                                  handleSaveWidgetName(dashboardWidget.id)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                                className="rename-widget-input w-44 px-2.5 py-1.5 rounded-md bg-slate-900/80 border border-white/25 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                placeholder="Nom du widget"
+                              />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  void handleToggleWidgetBackground(
+                                    dashboardWidget.id,
+                                  );
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                                  dashboardWidget.config?.transparentBackground
+                                    ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
+                                    : "bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                }`}
+                                title="Activer/desactiver le fond du widget"
+                              >
+                                Fond
+                              </button>
+                              {dashboardWidget.Widget?.component === "Clock" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    void handleToggleClockMode(
+                                      dashboardWidget.id,
+                                    );
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
+                                  className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                  title="Basculer analog/digital"
+                                >
+                                  Mode
+                                </button>
+                              )}
+                              {dashboardWidget.Widget?.component ===
+                                "Weather" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    setEditingWeatherWidget(dashboardWidget.id);
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
+                                  className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                  title="Configurer la météo"
+                                >
+                                  Config
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {editMode && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
-                                void handleToggleWidgetBackground(
-                                  dashboardWidget.id,
-                                );
+                                setWidgetToDelete(dashboardWidget.id);
                               }}
                               onMouseDown={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                               }}
-                              className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                                dashboardWidget.config?.transparentBackground
-                                  ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
-                                  : "bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
-                              }`}
-                              title="Activer/desactiver le fond du widget"
-                            >
-                              Fond
-                            </button>
-                            {dashboardWidget.Widget?.component === "Clock" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  void handleToggleClockMode(
-                                    dashboardWidget.id,
-                                  );
-                                }}
-                                onMouseDown={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                }}
-                                className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
-                                title="Basculer analog/digital"
-                              >
-                                Mode
-                              </button>
-                            )}
-                            {dashboardWidget.Widget?.component ===
-                              "Section" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  void handleCycleSectionColor(
-                                    dashboardWidget.id,
-                                  );
-                                }}
-                                onMouseDown={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                }}
-                                className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white`}
-                                title="Changer la couleur de la section"
-                              >
-                                🎨 Couleur
-                              </button>
-                            )}
-                            {dashboardWidget.Widget?.component ===
-                              "Weather" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  setEditingWeatherWidget(dashboardWidget.id);
-                                }}
-                                onMouseDown={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                }}
-                                className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
-                                title="Configurer la météo"
-                              >
-                                ⚙️ Config
-                              </button>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Bouton supprimer - HORS de l'overlay pour éviter les conflits */}
-                        {editMode && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              setWidgetToDelete(dashboardWidget.id);
-                            }}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
-                            className="delete-button absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
-                            title="Supprimer le widget"
-                          >
-                            <svg
-                              className="w-4 h-4 text-white pointer-events-none"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        )}
-
-                        {/* Overlay en mode édition pour bloquer les clics */}
-                        {editMode && (
-                          <div
-                            className={`absolute inset-0 cursor-move rounded-2xl pointer-events-none ${
-                              isSection
-                                ? "bg-white/5 border-2 border-dashed border-white/30"
-                                : "bg-purple-500/10 border-2 border-purple-500/50"
-                            }`}
-                          >
-                            {/* Poignée de redimensionnement */}
-                            <div
-                              className={`absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center ${
-                                isSection ? "bg-white/40" : "bg-purple-500"
-                              }`}
+                              className="delete-button absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-lg z-[100]"
+                              title="Supprimer le widget"
                             >
                               <svg
-                                className="w-4 h-4 text-white"
+                                className="w-4 h-4 text-white pointer-events-none"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -1324,16 +1470,36 @@ export function Dashboard() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                 />
                               </svg>
+                            </button>
+                          )}
+
+                          {editMode && (
+                            <div className="absolute inset-0 cursor-move rounded-2xl pointer-events-none bg-purple-500/10 border-2 border-purple-500/50">
+                              <div className="absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center bg-purple-500">
+                                <svg
+                                  className="w-4 h-4 text-white"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                                  />
+                                </svg>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </ResponsiveGridLayout>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </ResponsiveGridLayout>
+                </div>
               </div>
             )}
           </main>
@@ -1514,7 +1680,7 @@ export function Dashboard() {
 
       {/* Version */}
       <span className="fixed bottom-1 right-2 text-[10px] text-white/20 pointer-events-none select-none">
-        v0.1
+        v0.2
       </span>
     </div>
   );
