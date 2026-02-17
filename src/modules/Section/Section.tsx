@@ -20,9 +20,9 @@ export function Section({ dashboardWidget }: WidgetComponentProps) {
       className="section-zone h-full w-full rounded-2xl transition-all duration-500"
       style={{
         backgroundColor: bg,
-        margin: "-5px",
-        width: "calc(100% + 10px)",
-        height: "calc(100% + 10px)",
+        margin: "-10px",
+        width: "calc(100% + 20px)",
+        height: "calc(100% + 20px)",
       }}
     />
   );
