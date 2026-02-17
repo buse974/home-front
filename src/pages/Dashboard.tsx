@@ -843,6 +843,9 @@ export function Dashboard() {
           display: flex !important;
           flex-direction: column !important;
         }
+        .widget-grid-layer .react-grid-item {
+          pointer-events: auto !important;
+        }
         .widget-no-background > div:first-child {
           background: transparent !important;
           backdrop-filter: none !important;
@@ -1297,7 +1300,7 @@ export function Dashboard() {
                 )}
 
                 {/* Grid widgets (contenu, z-index haut) */}
-                <div style={{ position: "relative", zIndex: 1 }}>
+                <div className="widget-grid-layer" style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
                   <ResponsiveGridLayout
                     className="layout"
                     layouts={widgetLayoutsForRender}
@@ -1680,7 +1683,7 @@ export function Dashboard() {
 
       {/* Version */}
       <span className="fixed bottom-1 right-2 text-[10px] text-white/20 pointer-events-none select-none">
-        v0.2
+        v0.3
       </span>
     </div>
   );
