@@ -17,6 +17,8 @@ import type {
 const ResponsiveGridLayout = WidthProvider(Responsive);
 const GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
 const GRID_COLS = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
+const ROW_HEIGHT = 120;
+const GRID_MARGIN = 10;
 type GridBreakpoint = keyof typeof GRID_COLS;
 type DashboardTone = "violet" | "ocean" | "emerald" | "sunset" | "particles";
 const DASHBOARD_TONES: Record<
@@ -84,11 +86,13 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
-  // Group drag state: tracks contained widgets when dragging a section
+  // Group drag state: tracks contained widget DOM elements when dragging a section
   const groupDragRef = useRef<{
     sectionId: string;
     containedIds: string[];
     initialPositions: Record<string, { x: number; y: number }>;
+    elements: Record<string, HTMLElement>;
+    colWidth: number;
   } | null>(null);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
@@ -572,10 +576,14 @@ export function Dashboard() {
     }
   };
 
-  // Group drag: when a Section is dragged, move all contained widgets in real-time
+  // Group drag: move contained widgets visually via DOM transforms during drag
   const handleDragStart = (
     layout: any[],
     oldItem: any,
+    _newItem: any,
+    _placeholder: any,
+    _e: any,
+    element: HTMLElement,
   ) => {
     if (!dashboard) return;
 
@@ -587,6 +595,17 @@ export function Dashboard() {
       return;
     }
 
+    // Calculate column width from the grid container
+    const gridEl = element.closest(".react-grid-layout") as HTMLElement | null;
+    if (!gridEl) { groupDragRef.current = null; return; }
+    const containerWidth = gridEl.clientWidth;
+    // Detect current breakpoint columns
+    let cols = GRID_COLS.lg;
+    for (const [bp, minW] of Object.entries(GRID_BREAKPOINTS) as [GridBreakpoint, number][]) {
+      if (containerWidth >= minW) { cols = GRID_COLS[bp]; break; }
+    }
+    const colWidth = (containerWidth - GRID_MARGIN * (cols + 1)) / cols;
+
     // Find non-section widgets fully inside the section bounds
     const sectionWidgetIds = new Set(
       (dashboard.DashboardWidgets || [])
@@ -596,6 +615,7 @@ export function Dashboard() {
 
     const containedIds: string[] = [];
     const initialPositions: Record<string, { x: number; y: number }> = {};
+    const elements: Record<string, HTMLElement> = {};
 
     for (const item of layout) {
       if (item.i === oldItem.i) continue;
@@ -606,13 +626,21 @@ export function Dashboard() {
         item.x + item.w <= oldItem.x + oldItem.w &&
         item.y + item.h <= oldItem.y + oldItem.h
       ) {
-        containedIds.push(item.i);
-        initialPositions[item.i] = { x: item.x, y: item.y };
+        // Find DOM element for this widget
+        const el = gridEl.querySelector(`[data-grid-id="${item.i}"]`) as HTMLElement;
+        if (el) {
+          const gridItem = el.closest(".react-grid-item") as HTMLElement;
+          if (gridItem) {
+            containedIds.push(item.i);
+            initialPositions[item.i] = { x: item.x, y: item.y };
+            elements[item.i] = gridItem;
+          }
+        }
       }
     }
 
     groupDragRef.current = containedIds.length > 0
-      ? { sectionId: oldItem.i, containedIds, initialPositions }
+      ? { sectionId: oldItem.i, containedIds, initialPositions, elements, colWidth }
       : null;
   };
 
@@ -627,39 +655,68 @@ export function Dashboard() {
     const deltaX = newItem.x - oldItem.x;
     const deltaY = newItem.y - oldItem.y;
 
-    // Update layouts in real-time so contained widgets follow
-    setDashboard((prev) => {
-      if (!prev) return prev;
-      const currentLayouts = prev.layouts || {};
-      const updatedLayouts: any = {};
-      for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
-        if (!Array.isArray(bpLayout)) {
-          updatedLayouts[bp] = bpLayout;
-          continue;
-        }
-        updatedLayouts[bp] = (bpLayout as any[]).map((item: any) => {
-          const initPos = group.initialPositions[item.i];
-          if (initPos) {
-            return { ...item, x: initPos.x + deltaX, y: initPos.y + deltaY };
-          }
-          return item;
-        });
+    // Move contained widgets visually via CSS transform
+    const pxDeltaX = deltaX * (group.colWidth + GRID_MARGIN);
+    const pxDeltaY = deltaY * (ROW_HEIGHT + GRID_MARGIN);
+
+    for (const id of group.containedIds) {
+      const el = group.elements[id];
+      if (el) {
+        el.style.transform = `translate(${pxDeltaX}px, ${pxDeltaY}px)`;
+        el.style.transition = "none";
+        el.style.zIndex = "3";
       }
-      return { ...prev, layouts: updatedLayouts };
-    });
+    }
   };
 
-  const handleDragStop = () => {
+  const handleDragStop = (
+    _layout: any[],
+    oldItem: any,
+    newItem: any,
+  ) => {
     const group = groupDragRef.current;
     if (!group || !dashboard) {
       groupDragRef.current = null;
       return;
     }
-    groupDragRef.current = null;
 
-    // Save final layouts to DB
-    const finalLayouts = dashboard.layouts || {};
-    api.updateDashboardLayouts(dashboard.id, finalLayouts).catch((error) => {
+    const deltaX = newItem.x - oldItem.x;
+    const deltaY = newItem.y - oldItem.y;
+
+    // Remove CSS transforms
+    for (const id of group.containedIds) {
+      const el = group.elements[id];
+      if (el) {
+        el.style.transform = "";
+        el.style.transition = "";
+        el.style.zIndex = "";
+      }
+    }
+
+    groupDragRef.current = null;
+    if (deltaX === 0 && deltaY === 0) return;
+
+    // Update layout positions for contained widgets
+    const currentLayouts = dashboard.layouts || {};
+    const updatedLayouts: any = {};
+    for (const [bp, bpLayout] of Object.entries(currentLayouts)) {
+      if (!Array.isArray(bpLayout)) {
+        updatedLayouts[bp] = bpLayout;
+        continue;
+      }
+      updatedLayouts[bp] = (bpLayout as any[]).map((item: any) => {
+        const initPos = group.initialPositions[item.i];
+        if (initPos) {
+          return { ...item, x: initPos.x + deltaX, y: initPos.y + deltaY };
+        }
+        return item;
+      });
+    }
+
+    setDashboard((prev) =>
+      prev ? { ...prev, layouts: updatedLayouts } : prev,
+    );
+    api.updateDashboardLayouts(dashboard.id, updatedLayouts).catch((error) => {
       console.error("Failed to update layouts after group drag:", error);
     });
   };
@@ -751,9 +808,6 @@ export function Dashboard() {
   const showParticles = dashboardTone === "particles";
 
   const gridWidgets = dashboard.DashboardWidgets || [];
-
-  const ROW_HEIGHT = 120;
-  const GRID_MARGIN = 10;
   const particleHue = DASHBOARD_TONES[dashboardTone].particleHue;
 
   return (
@@ -1160,6 +1214,7 @@ export function Dashboard() {
                         className={`relative h-full w-full ${
                           isSection && !editMode ? "pointer-events-none" : ""
                         }`}
+                        data-grid-id={dashboardWidget.id}
                         {...(isSection ? { "data-section": true } : {})}
                       >
                         <div
