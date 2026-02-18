@@ -1442,6 +1442,26 @@ export function Dashboard() {
                                 Fond
                               </button>
                             )}
+                            {!isSection && (
+                              <button
+                                draggable
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  e.dataTransfer.effectAllowed = "move";
+                                  e.dataTransfer.setData(
+                                    "text/plain",
+                                    `dashboard-widget:${dashboardWidget.id}`,
+                                  );
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                className="widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors bg-slate-900/80 border-cyan-400/50 text-cyan-200 hover:text-cyan-100"
+                                title="Glisser ce widget vers une section"
+                              >
+                                Vers section
+                              </button>
+                            )}
                             {dashboardWidget.Widget?.component ===
                               "Clock" && (
                               <button

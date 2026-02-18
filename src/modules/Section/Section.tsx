@@ -283,6 +283,17 @@ export function Section({
   const [collapsed, setCollapsed] = useState(!!config.collapsed);
   const [expanded, setExpanded] = useState(false);
   const [showAddPicker, setShowAddPicker] = useState(false);
+  const [isExternalDragOver, setIsExternalDragOver] = useState(false);
+
+  const parseExternalWidgetId = (e: React.DragEvent): string | null => {
+    const raw = e.dataTransfer.getData("text/plain");
+    if (!raw || !raw.startsWith("dashboard-widget:")) return null;
+    return raw.replace("dashboard-widget:", "");
+  };
+
+  const canAcceptExternalWidget = (widgetId: string): boolean => {
+    return !!(onAddChild && freeWidgets?.some((w) => w.id === widgetId));
+  };
 
   // Mode dossier : compact (2x1) avec overlay au clic
   if (foldable && !editMode) {
@@ -374,8 +385,29 @@ export function Section({
   // Mode normal (inline)
   return (
     <div
-      className="section-zone h-full w-full rounded-2xl flex flex-col overflow-hidden transition-all duration-500"
+      className={`section-zone h-full w-full rounded-2xl flex flex-col overflow-hidden transition-all duration-500 ${
+        editMode && isExternalDragOver ? "ring-2 ring-cyan-300/80 ring-offset-2 ring-offset-transparent" : ""
+      }`}
       style={{ backgroundColor: bg }}
+      onDragOver={(e) => {
+        if (!editMode || !onAddChild) return;
+        const widgetId = parseExternalWidgetId(e);
+        if (!widgetId || !canAcceptExternalWidget(widgetId)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setIsExternalDragOver(true);
+      }}
+      onDragLeave={() => {
+        if (isExternalDragOver) setIsExternalDragOver(false);
+      }}
+      onDrop={(e) => {
+        if (!editMode || !onAddChild) return;
+        e.preventDefault();
+        const widgetId = parseExternalWidgetId(e);
+        setIsExternalDragOver(false);
+        if (!widgetId || !canAcceptExternalWidget(widgetId)) return;
+        onAddChild(widgetId);
+      }}
     >
       {/* Barre titre */}
       {title && (
@@ -445,6 +477,11 @@ export function Section({
                       onAddChild={onAddChild}
                       onClose={() => setShowAddPicker(false)}
                     />
+                  </div>
+                )}
+                {isExternalDragOver && (
+                  <div className="mt-2 rounded-lg border border-cyan-300/60 bg-cyan-400/10 px-2 py-1 text-[11px] text-cyan-100 text-center">
+                    Relache ici pour ajouter a la section
                   </div>
                 )}
               </div>
