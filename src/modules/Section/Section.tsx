@@ -91,16 +91,41 @@ function EditChildrenGrid({
   const droppedInsideRef = useRef(false);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [previewOrder, setPreviewOrder] = useState<string[]>(
+    childWidgets.map((c) => c.id),
+  );
+
+  useEffect(() => {
+    setPreviewOrder(childWidgets.map((c) => c.id));
+  }, [childWidgets]);
+
+  const reorderIds = (
+    ids: string[],
+    sourceId: string,
+    targetId: string,
+  ): string[] => {
+    const sourceIdx = ids.indexOf(sourceId);
+    const targetIdx = ids.indexOf(targetId);
+    if (sourceIdx === -1 || targetIdx === -1 || sourceIdx === targetIdx) {
+      return ids;
+    }
+    const next = [...ids];
+    next.splice(sourceIdx, 1);
+    next.splice(targetIdx, 0, sourceId);
+    return next;
+  };
 
   const handleDragStart = (childId: string) => {
     dragItemRef.current = childId;
+    droppedInsideRef.current = false;
   };
 
   const handleDragOver = (e: React.DragEvent, childId: string) => {
     e.preventDefault();
-    if (dragItemRef.current && dragItemRef.current !== childId) {
-      setDragOverId(childId);
-    }
+    const sourceId = dragItemRef.current;
+    if (!sourceId || sourceId === childId) return;
+    setDragOverId(childId);
+    setPreviewOrder((prev) => reorderIds(prev, sourceId, childId));
   };
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
@@ -109,17 +134,16 @@ function EditChildrenGrid({
     setDragOverId(null);
     const sourceId = dragItemRef.current;
     dragItemRef.current = null;
-    if (!sourceId || sourceId === targetId || !onReorderChildren) return;
+    if (!sourceId) return;
 
-    const ids = childWidgets.map((c) => c.id);
-    const sourceIdx = ids.indexOf(sourceId);
-    const targetIdx = ids.indexOf(targetId);
-    if (sourceIdx === -1 || targetIdx === -1) return;
+    const reordered = reorderIds(previewOrder, sourceId, targetId);
+    setPreviewOrder(reordered);
+    if (!onReorderChildren) return;
 
-    const newIds = [...ids];
-    newIds.splice(sourceIdx, 1);
-    newIds.splice(targetIdx, 0, sourceId);
-    onReorderChildren(newIds);
+    const currentIds = childWidgets.map((c) => c.id);
+    if (reordered.join("|") !== currentIds.join("|")) {
+      onReorderChildren(reordered);
+    }
   };
 
   const handleDragEnd = (e: React.DragEvent, childId: string) => {
@@ -141,8 +165,20 @@ function EditChildrenGrid({
 
     if (!droppedInThisSection) {
       onRemoveChild(sourceId, { clientX: e.clientX, clientY: e.clientY });
+      return;
     }
+
+    setPreviewOrder(childWidgets.map((c) => c.id));
   };
+
+  const childrenById = new Map(childWidgets.map((child) => [child.id, child]));
+  const orderedChildren = previewOrder
+    .map((id) => childrenById.get(id))
+    .filter((child): child is DashboardWidget => child != null);
+  const missingChildren = childWidgets.filter(
+    (child) => !previewOrder.includes(child.id),
+  );
+  const renderedChildren = [...orderedChildren, ...missingChildren];
 
   return (
     <div
@@ -154,7 +190,7 @@ function EditChildrenGrid({
       onTouchStart={(e) => e.stopPropagation()}
     >
       <div className="grid grid-cols-2 gap-2 auto-rows-[120px]">
-        {childWidgets.map((child) => {
+        {renderedChildren.map((child) => {
           const ChildComponent = getWidgetComponent(
             child.Widget?.component || "",
           );
