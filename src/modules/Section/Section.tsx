@@ -85,6 +85,8 @@ function EditChildrenGrid({
   padding: number;
 }) {
   const dragItemRef = useRef<string | null>(null);
+  const droppedInsideRef = useRef(false);
+  const gridContainerRef = useRef<HTMLDivElement | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const handleDragStart = (childId: string) => {
@@ -100,6 +102,7 @@ function EditChildrenGrid({
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
+    droppedInsideRef.current = true;
     setDragOverId(null);
     const sourceId = dragItemRef.current;
     dragItemRef.current = null;
@@ -116,16 +119,36 @@ function EditChildrenGrid({
     onReorderChildren(newIds);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: React.DragEvent, childId: string) => {
+    const sourceId = dragItemRef.current || childId;
+    const droppedInside = droppedInsideRef.current;
+    droppedInsideRef.current = false;
     dragItemRef.current = null;
     setDragOverId(null);
+
+    if (droppedInside || !onRemoveChild) return;
+
+    // Drop released outside this section children grid -> eject to dashboard.
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const droppedInThisSection = !!(
+      target &&
+      gridContainerRef.current &&
+      gridContainerRef.current.contains(target)
+    );
+
+    if (!droppedInThisSection) {
+      onRemoveChild(sourceId);
+    }
   };
 
   return (
     <div
-      className="h-full overflow-y-auto overflow-x-hidden"
+      ref={gridContainerRef}
+      className="h-full overflow-y-auto overflow-x-hidden section-children-dnd"
       style={{ padding }}
       data-no-dashboard-swipe=""
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       <div className="grid grid-cols-2 gap-2 auto-rows-[120px]">
         {childWidgets.map((child) => {
@@ -154,7 +177,7 @@ function EditChildrenGrid({
               onDragStart={() => handleDragStart(child.id)}
               onDragOver={(e) => handleDragOver(e, child.id)}
               onDrop={(e) => handleDrop(e, child.id)}
-              onDragEnd={handleDragEnd}
+              onDragEnd={(e) => handleDragEnd(e, child.id)}
             >
               <div className="h-full w-full pointer-events-none">
                 <ChildComponent
