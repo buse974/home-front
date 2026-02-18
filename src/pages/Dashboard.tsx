@@ -1094,14 +1094,14 @@ export function Dashboard() {
       </div>
 
       <div
-        className={`relative z-10 min-h-screen flex flex-col ${
-          shouldHideTitle ? "py-0" : "py-6 md:py-8 lg:py-10"
-        }`}
+        className={`relative z-10 flex flex-col ${
+          isMobileView && !editMode ? "h-screen overflow-hidden" : "min-h-screen"
+        } ${shouldHideTitle ? "py-0" : "py-6 md:py-8 lg:py-10"}`}
       >
-        <div className="w-full max-w-[1760px] mx-auto px-5 md:px-7 lg:px-8 flex-1 flex flex-col">
+        <div className="w-full max-w-[1760px] mx-auto px-5 md:px-7 lg:px-8 flex-1 flex flex-col min-h-0">
           {/* Header */}
           <header className={`${shouldHideTitle ? "hidden" : "mb-2 md:mb-3"}`}>
-            <div className="min-h-[clamp(6rem,13vh,9rem)] md:min-h-[clamp(7rem,15vh,10rem)] px-2 md:px-3 flex items-center justify-between">
+            <div className="min-h-[clamp(6rem,13vh,9rem)] md:min-h-[clamp(7rem,15vh,10rem)] px-2 md:px-3 flex flex-wrap items-center justify-between gap-2">
               {!shouldHideTitle && (
                 <div>
                   <div className="flex items-center gap-3 mb-2">
@@ -1129,7 +1129,7 @@ export function Dashboard() {
                         )}
                       </div>
                     ) : (
-                      <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+                      <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
                         {dashboard.name}
                       </h1>
                     )}
@@ -1153,7 +1153,7 @@ export function Dashboard() {
                     )}
                 </div>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3">
                 {editMode && !isFullscreen && (
                   <div className="h-12 px-3 rounded-xl bg-white/10 border border-white/15 inline-flex items-center gap-2">
                     <span className="text-xs text-white/65 hidden md:inline">
@@ -1360,7 +1360,7 @@ export function Dashboard() {
 
           {/* Widgets Grid */}
           <main
-            className={`flex-1 flex ${
+            className={`flex-1 flex min-h-0 ${
               shouldHideTitle ? "items-center" : "items-start"
             }`}
           >
