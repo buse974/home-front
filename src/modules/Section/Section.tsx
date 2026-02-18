@@ -34,7 +34,7 @@ function ChildrenGrid({
 }) {
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden"
+      className="h-full overflow-y-auto overflow-x-hidden"
       style={{ padding }}
       data-no-dashboard-swipe=""
     >
@@ -216,7 +216,7 @@ export function Section({
 
       {/* Contenu avec les widgets enfants */}
       {!collapsed && childWidgets.length > 0 && (
-        <div className={editMode ? "pointer-events-none" : ""}>
+        <div className={`flex-1 min-h-0 ${editMode ? "pointer-events-none" : ""}`}>
           <ChildrenGrid
             childWidgets={childWidgets}
             onChildCommand={onChildCommand}
