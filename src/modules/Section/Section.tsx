@@ -25,58 +25,46 @@ export function Section({
   const padding = (config.padding as number) ?? 12;
   const [collapsed, setCollapsed] = useState(!!config.collapsed);
 
-  // En edit mode, les enfants sont dans la grille principale, pas ici
-  if (editMode) {
-    return (
-      <div
-        className="section-zone h-full w-full rounded-2xl flex flex-col overflow-hidden transition-all duration-500"
-        style={{ backgroundColor: bg }}
-      >
-        {title && (
-          <div className="flex items-center px-3 py-2 shrink-0">
-            <span className="text-sm font-medium text-white/80 truncate">
-              {title}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div
       className="section-zone h-full w-full rounded-2xl flex flex-col overflow-hidden transition-all duration-500"
       style={{ backgroundColor: bg }}
     >
-      {/* Barre titre (cliquable pour collapse) */}
+      {/* Barre titre (cliquable pour collapse, sauf en edit mode) */}
       {title && (
         <div
-          className="flex items-center justify-between px-3 py-2 cursor-pointer select-none shrink-0 hover:bg-white/5 transition-colors"
-          onClick={() => setCollapsed((c) => !c)}
+          className={`flex items-center justify-between px-3 py-2 select-none shrink-0 ${
+            !editMode ? "cursor-pointer hover:bg-white/5 transition-colors" : ""
+          }`}
+          onClick={!editMode ? () => setCollapsed((c) => !c) : undefined}
         >
           <span className="text-sm font-medium text-white/80 truncate">
             {title}
           </span>
-          <svg
-            className={`w-4 h-4 text-white/50 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          {!editMode && (
+            <svg
+              className={`w-4 h-4 text-white/50 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          )}
         </div>
       )}
 
-      {/* Contenu scrollable avec les widgets enfants */}
+      {/* Contenu avec les widgets enfants */}
       {!collapsed && childWidgets.length > 0 && (
         <div
-          className="flex-1 overflow-y-auto overflow-x-hidden"
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${
+            editMode ? "pointer-events-none" : ""
+          }`}
           style={{ padding }}
           data-no-dashboard-swipe=""
         >
