@@ -811,6 +811,10 @@ export function Dashboard() {
           display: flex !important;
           flex-direction: column !important;
         }
+        .react-grid-item > .react-resizable-handle {
+          z-index: 200 !important;
+          pointer-events: auto !important;
+        }
         .widget-no-background > div:first-child {
           background: transparent !important;
           backdrop-filter: none !important;
