@@ -23,6 +23,33 @@ const SECTION_COLORS_SOLID: Record<string, string> = {
   white: "rgba(255, 255, 255, 0.15)",
 };
 
+const SECTION_GRADIENT: Record<string, [string, string]> = {
+  blue: ["rgba(59,130,246,0.50)", "rgba(99,102,241,0.30)"],
+  emerald: ["rgba(52,211,153,0.50)", "rgba(16,185,129,0.30)"],
+  violet: ["rgba(139,92,246,0.50)", "rgba(168,85,247,0.30)"],
+  rose: ["rgba(244,63,94,0.50)", "rgba(236,72,153,0.30)"],
+  amber: ["rgba(245,158,11,0.50)", "rgba(251,191,36,0.30)"],
+  cyan: ["rgba(6,182,212,0.50)", "rgba(34,211,238,0.30)"],
+  white: ["rgba(255,255,255,0.20)", "rgba(200,200,220,0.12)"],
+};
+
+const WIDGET_ICONS: Record<string, string> = {
+  Switch: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
+  SwitchToggle: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
+  ActionButton: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z",
+  SwitchNeon: "M13 10V3L4 14h7v7l9-11h-7z",
+  Sensor: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+  StateMessage: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z",
+  RawState: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
+  TextTicker: "M4 6h16M4 12h16M4 18h7",
+  Clock: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+  Weather: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z",
+  PhotoFrame: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
+  ColorSlider: "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
+  WhiteSlider: "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z",
+  LightControl: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
+};
+
 function ChildrenGrid({
   childWidgets,
   onChildCommand,
@@ -357,36 +384,98 @@ export function Section({
   };
 
   // Mode dossier : compact (2x1) avec overlay au clic
+  const gradient = SECTION_GRADIENT[color] || SECTION_GRADIENT.white;
+
   if (foldable && !editMode) {
+    const previewWidgets = childWidgets.slice(0, 5);
+    const extraCount = childWidgets.length - previewWidgets.length;
+
     return (
       <>
         <div
-          className="section-zone h-full w-full rounded-2xl flex items-center justify-between px-3 gap-2 cursor-pointer select-none hover:brightness-125 transition-all duration-300"
-          style={{ backgroundColor: bgSolid }}
+          className="section-zone group/folder h-full w-full rounded-2xl cursor-pointer select-none overflow-hidden relative"
+          style={{
+            background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
+          }}
           onClick={() => setExpanded(true)}
         >
-          <span className="text-sm font-medium text-white/90 truncate">
-            {title || "Section"}
-          </span>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {childWidgets.length > 0 && (
-              <span className="text-xs text-white/50">
-                {childWidgets.length}
+          {/* Animated shimmer overlay */}
+          <div
+            className="absolute inset-0 opacity-0 group-hover/folder:opacity-100 transition-opacity duration-500"
+            style={{
+              background: `linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)`,
+              backgroundSize: "200% 100%",
+              animation: "section-shimmer 1.5s ease-in-out infinite",
+            }}
+          />
+
+          {/* Glass border */}
+          <div className="absolute inset-0 rounded-2xl border border-white/15 group-hover/folder:border-white/30 transition-colors duration-300" />
+
+          {/* Content */}
+          <div className="relative h-full flex flex-col justify-between p-3">
+            {/* Top: title */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white/90 truncate">
+                {title || "Section"}
               </span>
-            )}
-            <svg
-              className="w-4 h-4 text-white/60"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-              />
-            </svg>
+            </div>
+
+            {/* Bottom: widget mini-previews */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                {previewWidgets.map((child) => {
+                  const comp = child.Widget?.component || "";
+                  const iconPath = WIDGET_ICONS[comp];
+                  return (
+                    <div
+                      key={child.id}
+                      className="w-7 h-7 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center shrink-0"
+                    >
+                      {iconPath ? (
+                        <svg
+                          className="w-3.5 h-3.5 text-white/70"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d={iconPath} />
+                        </svg>
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-white/40" />
+                      )}
+                    </div>
+                  );
+                })}
+                {extraCount > 0 && (
+                  <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-medium text-white/50">
+                      +{extraCount}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Expand indicator */}
+              <div className="w-7 h-7 rounded-lg bg-white/10 group-hover/folder:bg-white/20 flex items-center justify-center transition-all duration-300 group-hover/folder:scale-110">
+                <svg
+                  className="w-3.5 h-3.5 text-white/60 group-hover/folder:text-white/90 transition-colors duration-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
