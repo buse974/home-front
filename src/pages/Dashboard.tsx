@@ -1429,7 +1429,7 @@ export function Dashboard() {
                             }`}
                           >
                             <div
-                              className={`absolute bottom-0 right-0 w-8 h-8 rounded-tl-lg rounded-br-xl pointer-events-auto cursor-se-resize flex items-center justify-center z-[102] ${
+                              className={`absolute bottom-0 right-0 w-8 h-8 rounded-tl-lg rounded-br-xl pointer-events-none flex items-center justify-center z-[102] ${
                                 isSection ? "bg-white/40" : "bg-purple-500"
                               }`}
                             >
