@@ -13,16 +13,6 @@ const SECTION_COLORS: Record<string, string> = {
   white: "rgba(255, 255, 255, 0.10)",
 };
 
-const SECTION_COLORS_SOLID: Record<string, string> = {
-  blue: "rgba(59, 130, 246, 0.35)",
-  emerald: "rgba(52, 211, 153, 0.35)",
-  violet: "rgba(139, 92, 246, 0.35)",
-  rose: "rgba(244, 63, 94, 0.35)",
-  amber: "rgba(245, 158, 11, 0.35)",
-  cyan: "rgba(6, 182, 212, 0.35)",
-  white: "rgba(255, 255, 255, 0.15)",
-};
-
 const SECTION_GRADIENT: Record<string, [string, string]> = {
   blue: ["rgba(59,130,246,0.50)", "rgba(99,102,241,0.30)"],
   emerald: ["rgba(52,211,153,0.50)", "rgba(16,185,129,0.30)"],
@@ -357,7 +347,6 @@ export function Section({
   const config = dashboardWidget.config || {};
   const color = (config.sectionColor as string) || "white";
   const bg = SECTION_COLORS[color] || SECTION_COLORS.white;
-  const bgSolid = SECTION_COLORS_SOLID[color] || SECTION_COLORS_SOLID.white;
   const title = (config.title as string | null | undefined) || undefined;
   const padding = (config.padding as number) ?? 12;
   const foldable = !!config.foldable;
@@ -486,8 +475,7 @@ export function Section({
               onClick={() => setExpanded(false)}
             >
               <div
-                className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-white/15 bg-black/60 backdrop-blur-xl"
-                style={{ backgroundColor: bgSolid }}
+                className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-white/10 bg-[rgba(15,15,20,0.85)] backdrop-blur-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-white/10">
