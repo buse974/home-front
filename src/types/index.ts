@@ -196,6 +196,9 @@ export interface SectionComponentProps extends WidgetComponentProps {
   editMode?: boolean;
   freeWidgets?: DashboardWidget[];
   onReorderChildren?: (newChildIds: string[]) => void;
-  onRemoveChild?: (childId: string) => void;
+  onRemoveChild?: (
+    childId: string,
+    dropPoint?: { clientX: number; clientY: number },
+  ) => void;
   onAddChild?: (widgetId: string) => void;
 }

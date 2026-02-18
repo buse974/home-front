@@ -81,7 +81,10 @@ function EditChildrenGrid({
 }: {
   childWidgets: DashboardWidget[];
   onReorderChildren?: (newChildIds: string[]) => void;
-  onRemoveChild?: (childId: string) => void;
+  onRemoveChild?: (
+    childId: string,
+    dropPoint?: { clientX: number; clientY: number },
+  ) => void;
   padding: number;
 }) {
   const dragItemRef = useRef<string | null>(null);
@@ -137,7 +140,7 @@ function EditChildrenGrid({
     );
 
     if (!droppedInThisSection) {
-      onRemoveChild(sourceId);
+      onRemoveChild(sourceId, { clientX: e.clientX, clientY: e.clientY });
     }
   };
 

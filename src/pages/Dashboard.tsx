@@ -89,6 +89,7 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
+  const gridAreaRef = useRef<HTMLDivElement | null>(null);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -639,6 +640,80 @@ export function Dashboard() {
     return merged as Layouts;
   };
 
+  const getBreakpointFromWidth = (width: number): GridBreakpoint => {
+    if (width >= GRID_BREAKPOINTS.lg) return "lg";
+    if (width >= GRID_BREAKPOINTS.md) return "md";
+    if (width >= GRID_BREAKPOINTS.sm) return "sm";
+    if (width >= GRID_BREAKPOINTS.xs) return "xs";
+    return "xxs";
+  };
+
+  const placeWidgetFromDropPoint = (
+    widgetId: string,
+    dropPoint?: { clientX: number; clientY: number },
+  ) => {
+    if (!dashboard || !dropPoint) return;
+
+    const gridEl = gridAreaRef.current?.querySelector(
+      ".react-grid-layout",
+    ) as HTMLElement | null;
+    if (!gridEl) return;
+
+    const rect = gridEl.getBoundingClientRect();
+    if (
+      dropPoint.clientX < rect.left ||
+      dropPoint.clientX > rect.right ||
+      dropPoint.clientY < rect.top ||
+      dropPoint.clientY > rect.bottom
+    ) {
+      return;
+    }
+
+    const bp = getBreakpointFromWidth(gridEl.clientWidth);
+    const cols = GRID_COLS[bp];
+    if (!cols) return;
+
+    const currentLayouts = dashboard.layouts || {};
+    const bpLayout = Array.isArray(currentLayouts[bp]) ? [...currentLayouts[bp]] : [];
+    const currentItem = bpLayout.find((item) => item.i === widgetId);
+    const widget = dashboard.DashboardWidgets?.find((w) => w.id === widgetId);
+
+    const w = Math.max(1, Math.min(cols, currentItem?.w || widget?.position?.w || 3));
+    const h = Math.max(1, currentItem?.h || widget?.position?.h || 2);
+
+    const colWidth = (rect.width - GRID_MARGIN * (cols - 1)) / cols;
+    const stepX = colWidth + GRID_MARGIN;
+    const stepY = ROW_HEIGHT + GRID_MARGIN;
+
+    const relativeX = Math.max(0, dropPoint.clientX - rect.left);
+    const relativeY = Math.max(0, dropPoint.clientY - rect.top);
+
+    const x = Math.max(0, Math.min(cols - w, Math.floor(relativeX / stepX)));
+    const y = Math.max(0, Math.floor(relativeY / stepY));
+
+    const nextItem = {
+      i: widgetId,
+      x,
+      y,
+      w,
+      h,
+    };
+
+    const nextBpLayout = bpLayout.some((item) => item.i === widgetId)
+      ? bpLayout.map((item) => (item.i === widgetId ? { ...item, ...nextItem } : item))
+      : [...bpLayout, nextItem];
+
+    const nextLayouts = {
+      ...currentLayouts,
+      [bp]: nextBpLayout,
+    } as Layouts;
+
+    setDashboard((prev) => (prev ? { ...prev, layouts: nextLayouts } : prev));
+    void api.updateDashboardLayouts(dashboard.id, nextLayouts).catch((error) => {
+      console.error("Failed to persist dropped widget position:", error);
+    });
+  };
+
   const handleLayoutChange = async (newLayouts: Layouts) => {
     if (!editMode || !dashboard) return;
     const merged = mergeLayouts(newLayouts);
@@ -745,7 +820,11 @@ export function Dashboard() {
     void updateSectionConfig(sectionId, { childWidgetIds: newChildIds });
   };
 
-  const handleRemoveChild = (sectionId: string, childId: string) => {
+  const handleRemoveChild = (
+    sectionId: string,
+    childId: string,
+    dropPoint?: { clientX: number; clientY: number },
+  ) => {
     if (!dashboard) return;
     const section = dashboard.DashboardWidgets?.find(
       (w) => w.id === sectionId,
@@ -755,6 +834,7 @@ export function Dashboard() {
       (section.config?.childWidgetIds as string[]) || [];
     const newIds = currentIds.filter((id) => id !== childId);
     void updateSectionConfig(sectionId, { childWidgetIds: newIds });
+    placeWidgetFromDropPoint(childId, dropPoint);
   };
 
   const handleAddChild = (sectionId: string, widgetId: string) => {
@@ -1256,7 +1336,7 @@ export function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="relative w-full px-2 md:px-3">
+              <div ref={gridAreaRef} className="relative w-full px-2 md:px-3">
                 <ResponsiveGridLayout
                   className="layout"
                   layouts={gridLayoutsForRender}
@@ -1351,10 +1431,11 @@ export function Dashboard() {
                                   newChildIds,
                                 )
                               }
-                              onRemoveChild={(childId) =>
+                              onRemoveChild={(childId, dropPoint) =>
                                 handleRemoveChild(
                                   dashboardWidget.id,
                                   childId,
+                                  dropPoint,
                                 )
                               }
                               onAddChild={(widgetId) =>
