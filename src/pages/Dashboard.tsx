@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../services/api";
 import { getWidgetComponent } from "../modules/WidgetRegistry";
@@ -84,6 +84,12 @@ export function Dashboard() {
     debugWeatherCode?: number | null;
     extendToBackground?: boolean;
   }>({});
+  const [viewMode, setViewMode] = useState<"auto" | "mobile" | "desktop">(() => {
+    const stored = localStorage.getItem("dashboard-viewMode");
+    if (stored === "mobile" || stored === "desktop") return stored;
+    return "auto";
+  });
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const ignoreTouchSwipe = useRef(false);
   const lastDashboardNavAt = useRef(0);
@@ -134,6 +140,27 @@ export function Dashboard() {
       hideTitleInFullscreen ? "1" : "0",
     );
   }, [hideTitleInFullscreen]);
+
+  // Persist viewMode and listen for resize
+  useEffect(() => {
+    localStorage.setItem("dashboard-viewMode", viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (viewMode !== "auto") return;
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [viewMode]);
+
+  const isMobileView =
+    viewMode === "mobile" ? true : viewMode === "desktop" ? false : windowWidth < 400;
+
+  const cycleViewMode = useCallback(() => {
+    setViewMode((prev) =>
+      prev === "auto" ? "mobile" : prev === "mobile" ? "desktop" : "auto",
+    );
+  }, []);
 
   const loadDashboard = async () => {
     try {
@@ -1207,6 +1234,30 @@ export function Dashboard() {
                 )}
                 {!isFullscreen && (
                   <button
+                    onClick={cycleViewMode}
+                    className="relative w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
+                    title={`Vue: ${viewMode === "auto" ? "Auto" : viewMode === "mobile" ? "Mobile" : "Desktop"}`}
+                  >
+                    {viewMode === "mobile" ? (
+                      <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    ) : viewMode === "desktop" ? (
+                      <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    )}
+                    <span className="absolute -bottom-0.5 -right-0.5 text-[8px] font-bold bg-white/20 rounded px-0.5 text-white/80 leading-tight">
+                      {viewMode === "auto" ? "A" : viewMode === "mobile" ? "M" : "D"}
+                    </span>
+                  </button>
+                )}
+                {!isFullscreen && (
+                  <button
                     onClick={toggleFullscreen}
                     className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
                     title="Plein écran"
@@ -1362,6 +1413,89 @@ export function Dashboard() {
                     </button>
                   )}
                 </div>
+              </div>
+            ) : isMobileView && !editMode ? (
+              <div className="mobile-carousel-container">
+                {gridWidgets.map((dashboardWidget) => {
+                  const isSection =
+                    dashboardWidget.Widget?.component === "Section";
+                  const WidgetComponent = isSection
+                    ? null
+                    : getWidgetComponent(
+                        dashboardWidget.Widget?.component || "",
+                      );
+
+                  if (!isSection && !WidgetComponent) {
+                    return (
+                      <div
+                        key={dashboardWidget.id}
+                        className="mobile-carousel-item"
+                      >
+                        <div className="p-6 bg-red-500/10 backdrop-blur-sm rounded-2xl border border-red-500/20 h-full">
+                          <p className="text-red-400">
+                            Unknown widget:{" "}
+                            {dashboardWidget.Widget?.component}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={dashboardWidget.id}
+                      className="mobile-carousel-item"
+                    >
+                      <div className="h-full w-full">
+                        {isSection ? (
+                          <Section
+                            dashboardWidget={dashboardWidget}
+                            childWidgets={getChildWidgets(dashboardWidget)}
+                            onCommand={async () => {}}
+                            onChildCommand={async (
+                              dwId,
+                              capability,
+                              params,
+                              deviceId,
+                            ) => {
+                              const child = allWidgets.find(
+                                (w) => w.id === dwId,
+                              );
+                              await handleExecuteCommand(
+                                deviceId ||
+                                  child?.GenericDevices?.[0]?.id ||
+                                  "",
+                                capability,
+                                params,
+                              );
+                            }}
+                            editMode={false}
+                            freeWidgets={freeWidgets}
+                            onReorderChildren={() => {}}
+                            onRemoveChild={() => {}}
+                            onAddChild={() => {}}
+                          />
+                        ) : (
+                          WidgetComponent && (
+                            <WidgetComponent
+                              dashboardWidget={dashboardWidget}
+                              onCommand={(capability, params, deviceId) =>
+                                handleExecuteCommand(
+                                  deviceId ||
+                                    dashboardWidget.GenericDevices?.[0]
+                                      ?.id ||
+                                    "",
+                                  capability,
+                                  params,
+                                )
+                              }
+                            />
+                          )
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div ref={gridAreaRef} className="relative w-full px-2 md:px-3">
