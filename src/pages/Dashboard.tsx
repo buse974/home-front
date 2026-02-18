@@ -621,72 +621,6 @@ export function Dashboard() {
     }
   };
 
-  // Drag-to-assign: when a widget is dropped, check if it's inside a section (AABB)
-  const handleGridDragStop = async (
-    layout: any[],
-    _oldItem: any,
-    newItem: any,
-  ) => {
-    if (!dashboard) return;
-
-    const allWidgets = dashboard.DashboardWidgets || [];
-    const draggedWidget = allWidgets.find((dw) => dw.id === newItem.i);
-    // Don't assign sections into sections
-    if (!draggedWidget || draggedWidget.Widget?.component === "Section") return;
-
-    const sections = allWidgets.filter(
-      (dw) => dw.Widget?.component === "Section",
-    );
-
-    // Find which section (if any) fully contains the dropped widget
-    let targetSectionId: string | null = null;
-    for (const section of sections) {
-      const sLayout = layout.find((l: any) => l.i === section.id);
-      if (!sLayout) continue;
-      if (
-        newItem.x >= sLayout.x &&
-        newItem.y >= sLayout.y &&
-        newItem.x + newItem.w <= sLayout.x + sLayout.w &&
-        newItem.y + newItem.h <= sLayout.y + sLayout.h
-      ) {
-        targetSectionId = section.id;
-        break;
-      }
-    }
-
-    // Build all updates, then execute together
-    const updates: Array<{ sectionId: string; newConfig: Record<string, any> }> = [];
-    for (const section of sections) {
-      const children: string[] =
-        (section.config?.childWidgetIds as string[]) || [];
-      const hasWidget = children.includes(newItem.i);
-
-      if (section.id === targetSectionId && !hasWidget) {
-        updates.push({
-          sectionId: section.id,
-          newConfig: { ...section.config, childWidgetIds: [...children, newItem.i] },
-        });
-      } else if (section.id !== targetSectionId && hasWidget) {
-        updates.push({
-          sectionId: section.id,
-          newConfig: { ...section.config, childWidgetIds: children.filter((id: string) => id !== newItem.i) },
-        });
-      }
-    }
-
-    if (updates.length === 0) return;
-
-    try {
-      await Promise.all(
-        updates.map((u) => api.updateWidget(u.sectionId, { config: u.newConfig })),
-      );
-      loadDashboard();
-    } catch (error) {
-      console.error("Failed to update section assignments:", error);
-      loadDashboard(); // Reload to get consistent state
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -784,11 +718,8 @@ export function Dashboard() {
     }
   });
 
-  // In edit mode: all widgets in the grid (so they can be dragged in/out of sections)
-  // In view mode: sections + free widgets only (children rendered inside Section.tsx)
-  const gridWidgets = editMode
-    ? allWidgets
-    : allWidgets.filter((dw) => !childWidgetIdSet.has(dw.id));
+  // Children are always rendered inside Section.tsx, never in the main grid
+  const gridWidgets = allWidgets.filter((dw) => !childWidgetIdSet.has(dw.id));
 
   const filterLayouts = (layouts: Layouts, keepIds: Set<string>): Layouts =>
     Object.fromEntries(
@@ -1179,8 +1110,7 @@ export function Dashboard() {
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
-                  onDragStop={handleGridDragStop}
-                  allowOverlap={true}
+                  allowOverlap={false}
                   compactType={null}
                   resizeHandles={["se"]}
                 >
