@@ -338,6 +338,7 @@ export function Section({
   const [expanded, setExpanded] = useState(false);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [isExternalDragOver, setIsExternalDragOver] = useState(false);
+  const portalTarget = document.fullscreenElement || document.body;
 
   useEffect(() => {
     if (!foldable && collapsed) {
@@ -436,7 +437,7 @@ export function Section({
                 )}
               </div>
             </div>,
-            document.body,
+            portalTarget,
           )}
       </>
     );
