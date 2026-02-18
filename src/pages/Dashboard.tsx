@@ -1122,7 +1122,7 @@ export function Dashboard() {
                     </div>
                   </div>
                 )}
-                {!isFullscreen && (
+                {!isFullscreen && editMode && (
                   <button
                     onClick={() => setHideTitleInFullscreen((prev) => !prev)}
                     className={`h-12 px-4 inline-flex items-center justify-center rounded-xl text-xs font-medium border transition-colors ${
@@ -1224,6 +1224,30 @@ export function Dashboard() {
                         />
                       </svg>
                     </Link>
+                    {editMode && (
+                      <button
+                        onClick={() => setShowAddModal(true)}
+                        className="group relative h-12 px-6 inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="relative flex items-center gap-2">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                          <span>Add Widget</span>
+                        </div>
+                      </button>
+                    )}
                     <button
                       onClick={() => setEditMode(!editMode)}
                       className={`group relative h-12 px-6 rounded-xl font-medium inline-flex items-center justify-center transition-all duration-300 hover:scale-105 ${
@@ -1249,30 +1273,6 @@ export function Dashboard() {
                         <span>{editMode ? "Save Layout" : "Edit Layout"}</span>
                       </div>
                     </button>
-                    {editMode && (
-                      <button
-                        onClick={() => setShowAddModal(true)}
-                        className="group relative h-12 px-6 inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="relative flex items-center gap-2">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          <span>Add Widget</span>
-                        </div>
-                      </button>
-                    )}
                   </>
                 )}
               </div>
