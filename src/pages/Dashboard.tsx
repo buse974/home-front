@@ -84,6 +84,7 @@ export function Dashboard() {
     debugWeatherCode?: number | null;
     extendToBackground?: boolean;
   }>({});
+  const [showMenu, setShowMenu] = useState(false);
   const [viewMode, setViewMode] = useState<"auto" | "mobile" | "desktop">(() => {
     const stored = localStorage.getItem("dashboard-viewMode");
     if (stored === "mobile" || stored === "desktop") return stored;
@@ -1101,7 +1102,7 @@ export function Dashboard() {
         <div className="w-full max-w-[1760px] mx-auto px-5 md:px-7 lg:px-8 flex-1 flex flex-col min-h-0">
           {/* Header */}
           <header className={`${shouldHideTitle ? "hidden" : "mb-2 md:mb-3"}`}>
-            <div className="min-h-[clamp(6rem,13vh,9rem)] md:min-h-[clamp(7rem,15vh,10rem)] px-2 md:px-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="px-2 md:px-3 py-2 flex items-center justify-between gap-2">
               {!shouldHideTitle && (
                 <div>
                   <div className="flex items-center gap-3 mb-2">
@@ -1135,226 +1136,198 @@ export function Dashboard() {
                     )}
                   </div>
                   {!isFullscreen && (
-                    <p className="text-white/60 font-light">
+                    <p className="text-white/60 font-light text-sm">
                       Control your connected devices
                     </p>
                   )}
-                  {!isFullscreen &&
-                    dashboards.length > 1 &&
-                    currentDashboardIndex >= 0 && (
-                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/75">
-                        <span>
-                          Dashboard {currentDashboardIndex + 1}/
-                          {dashboards.length}
-                        </span>
-                        <span className="text-white/40">•</span>
-                        <span>Swipe gauche/droite</span>
-                      </div>
-                    )}
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                {editMode && !isFullscreen && (
-                  <div className="h-12 px-3 rounded-xl bg-white/10 border border-white/15 inline-flex items-center gap-2">
-                    <span className="text-xs text-white/65 hidden md:inline">
-                      Nuance
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {(Object.keys(DASHBOARD_TONES) as DashboardTone[]).map(
-                        (tone) => (
-                          <button
-                            key={tone}
-                            onClick={() => setDashboardTone(tone)}
-                            className={`w-6 h-6 rounded-full bg-gradient-to-br ${DASHBOARD_TONES[tone].swatch} border-2 transition-transform hover:scale-110 ${
-                              dashboardTone === tone
-                                ? "border-white shadow-[0_0_12px_rgba(255,255,255,0.45)]"
-                                : "border-white/30"
-                            }`}
-                            title={`Nuance ${DASHBOARD_TONES[tone].label}`}
-                          />
-                        ),
-                      )}
-                    </div>
-                  </div>
-                )}
-                {!isFullscreen && editMode && (
+              {!isFullscreen && (
+                <div className="relative">
                   <button
-                    onClick={() => setHideTitleInFullscreen((prev) => !prev)}
-                    className={`h-12 px-4 inline-flex items-center justify-center rounded-xl text-xs font-medium border transition-colors ${
-                      hideTitleInFullscreen
-                        ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
-                        : "bg-white/10 border-white/15 text-white/70 hover:text-white hover:bg-white/15"
-                    }`}
-                    title="Masquer le titre en plein écran"
+                    onClick={() => setShowMenu((p) => !p)}
+                    className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 border border-white/10 hover:border-white/20"
+                    title="Menu"
                   >
-                    Titre FS: {hideTitleInFullscreen ? "Off" : "On"}
-                  </button>
-                )}
-                {!isFullscreen && dashboards.length > 1 && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => goToDashboardBySwipe("prev")}
-                      className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
-                      title="Dashboard précédent"
-                    >
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => goToDashboardBySwipe("next")}
-                      className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors border border-white/10 hover:border-white/20"
-                      title="Dashboard suivant"
-                    >
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-                {!isFullscreen && (
-                  <button
-                    onClick={cycleViewMode}
-                    className="relative w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
-                    title={`Vue: ${viewMode === "auto" ? "Auto" : viewMode === "mobile" ? "Mobile" : "Desktop"}`}
-                  >
-                    {viewMode === "mobile" ? (
-                      <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                    ) : viewMode === "desktop" ? (
-                      <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      {showMenu ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      ) : (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    )}
-                    <span className="absolute -bottom-0.5 -right-0.5 text-[8px] font-bold bg-white/20 rounded px-0.5 text-white/80 leading-tight">
-                      {viewMode === "auto" ? "A" : viewMode === "mobile" ? "M" : "D"}
-                    </span>
-                  </button>
-                )}
-                {!isFullscreen && (
-                  <button
-                    onClick={toggleFullscreen}
-                    className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
-                    title="Plein écran"
-                  >
-                    <svg
-                      className="w-6 h-6 text-white/90"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 8V4h4m8 0h4v4M4 16v4h4m8 0h4v-4"
-                      />
+                      )}
                     </svg>
                   </button>
-                )}
-                {!isFullscreen && (
-                  <>
-                    <Link
-                      to="/admin"
-                      className="group relative w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 border border-white/10 hover:border-white/20"
-                    >
-                      <svg
-                        className="w-6 h-6 text-white/80 group-hover:text-white transition-colors group-hover:rotate-90 duration-300"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                    </Link>
-                    {editMode && (
+
+                  {showMenu && (
+                    <>
                       <button
-                        onClick={() => setShowAddModal(true)}
-                        className="group relative h-12 px-6 inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl font-medium text-white shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="relative flex items-center gap-2">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          <span>Add Widget</span>
-                        </div>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setEditMode(!editMode)}
-                      className={`group relative h-12 px-6 rounded-xl font-medium inline-flex items-center justify-center transition-all duration-300 hover:scale-105 ${
-                        editMode
-                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/50"
-                          : "bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 border border-white/10 hover:border-white/20"
-                      }`}
-                    >
-                      <div className="relative flex items-center gap-2">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                        className="fixed inset-0 z-[149]"
+                        onClick={() => setShowMenu(false)}
+                        aria-label="Fermer le menu"
+                      />
+                      <div className="absolute right-0 top-14 z-[150] w-64 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/15 shadow-2xl p-2 flex flex-col gap-1">
+                        {/* Dashboard navigation */}
+                        {dashboards.length > 1 && (
+                          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5">
+                            <span className="text-xs text-white/60">
+                              Dashboard {currentDashboardIndex + 1}/{dashboards.length}
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => { goToDashboardBySwipe("prev"); setShowMenu(false); }}
+                                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                              >
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => { goToDashboardBySwipe("next"); setShowMenu(false); }}
+                                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                              >
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* View mode */}
+                        <button
+                          onClick={() => { cycleViewMode(); }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                        <span>{editMode ? "Save Layout" : "Edit Layout"}</span>
+                          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                            {viewMode === "mobile" ? (
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              </svg>
+                            ) : viewMode === "desktop" ? (
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                              </svg>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-sm text-white">Vue: {viewMode === "auto" ? "Auto" : viewMode === "mobile" ? "Mobile" : "Desktop"}</div>
+                            <div className="text-xs text-white/50">Cliquer pour changer</div>
+                          </div>
+                        </button>
+
+                        {/* Fullscreen */}
+                        <button
+                          onClick={() => { toggleFullscreen(); setShowMenu(false); }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4h4m8 0h4v4M4 16v4h4m8 0h4v-4" />
+                            </svg>
+                          </div>
+                          <span className="text-sm text-white">Plein écran</span>
+                        </button>
+
+                        {/* Edit mode */}
+                        <button
+                          onClick={() => { setEditMode(!editMode); setShowMenu(false); }}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${
+                            editMode ? "bg-emerald-500/20 hover:bg-emerald-500/30" : "hover:bg-white/10"
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            editMode ? "bg-emerald-500/30" : "bg-white/10"
+                          }`}>
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm text-white">{editMode ? "Sauver le layout" : "Modifier le layout"}</span>
+                        </button>
+
+                        {/* Add widget (edit mode only) */}
+                        {editMode && (
+                          <button
+                            onClick={() => { setShowAddModal(true); setShowMenu(false); }}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                              <svg className="w-4 h-4 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                            </div>
+                            <span className="text-sm text-white">Ajouter un widget</span>
+                          </button>
+                        )}
+
+                        {/* Tone picker (edit mode only) */}
+                        {editMode && (
+                          <div className="px-3 py-2.5 rounded-xl bg-white/5">
+                            <span className="text-xs text-white/60 mb-2 block">Nuance</span>
+                            <div className="flex items-center gap-2">
+                              {(Object.keys(DASHBOARD_TONES) as DashboardTone[]).map(
+                                (tone) => (
+                                  <button
+                                    key={tone}
+                                    onClick={() => setDashboardTone(tone)}
+                                    className={`w-7 h-7 rounded-full bg-gradient-to-br ${DASHBOARD_TONES[tone].swatch} border-2 transition-transform hover:scale-110 ${
+                                      dashboardTone === tone
+                                        ? "border-white shadow-[0_0_12px_rgba(255,255,255,0.45)]"
+                                        : "border-white/30"
+                                    }`}
+                                    title={DASHBOARD_TONES[tone].label}
+                                  />
+                                ),
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Title in fullscreen toggle (edit mode only) */}
+                        {editMode && (
+                          <button
+                            onClick={() => setHideTitleInFullscreen((prev) => !prev)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left"
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              hideTitleInFullscreen ? "bg-emerald-500/20" : "bg-white/10"
+                            }`}>
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={hideTitleInFullscreen ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878l4.242 4.242M21 21l-4.879-4.879" : "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"} />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="text-sm text-white">Titre plein écran</div>
+                              <div className="text-xs text-white/50">{hideTitleInFullscreen ? "Masqué" : "Visible"}</div>
+                            </div>
+                          </button>
+                        )}
+
+                        <div className="h-px bg-white/10 my-1" />
+
+                        {/* Admin */}
+                        <Link
+                          to="/admin"
+                          onClick={() => setShowMenu(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm text-white">Administration</span>
+                        </Link>
                       </div>
-                    </button>
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </header>
 
