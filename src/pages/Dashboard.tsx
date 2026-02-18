@@ -653,6 +653,69 @@ export function Dashboard() {
   const handleDragStart = () => setIsDragging(true);
   const handleDragStop = () => setIsDragging(false);
 
+  // Section child management handlers
+  const updateSectionConfig = async (
+    sectionId: string,
+    configPatch: Record<string, any>,
+  ) => {
+    if (!dashboard) return;
+    const section = dashboard.DashboardWidgets?.find(
+      (w) => w.id === sectionId,
+    );
+    if (!section) return;
+
+    const nextConfig = { ...section.config, ...configPatch };
+
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+          w.id === sectionId ? { ...w, config: nextConfig } : w,
+        ),
+      };
+    });
+
+    try {
+      await api.updateWidget(sectionId, { config: nextConfig });
+    } catch (error) {
+      console.error("Failed to update section config:", error);
+    }
+  };
+
+  const handleReorderChildren = (
+    sectionId: string,
+    newChildIds: string[],
+  ) => {
+    void updateSectionConfig(sectionId, { childWidgetIds: newChildIds });
+  };
+
+  const handleRemoveChild = (sectionId: string, childId: string) => {
+    if (!dashboard) return;
+    const section = dashboard.DashboardWidgets?.find(
+      (w) => w.id === sectionId,
+    );
+    if (!section) return;
+    const currentIds: string[] =
+      (section.config?.childWidgetIds as string[]) || [];
+    const newIds = currentIds.filter((id) => id !== childId);
+    void updateSectionConfig(sectionId, { childWidgetIds: newIds });
+  };
+
+  const handleAddChild = (sectionId: string, widgetId: string) => {
+    if (!dashboard) return;
+    const section = dashboard.DashboardWidgets?.find(
+      (w) => w.id === sectionId,
+    );
+    if (!section) return;
+    const currentIds: string[] =
+      (section.config?.childWidgetIds as string[]) || [];
+    if (currentIds.includes(widgetId)) return;
+    void updateSectionConfig(sectionId, {
+      childWidgetIds: [...currentIds, widgetId],
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -775,6 +838,12 @@ export function Dashboard() {
       .map((id) => allWidgets.find((w) => w.id === id))
       .filter((w): w is DashboardWidgetType => w != null);
   };
+
+  // Free widgets = not in any section and not sections themselves
+  const freeWidgets = allWidgets.filter(
+    (w) =>
+      w.Widget?.component !== "Section" && !childWidgetIdSet.has(w.id),
+  );
 
   const particleHue = DASHBOARD_TONES[dashboardTone].particleHue;
 
@@ -1220,6 +1289,25 @@ export function Dashboard() {
                                 );
                               }}
                               editMode={editMode}
+                              freeWidgets={freeWidgets}
+                              onReorderChildren={(newChildIds) =>
+                                handleReorderChildren(
+                                  dashboardWidget.id,
+                                  newChildIds,
+                                )
+                              }
+                              onRemoveChild={(childId) =>
+                                handleRemoveChild(
+                                  dashboardWidget.id,
+                                  childId,
+                                )
+                              }
+                              onAddChild={(widgetId) =>
+                                handleAddChild(
+                                  dashboardWidget.id,
+                                  widgetId,
+                                )
+                              }
                             />
                           ) : (
                             WidgetComponent && (
