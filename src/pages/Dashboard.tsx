@@ -1112,6 +1112,7 @@ export function Dashboard() {
                   }
                   allowOverlap={false}
                   compactType={null}
+                  preventCollision={true}
                   resizeHandles={["se"]}
                 >
                   {gridWidgets.map((dashboardWidget) => {
