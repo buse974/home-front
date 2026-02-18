@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { SectionComponentProps } from "../../types";
 import { getWidgetComponent } from "../WidgetRegistry";
 
@@ -121,58 +122,59 @@ export function Section({
           </div>
         </div>
 
-        {/* Overlay déplié par-dessus tout */}
-        {expanded && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-8">
-            {/* Backdrop */}
+        {/* Overlay déplié par-dessus tout (portal pour sortir du grid item) */}
+        {expanded &&
+          createPortal(
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-8"
               onClick={() => setExpanded(false)}
-            />
-            {/* Panel */}
-            <div
-              className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-white/15"
-              style={{ backgroundColor: bgSolid }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-white/10">
-                <span className="text-base font-semibold text-white/90">
-                  {title || "Section"}
-                </span>
-                <button
-                  onClick={() => setExpanded(false)}
-                  className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4 text-white/70"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+              {/* Panel - stop propagation pour ne pas fermer au clic dedans */}
+              <div
+                className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-white/15 bg-black/60 backdrop-blur-xl"
+                style={{ backgroundColor: bgSolid }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-white/10">
+                  <span className="text-base font-semibold text-white/90">
+                    {title || "Section"}
+                  </span>
+                  <button
+                    onClick={() => setExpanded(false)}
+                    className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              {/* Children */}
-              {childWidgets.length > 0 ? (
-                <ChildrenGrid
-                  childWidgets={childWidgets}
-                  onChildCommand={onChildCommand}
-                  padding={padding}
-                />
-              ) : (
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <p className="text-white/40 text-sm">Aucun widget</p>
+                    <svg
+                      className="w-4 h-4 text-white/70"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+                {/* Children */}
+                {childWidgets.length > 0 ? (
+                  <ChildrenGrid
+                    childWidgets={childWidgets}
+                    onChildCommand={onChildCommand}
+                    padding={padding}
+                  />
+                ) : (
+                  <div className="flex-1 flex items-center justify-center p-8">
+                    <p className="text-white/40 text-sm">Aucun widget</p>
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body,
+          )}
       </>
     );
   }
