@@ -63,6 +63,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hideTitleInFullscreen, setHideTitleInFullscreen] = useState(() => {
     return localStorage.getItem("hideTitleInFullscreen") === "1";
@@ -88,7 +89,6 @@ export function Dashboard() {
   const lastDashboardNavAt = useRef(0);
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
-  const layoutSnapshotRef = useRef<Layouts | null>(null);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -641,8 +641,6 @@ export function Dashboard() {
 
   const handleLayoutChange = async (newLayouts: Layouts) => {
     if (!editMode || !dashboard) return;
-    // Don't save during drag - we'll save on drop
-    if (layoutSnapshotRef.current) return;
     const merged = mergeLayouts(newLayouts);
     setDashboard((prev) => (prev ? { ...prev, layouts: merged } : prev));
     try {
@@ -652,44 +650,8 @@ export function Dashboard() {
     }
   };
 
-  // Save positions at drag start
-  const handleDragStart = () => {
-    if (!dashboard) return;
-    const current = dashboard.layouts || {};
-    // Deep clone the layouts
-    layoutSnapshotRef.current = JSON.parse(JSON.stringify(current));
-  };
-
-  // Restore positions at drag stop, only keep the dragged widget's new position
-  const handleDragStop = (
-    _layout: any[],
-    _oldItem: any,
-    newItem: any,
-  ) => {
-    const snapshot = layoutSnapshotRef.current;
-    layoutSnapshotRef.current = null;
-    if (!snapshot || !dashboard) return;
-
-    // Restore snapshot but update the dragged widget's position
-    const restored: any = {};
-    for (const [bp, bpLayout] of Object.entries(snapshot)) {
-      if (!Array.isArray(bpLayout)) {
-        restored[bp] = bpLayout;
-        continue;
-      }
-      restored[bp] = (bpLayout as any[]).map((item: any) => {
-        if (item.i === newItem.i) {
-          return { ...item, x: newItem.x, y: newItem.y, w: newItem.w, h: newItem.h };
-        }
-        return item;
-      });
-    }
-
-    setDashboard((prev) => (prev ? { ...prev, layouts: restored } : prev));
-    api.updateDashboardLayouts(dashboard.id, restored).catch((error) => {
-      console.error("Failed to update layouts after drag:", error);
-    });
-  };
+  const handleDragStart = () => setIsDragging(true);
+  const handleDragStop = () => setIsDragging(false);
 
   if (loading) {
     return (
@@ -1187,7 +1149,7 @@ export function Dashboard() {
                   onDragStart={handleDragStart}
                   onDragStop={handleDragStop}
                   allowOverlap={false}
-                  compactType={null}
+                  compactType={isDragging ? "vertical" : null}
                   resizeHandles={["se"]}
                 >
                   {gridWidgets.map((dashboardWidget) => {
