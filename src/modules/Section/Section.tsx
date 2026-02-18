@@ -90,14 +90,8 @@ function EditChildrenGrid({
   const dragItemRef = useRef<string | null>(null);
   const droppedInsideRef = useRef(false);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
+  const [dragSourceId, setDragSourceId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [previewOrder, setPreviewOrder] = useState<string[]>(
-    childWidgets.map((c) => c.id),
-  );
-
-  useEffect(() => {
-    setPreviewOrder(childWidgets.map((c) => c.id));
-  }, [childWidgets]);
 
   const reorderIds = (
     ids: string[],
@@ -118,6 +112,7 @@ function EditChildrenGrid({
   const handleDragStart = (childId: string) => {
     dragItemRef.current = childId;
     droppedInsideRef.current = false;
+    setDragSourceId(childId);
   };
 
   const handleDragOver = (e: React.DragEvent, childId: string) => {
@@ -125,7 +120,6 @@ function EditChildrenGrid({
     const sourceId = dragItemRef.current;
     if (!sourceId || sourceId === childId) return;
     setDragOverId(childId);
-    setPreviewOrder((prev) => reorderIds(prev, sourceId, childId));
   };
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
@@ -134,16 +128,12 @@ function EditChildrenGrid({
     setDragOverId(null);
     const sourceId = dragItemRef.current;
     dragItemRef.current = null;
-    if (!sourceId) return;
-
-    const reordered = reorderIds(previewOrder, sourceId, targetId);
-    setPreviewOrder(reordered);
-    if (!onReorderChildren) return;
+    setDragSourceId(null);
+    if (!sourceId || !onReorderChildren) return;
 
     const currentIds = childWidgets.map((c) => c.id);
-    if (reordered.join("|") !== currentIds.join("|")) {
-      onReorderChildren(reordered);
-    }
+    const reordered = reorderIds(currentIds, sourceId, targetId);
+    if (reordered.join("|") !== currentIds.join("|")) onReorderChildren(reordered);
   };
 
   const handleDragEnd = (e: React.DragEvent, childId: string) => {
@@ -151,6 +141,7 @@ function EditChildrenGrid({
     const droppedInside = droppedInsideRef.current;
     droppedInsideRef.current = false;
     dragItemRef.current = null;
+    setDragSourceId(null);
     setDragOverId(null);
 
     if (droppedInside || !onRemoveChild) return;
@@ -167,18 +158,24 @@ function EditChildrenGrid({
       onRemoveChild(sourceId, { clientX: e.clientX, clientY: e.clientY });
       return;
     }
-
-    setPreviewOrder(childWidgets.map((c) => c.id));
   };
 
   const childrenById = new Map(childWidgets.map((child) => [child.id, child]));
-  const orderedChildren = previewOrder
-    .map((id) => childrenById.get(id))
-    .filter((child): child is DashboardWidget => child != null);
-  const missingChildren = childWidgets.filter(
-    (child) => !previewOrder.includes(child.id),
-  );
-  const renderedChildren = [...orderedChildren, ...missingChildren];
+  const sourceChild =
+    dragSourceId != null ? childrenById.get(dragSourceId) || null : null;
+
+  const renderOrderIds = (() => {
+    const ids = childWidgets.map((c) => c.id);
+    if (!dragSourceId || !dragOverId || dragSourceId === dragOverId) return ids;
+    const sourceIdx = ids.indexOf(dragSourceId);
+    const targetIdx = ids.indexOf(dragOverId);
+    if (sourceIdx === -1 || targetIdx === -1) return ids;
+    const withoutSource = ids.filter((id) => id !== dragSourceId);
+    const insertAt = withoutSource.indexOf(dragOverId);
+    if (insertAt === -1) return ids;
+    withoutSource.splice(insertAt, 0, "__section_drag_placeholder__");
+    return withoutSource;
+  })();
 
   return (
     <div
@@ -190,7 +187,25 @@ function EditChildrenGrid({
       onTouchStart={(e) => e.stopPropagation()}
     >
       <div className="grid grid-cols-2 gap-2 auto-rows-[120px]">
-        {renderedChildren.map((child) => {
+        {renderOrderIds.map((id) => {
+          if (id === "__section_drag_placeholder__" && sourceChild) {
+            const placeholderColSpan = Math.min(sourceChild.position?.w || 1, 2);
+            const placeholderRowSpan = sourceChild.position?.h || 1;
+            return (
+              <div
+                key="__section_drag_placeholder__"
+                className="min-h-0 rounded-lg border-2 border-dashed border-cyan-300/70 bg-cyan-400/10"
+                style={{
+                  gridColumn: `span ${placeholderColSpan}`,
+                  gridRow: `span ${placeholderRowSpan}`,
+                }}
+              />
+            );
+          }
+
+          const child = childrenById.get(id);
+          if (!child) return null;
+
           const ChildComponent = getWidgetComponent(
             child.Widget?.component || "",
           );
