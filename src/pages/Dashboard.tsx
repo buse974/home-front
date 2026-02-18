@@ -1361,7 +1361,11 @@ export function Dashboard() {
           {/* Widgets Grid */}
           <main
             className={`flex-1 flex min-h-0 ${
-              shouldHideTitle ? "items-center" : "items-start"
+              isMobileView && !editMode
+                ? "items-stretch"
+                : shouldHideTitle
+                  ? "items-center"
+                  : "items-start"
             }`}
           >
             {!dashboard.DashboardWidgets ||
