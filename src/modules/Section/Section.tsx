@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { SectionComponentProps, DashboardWidget } from "../../types";
 import { getWidgetComponent } from "../WidgetRegistry";
@@ -288,6 +288,12 @@ export function Section({
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [isExternalDragOver, setIsExternalDragOver] = useState(false);
 
+  useEffect(() => {
+    if (!foldable && collapsed) {
+      setCollapsed(false);
+    }
+  }, [foldable, collapsed]);
+
   const parseExternalWidgetId = (e: React.DragEvent): string | null => {
     const raw = e.dataTransfer.getData("text/plain");
     if (!raw || !raw.startsWith("dashboard-widget:")) return null;
@@ -417,14 +423,18 @@ export function Section({
       {title && (
         <div
           className={`flex items-center justify-between px-3 py-2 select-none shrink-0 ${
-            !editMode ? "cursor-pointer hover:bg-white/5 transition-colors" : ""
+            !editMode && foldable
+              ? "cursor-pointer hover:bg-white/5 transition-colors"
+              : ""
           }`}
-          onClick={!editMode ? () => setCollapsed((c) => !c) : undefined}
+          onClick={
+            !editMode && foldable ? () => setCollapsed((c) => !c) : undefined
+          }
         >
           <span className="text-sm font-medium text-white/80 truncate">
             {title}
           </span>
-          {!editMode && (
+          {!editMode && foldable && (
             <svg
               className={`w-4 h-4 text-white/50 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
               fill="none"
