@@ -34,9 +34,11 @@ function ChildrenGrid({
 }) {
   return (
     <div
-      className="h-full overflow-y-auto overflow-x-hidden"
+      className="h-full overflow-y-auto overflow-x-hidden section-children-dnd"
       style={{ padding }}
       data-no-dashboard-swipe=""
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       <div className="grid grid-cols-2 gap-2 auto-rows-[120px]">
         {childWidgets.map((child) => {
@@ -139,7 +141,7 @@ function EditChildrenGrid({
           return (
             <div
               key={child.id}
-              className={`min-h-0 relative group rounded-lg transition-all ${
+              className={`min-h-0 relative group rounded-lg transition-all section-child-dropzone ${
                 isDragOver ? "ring-2 ring-purple-400 ring-offset-1 ring-offset-transparent" : ""
               }`}
               style={{
@@ -147,6 +149,8 @@ function EditChildrenGrid({
                 gridRow: `span ${rowSpan}`,
               }}
               draggable
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               onDragStart={() => handleDragStart(child.id)}
               onDragOver={(e) => handleDragOver(e, child.id)}
               onDrop={(e) => handleDrop(e, child.id)}

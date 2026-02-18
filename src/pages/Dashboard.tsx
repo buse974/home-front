@@ -1211,7 +1211,7 @@ export function Dashboard() {
                   margin={[GRID_MARGIN, GRID_MARGIN]}
                   isDraggable={editMode}
                   isResizable={editMode}
-                  draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button,.section-title-input"
+                  draggableCancel=".delete-button,.rename-widget-input,.rename-dashboard-input,.widget-style-button,.section-title-input,.section-children-dnd,.section-child-dropzone"
                   onLayoutChange={(_, layouts: Layouts) =>
                     handleLayoutChange(layouts)
                   }
