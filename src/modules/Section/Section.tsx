@@ -385,6 +385,7 @@ export function Section({
   // Mode normal (inline)
   return (
     <div
+      data-section-drop-id={dashboardWidget.id}
       className={`section-zone h-full w-full rounded-2xl flex flex-col overflow-hidden transition-all duration-500 ${
         editMode && isExternalDragOver ? "ring-2 ring-cyan-300/80 ring-offset-2 ring-offset-transparent" : ""
       }`}

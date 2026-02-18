@@ -651,7 +651,62 @@ export function Dashboard() {
   };
 
   const handleDragStart = () => setIsDragging(true);
-  const handleDragStop = () => setIsDragging(false);
+  const handleDragStop = (
+    _layout?: any,
+    _oldItem?: any,
+    newItem?: { i?: string },
+    _placeholder?: any,
+    _e?: MouseEvent,
+    element?: HTMLElement,
+  ) => {
+    setIsDragging(false);
+    if (!editMode || !dashboard) return;
+
+    const draggedWidgetId = newItem?.i;
+    if (!draggedWidgetId || !element) return;
+
+    const draggedWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === draggedWidgetId,
+    );
+    if (!draggedWidget || draggedWidget.Widget?.component === "Section") return;
+
+    const dragRect = element.getBoundingClientRect();
+    const dragArea = Math.max(1, dragRect.width * dragRect.height);
+
+    let bestSectionId: string | null = null;
+    let bestOverlapRatio = 0;
+
+    const sectionElements = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-section-drop-id]"),
+    );
+
+    for (const sectionEl of sectionElements) {
+      const sectionId = sectionEl.dataset.sectionDropId;
+      if (!sectionId) continue;
+
+      const sectionRect = sectionEl.getBoundingClientRect();
+      const overlapWidth =
+        Math.min(dragRect.right, sectionRect.right) -
+        Math.max(dragRect.left, sectionRect.left);
+      const overlapHeight =
+        Math.min(dragRect.bottom, sectionRect.bottom) -
+        Math.max(dragRect.top, sectionRect.top);
+
+      if (overlapWidth <= 0 || overlapHeight <= 0) continue;
+      const overlapArea = overlapWidth * overlapHeight;
+      const overlapRatio = overlapArea / dragArea;
+
+      if (overlapRatio > bestOverlapRatio) {
+        bestOverlapRatio = overlapRatio;
+        bestSectionId = sectionId;
+      }
+    }
+
+    // Require meaningful overlap to avoid accidental attach on near misses.
+    if (bestSectionId && bestOverlapRatio >= 0.25) {
+      handleAddChild(bestSectionId, draggedWidgetId);
+    }
+  };
 
   // Section child management handlers
   const updateSectionConfig = async (
