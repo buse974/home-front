@@ -528,6 +528,34 @@ export function Dashboard() {
     }
   };
 
+  const handleToggleSectionToggleAll = async (widgetId: string) => {
+    if (!dashboard) return;
+    const targetWidget = dashboard.DashboardWidgets?.find(
+      (w) => w.id === widgetId,
+    );
+    if (!targetWidget) return;
+
+    const currentConfig = targetWidget.config || {};
+    const nextToggleAll = !currentConfig.toggleAll;
+    const nextConfig = { ...currentConfig, toggleAll: nextToggleAll };
+
+    setDashboard((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        DashboardWidgets: (prev.DashboardWidgets || []).map((w) =>
+          w.id === widgetId ? { ...w, config: nextConfig } : w,
+        ),
+      };
+    });
+
+    try {
+      await api.updateWidget(widgetId, { config: nextConfig });
+    } catch (error) {
+      console.error("Failed to toggle section toggleAll:", error);
+    }
+  };
+
   const handleSaveWeatherConfig = async () => {
     if (!dashboard || !editingWeatherWidget) return;
 
@@ -1532,27 +1560,50 @@ export function Dashboard() {
                               </button>
                             )}
                             {isSection && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  void handleToggleSectionFoldable(
-                                    dashboardWidget.id,
-                                  );
-                                }}
-                                onMouseDown={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                }}
-                                className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                                  dashboardWidget.config?.foldable
-                                    ? "bg-amber-500/20 border-amber-400/50 text-amber-200"
-                                    : "bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
-                                }`}
-                                title="Mode dossier (pliable en overlay)"
-                              >
-                                Pliable
-                              </button>
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    void handleToggleSectionFoldable(
+                                      dashboardWidget.id,
+                                    );
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
+                                  className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                                    dashboardWidget.config?.foldable
+                                      ? "bg-amber-500/20 border-amber-400/50 text-amber-200"
+                                      : "bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                  }`}
+                                  title="Mode dossier (pliable en overlay)"
+                                >
+                                  Pliable
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    void handleToggleSectionToggleAll(
+                                      dashboardWidget.id,
+                                    );
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
+                                  className={`widget-style-button px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                                    dashboardWidget.config?.toggleAll
+                                      ? "bg-emerald-500/20 border-emerald-400/50 text-emerald-200"
+                                      : "bg-slate-900/80 border-white/25 text-white/80 hover:text-white"
+                                  }`}
+                                  title="Afficher les boutons On/Off global"
+                                >
+                                  On/Off
+                                </button>
+                              </>
                             )}
                             {!isSection && (
                               <button

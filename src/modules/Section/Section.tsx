@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { SectionComponentProps, DashboardWidget } from "../../types";
 import { getWidgetComponent } from "../WidgetRegistry";
+import { api } from "../../services/api";
 
 const SECTION_COLORS: Record<string, string> = {
   blue: "rgba(59, 130, 246, 0.18)",
@@ -350,11 +351,38 @@ export function Section({
   const title = (config.title as string | null | undefined) || undefined;
   const padding = (config.padding as number) ?? 12;
   const foldable = !!config.foldable;
+  const showToggleAll = !!config.toggleAll;
   const [collapsed, setCollapsed] = useState(!!config.collapsed);
   const [expanded, setExpanded] = useState(false);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [isExternalDragOver, setIsExternalDragOver] = useState(false);
+  const [toggleAllLoading, setToggleAllLoading] = useState(false);
   const portalTarget = document.fullscreenElement || document.body;
+
+  // Widgets enfants qui supportent toggle
+  const toggleableChildren = childWidgets.filter((child) =>
+    child.GenericDevices?.some((d) => d.capabilities?.toggle),
+  );
+  const hasToggleable = showToggleAll && toggleableChildren.length > 0;
+
+  const handleToggleAll = useCallback(
+    async (desiredState: boolean) => {
+      if (toggleAllLoading || toggleableChildren.length === 0) return;
+      setToggleAllLoading(true);
+      try {
+        await Promise.all(
+          toggleableChildren.map((child) =>
+            api.executeWidgetCommand(child.id, "toggle", { desiredState }),
+          ),
+        );
+      } catch (error) {
+        console.error("Failed to toggle all:", error);
+      } finally {
+        setToggleAllLoading(false);
+      }
+    },
+    [toggleableChildren, toggleAllLoading],
+  );
 
   useEffect(() => {
     if (!foldable && collapsed) {
@@ -403,11 +431,38 @@ export function Section({
 
           {/* Content */}
           <div className="relative h-full flex flex-col justify-between p-3">
-            {/* Top: title */}
-            <div className="flex items-center gap-2">
+            {/* Top: title + toggle all */}
+            <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-white/90 truncate">
                 {title || "Section"}
               </span>
+              {hasToggleable && (
+                <div
+                  className="flex items-center gap-1 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => void handleToggleAll(true)}
+                    disabled={toggleAllLoading}
+                    className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center hover:bg-emerald-500/35 active:scale-90 transition-all disabled:opacity-40"
+                    title="Tout allumer"
+                  >
+                    <svg className="w-3.5 h-3.5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => void handleToggleAll(false)}
+                    disabled={toggleAllLoading}
+                    className="w-7 h-7 rounded-lg bg-white/8 border border-white/15 flex items-center justify-center hover:bg-white/15 active:scale-90 transition-all disabled:opacity-40"
+                    title="Tout éteindre"
+                  >
+                    <svg className="w-3.5 h-3.5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Bottom: widget mini-previews */}

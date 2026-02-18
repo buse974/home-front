@@ -172,6 +172,7 @@ export interface SectionConfig {
   padding?: number;
   collapsed?: boolean;
   childWidgetIds?: string[];
+  toggleAll?: boolean;
 }
 
 // Props pour les composants Widget
