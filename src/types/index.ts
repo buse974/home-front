@@ -165,6 +165,15 @@ export interface WidgetStateResponse {
   total: number;
 }
 
+// Config spécifique au widget Section (conteneur)
+export interface SectionConfig {
+  sectionColor?: string;
+  title?: string;
+  padding?: number;
+  collapsed?: boolean;
+  childWidgetIds?: string[];
+}
+
 // Props pour les composants Widget
 export interface WidgetComponentProps {
   dashboardWidget: DashboardWidget;
@@ -173,4 +182,16 @@ export interface WidgetComponentProps {
     params?: any,
     deviceId?: string,
   ) => Promise<void>;
+}
+
+// Props étendues pour le widget Section (conteneur)
+export interface SectionComponentProps extends WidgetComponentProps {
+  childWidgets: DashboardWidget[];
+  onChildCommand: (
+    dwId: string,
+    capability: string,
+    params?: any,
+    deviceId?: string,
+  ) => Promise<void>;
+  editMode?: boolean;
 }
