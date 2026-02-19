@@ -97,6 +97,7 @@ export function Dashboard() {
   const lastTapAt = useRef(0);
   const dashboardContainerRef = useRef<HTMLDivElement | null>(null);
   const gridAreaRef = useRef<HTMLDivElement | null>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
   const shouldHideTitle = isFullscreen && hideTitleInFullscreen;
   const currentDashboardIndex = dashboard
     ? dashboards.findIndex((d) => d.id === dashboard.id)
@@ -162,6 +163,34 @@ export function Dashboard() {
       prev === "auto" ? "mobile" : prev === "mobile" ? "desktop" : "auto",
     );
   }, []);
+
+  const handleCarouselScroll = useCallback(() => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    const items = container.querySelectorAll<HTMLElement>(".mobile-carousel-item");
+    items.forEach((item) => {
+      const rect = item.getBoundingClientRect();
+      const itemCenterY = rect.top + rect.height / 2;
+      const distance = Math.abs(centerY - itemCenterY);
+      const maxDist = containerRect.height / 2;
+      const ratio = Math.min(distance / maxDist, 1); // 0 = centered, 1 = far
+      const scale = 1 - ratio * 0.15; // 1.0 → 0.85
+      const opacity = 1 - ratio * 0.5; // 1.0 → 0.5
+      item.style.transform = `scale(${scale})`;
+      item.style.opacity = `${opacity}`;
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = carouselRef.current;
+    if (!container || !isMobileView || editMode) return;
+    // Apply initial transforms
+    handleCarouselScroll();
+    container.addEventListener("scroll", handleCarouselScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleCarouselScroll);
+  }, [isMobileView, editMode, handleCarouselScroll]);
 
   const loadDashboard = async () => {
     try {
@@ -1392,7 +1421,7 @@ export function Dashboard() {
                 </div>
               </div>
             ) : isMobileView && !editMode ? (
-              <div className="mobile-carousel-container">
+              <div ref={carouselRef} className="mobile-carousel-container">
                 {gridWidgets.map((dashboardWidget) => {
                   const isSection =
                     dashboardWidget.Widget?.component === "Section";
