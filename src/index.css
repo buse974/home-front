@@ -24,15 +24,15 @@ body {
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
-  padding: 15vh 0.75rem;
-  scroll-padding: 15vh;
+  padding: 25vh 0.75rem;
+  scroll-padding: 25vh;
 }
 
 .mobile-carousel-item {
   scroll-snap-align: center;
-  height: 70vh;
-  min-height: 280px;
-  margin-bottom: 4vh;
+  height: 45vh;
+  min-height: 200px;
+  margin-bottom: 3vh;
   border-radius: 1rem;
   transform-origin: center center;
   transition: transform 0.15s ease-out, opacity 0.15s ease-out;
